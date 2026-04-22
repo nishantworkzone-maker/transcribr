@@ -12,14 +12,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } });
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 10 * 1024 * 1024 } });
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
+// ── Expose AssemblyAI key safely ──────────────────────────────────
+app.get('/api/assemblykey', (req, res) => {
+  res.json({ key: process.env.ASSEMBLYAI_API_KEY });
+});
+
+// ── GROQ (Fast mode) ──────────────────────────────────────────────
 async function transcribeGroq(filePath, language) {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
@@ -37,12 +43,13 @@ async function transcribeGroq(filePath, language) {
   const segments = data.segments || [];
   const text = segments.length > 0
     ? segments.map(s => `[${formatTime(s.start)}] ${s.text.trim()}`).join('\n')
-    : data.text;
+    : data.text || '';
   return { text, segments };
 }
 
+// ── DEEPGRAM (Balanced mode) ──────────────────────────────────────
 async function transcribeDeepgram(filePath, audioUrl, language) {
-  const params = `?model=nova-2&language=${language || 'en'}&punctuate=true&utterances=true&diarize=true`;
+  const params = `?model=nova-2&language=${language||'en'}&punctuate=true&utterances=true&diarize=true`;
   const url = `https://api.deepgram.com/v1/listen${params}`;
   let body, headers = { 'Authorization': `Token ${process.env.DEEPGRAM_API_KEY}` };
 
@@ -60,11 +67,12 @@ async function transcribeDeepgram(filePath, audioUrl, language) {
 
   const utterances = data.results?.utterances || [];
   const text = utterances.length > 0
-    ? utterances.map(u => `[${formatTime(u.start)}] Speaker ${u.speaker + 1}: ${u.transcript}`).join('\n')
+    ? utterances.map(u => `[${formatTime(u.start)}] Speaker ${u.speaker+1}: ${u.transcript}`).join('\n')
     : data.results?.channels[0]?.alternatives[0]?.transcript || '';
   return { text, segments: utterances };
 }
 
+// ── ASSEMBLYAI (Accurate mode) ────────────────────────────────────
 async function transcribeAssemblyAI(filePath, audioUrl, language) {
   const authHeaders = { 'Authorization': process.env.ASSEMBLYAI_API_KEY, 'Content-Type': 'application/json' };
   let uploadUrl = audioUrl;
@@ -103,11 +111,12 @@ async function transcribeAssemblyAI(filePath, audioUrl, language) {
 
   const utterances = result.utterances || [];
   const text = utterances.length > 0
-    ? utterances.map(u => `[${formatTime(u.start / 1000)}] Speaker ${u.speaker}: ${u.text}`).join('\n')
+    ? utterances.map(u => `[${formatTime(u.start/1000)}] Speaker ${u.speaker}: ${u.text}`).join('\n')
     : result.text || '';
   return { text, segments: utterances };
 }
 
+// ── Main transcribe route ─────────────────────────────────────────
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   const { mode, language, audioUrl } = req.body;
   const filePath = req.file?.path;

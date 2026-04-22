@@ -22,7 +22,6 @@
   .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
   .nav-links a:hover { color: var(--text); }
   .nav-cta { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1.4rem; border-radius: 100px; font-size: 0.88rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
   .hero { text-align: center; padding: 7rem 2rem 5rem; position: relative; overflow: hidden; }
   .hero::before { content: ''; position: absolute; top: -120px; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; background: radial-gradient(ellipse at center, rgba(124,106,255,0.12) 0%, transparent 70%); pointer-events: none; }
   .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(124,106,255,0.1); border: 1px solid rgba(124,106,255,0.3); color: var(--accent2); font-size: 0.78rem; padding: 0.3rem 0.9rem; border-radius: 100px; margin-bottom: 1.5rem; }
@@ -32,12 +31,10 @@
   .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
   .btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.85rem 2rem; border-radius: 100px; font-size: 0.95rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
   .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border2); padding: 0.85rem 2rem; border-radius: 100px; font-size: 0.95rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
   .stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; padding: 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
   .stat { text-align: center; }
   .stat-num { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 700; }
   .stat-label { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
-
   .features { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
   .section-tag { color: var(--accent2); font-size: 0.8rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1rem; }
   .section-title { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; letter-spacing: -0.5px; margin-bottom: 1rem; }
@@ -48,7 +45,6 @@
   .feat-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--accent-glow); border: 1px solid rgba(124,106,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 1.2rem; }
   .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
   .feature-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.65; }
-
   .pricing { background: var(--surface); padding: 6rem 2rem; }
   .pricing-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
   .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 3.5rem; text-align: left; }
@@ -64,15 +60,10 @@
   .price-features li::before { content: '✓'; color: var(--green); font-weight: 600; }
   .btn-plan { width: 100%; padding: 0.75rem; border-radius: 100px; font-size: 0.9rem; cursor: pointer; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border2); background: transparent; color: var(--text); }
   .btn-plan.filled { background: var(--accent); border-color: var(--accent); color: #fff; }
-
   .app-section { padding: 6rem 2rem; max-width: 960px; margin: 0 auto; }
-
-  /* Tabs */
   .input-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; background: var(--surface); border-radius: 12px; padding: 4px; width: fit-content; }
   .tab-btn { padding: 0.5rem 1.4rem; border-radius: 9px; border: none; background: transparent; color: var(--muted); font-size: 0.88rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
   .tab-btn.active { background: var(--accent); color: #fff; }
-
-  /* Upload */
   .upload-area { background: var(--surface); border: 2px dashed var(--border2); border-radius: 20px; padding: 3rem 2rem; text-align: center; cursor: pointer; position: relative; transition: border-color 0.2s; }
   .upload-area.dragover, .upload-area.has-file { border-style: solid; border-color: var(--accent); }
   .upload-icon { font-size: 2.8rem; margin-bottom: 1rem; display: block; }
@@ -81,41 +72,26 @@
   .upload-formats { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
   .fmt-badge { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; padding: 3px 10px; border-radius: 100px; }
   input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-
-  /* URL input */
   .url-panel { display: none; }
   .url-panel.active { display: block; }
-  .upload-panel { display: block; }
   .upload-panel.hidden { display: none; }
-  .url-input-wrap { position: relative; }
   .url-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 12px; padding: 1rem 1.2rem; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
   .url-input:focus { outline: none; border-color: var(--accent); }
   .url-hint { color: var(--muted); font-size: 0.82rem; margin-top: 0.5rem; }
-
-  /* Mode selector */
   .mode-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 1.5rem 0; }
   .mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s; }
-  .mode-card:hover { border-color: var(--border2); }
   .mode-card.selected { border-color: var(--accent); background: var(--accent-glow); }
   .mode-emoji { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
   .mode-name { font-size: 0.88rem; font-weight: 600; display: block; }
   .mode-desc { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 2px; }
-
-  /* Options */
   .options-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   .opt-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
   .opt-group select { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.6rem 0.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; appearance: none; }
-
-  /* Progress */
   .progress-bar { height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; margin: 1rem 0; display: none; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; width: 0; transition: width 0.4s ease; }
   .status-msg { font-size: 0.85rem; color: var(--muted); text-align: center; min-height: 20px; }
-
-  /* Button */
   .transcribe-btn { width: 100%; padding: 1rem; background: var(--accent); color: #fff; border: none; border-radius: 100px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity 0.2s; margin-top: 0.5rem; }
   .transcribe-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* Result */
   .result-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-top: 1.5rem; display: none; overflow: hidden; }
   .result-box.show { display: block; }
   .result-header { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem; }
@@ -123,12 +99,9 @@
   .export-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .exp-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 0.35rem 0.8rem; border-radius: 100px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
   .exp-btn:hover { border-color: var(--accent); }
-  .transcript-body { display: flex; gap: 0; }
-  .transcript-text { flex: 1; color: var(--text); font-size: 0.92rem; line-height: 2; white-space: pre-wrap; max-height: 420px; overflow-y: auto; padding: 1.5rem; }
+  .transcript-text { color: var(--text); font-size: 0.92rem; line-height: 2; white-space: pre-wrap; max-height: 420px; overflow-y: auto; padding: 1.5rem; }
   .transcript-text .ts { color: var(--accent2); font-size: 0.8rem; cursor: pointer; margin-right: 6px; font-weight: 500; }
   .transcript-text .ts:hover { text-decoration: underline; }
-
-  /* Audio player */
   .audio-player { background: var(--surface2); border-top: 1px solid var(--border); padding: 1rem 1.5rem; display: none; }
   .audio-player.show { display: block; }
   .player-inner { display: flex; align-items: center; gap: 1rem; }
@@ -137,11 +110,9 @@
   .player-progress { height: 100%; background: var(--accent); border-radius: 100px; width: 0%; pointer-events: none; }
   .player-time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
   .player-vol { width: 70px; accent-color: var(--accent); }
-
   .languages { padding: 4rem 2rem; background: var(--surface); text-align: center; }
   .lang-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; max-width: 700px; margin: 2rem auto 0; }
   .lang-pill { background: var(--bg); border: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; padding: 0.4rem 1rem; border-radius: 100px; }
-
   footer { border-top: 1px solid var(--border); padding: 3rem 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: 0.85rem; }
   .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 0.8rem 1.2rem; font-size: 0.88rem; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 999; }
   .toast.show { transform: translateY(0); opacity: 1; }
@@ -186,7 +157,7 @@
     <div class="feature-card"><div class="feat-icon">🔗</div><h3>URL import</h3><p>Paste a direct audio or video URL — no need to download the file first.</p></div>
     <div class="feature-card"><div class="feat-icon">🤖</div><h3>3 AI engines</h3><p>Choose Fast, Balanced, or Accurate mode depending on your needs.</p></div>
     <div class="feature-card"><div class="feat-icon">👥</div><h3>Speaker detection</h3><p>Automatically identify and label different speakers in your audio.</p></div>
-    <div class="feature-card"><div class="feat-icon">📝</div><h3>Export anywhere</h3><p>Download as TXT, SRT, VTT, or copy to clipboard instantly.</p></div>
+    <div class="feature-card"><div class="feat-icon">📝</div><h3>Export anywhere</h3><p>Download as TXT, SRT, VTT or copy to clipboard instantly.</p></div>
     <div class="feature-card"><div class="feat-icon">▶️</div><h3>Audio player</h3><p>Play your audio and click timestamps to jump to any moment.</p></div>
   </div>
 </section>
@@ -262,19 +233,17 @@
   <h2 class="section-title">Try it now — free</h2>
   <p class="section-sub">Upload a file or paste an audio URL to get a real transcript.</p>
 
-  <!-- Input tabs -->
   <div class="input-tabs">
     <button class="tab-btn active" onclick="switchTab('upload')">📁 Upload File</button>
     <button class="tab-btn" onclick="switchTab('url')">🔗 Paste URL</button>
   </div>
 
-  <!-- Upload panel -->
   <div class="upload-panel" id="uploadPanel">
     <div class="upload-area" id="uploadArea">
       <input type="file" id="fileInput" accept="audio/*,video/*" onchange="handleFile(event)"/>
       <span class="upload-icon">🎙</span>
       <h3 id="uploadTitle">Drop your file here</h3>
-      <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A, OGG and more (up to 100MB)</p>
+      <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A and more (up to 100MB)</p>
       <div class="upload-formats">
         <span class="fmt-badge">MP3</span><span class="fmt-badge">MP4</span>
         <span class="fmt-badge">WAV</span><span class="fmt-badge">M4A</span>
@@ -283,15 +252,11 @@
     </div>
   </div>
 
-  <!-- URL panel -->
   <div class="url-panel" id="urlPanel">
-    <div class="url-input-wrap">
-      <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/audio.mp3 or .wav recording URL"/>
-    </div>
+    <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3 or call recording URL"/>
     <p class="url-hint">Supports direct audio/video URLs including call recording links</p>
   </div>
 
-  <!-- Mode selector -->
   <div class="mode-row">
     <div class="mode-card selected" onclick="selectMode('fast', this)">
       <span class="mode-emoji">⚡</span>
@@ -310,7 +275,6 @@
     </div>
   </div>
 
-  <!-- Language -->
   <div class="options-row">
     <div class="opt-group">
       <label>Language</label>
@@ -346,7 +310,6 @@
 
   <button class="transcribe-btn" id="transcribeBtn" onclick="transcribe()">Transcribe now →</button>
 
-  <!-- Result -->
   <div class="result-box" id="resultBox">
     <div class="result-header">
       <h4>Transcript</h4>
@@ -357,10 +320,7 @@
         <button class="exp-btn" onclick="downloadVtt()">⬇ VTT</button>
       </div>
     </div>
-    <div class="transcript-body">
-      <div class="transcript-text" id="transcriptText"></div>
-    </div>
-    <!-- Audio player -->
+    <div class="transcript-text" id="transcriptText"></div>
     <div class="audio-player" id="audioPlayer">
       <div class="player-inner">
         <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
@@ -396,21 +356,20 @@ let currentMode = 'fast';
 let currentTab = 'upload';
 let segments = [];
 
-// Tab switching
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='upload')||(i===1&&tab==='url')));
-  document.getElementById('uploadPanel').classList.toggle('hidden', tab === 'url');
-  document.getElementById('urlPanel').classList.toggle('active', tab === 'url');
+  document.getElementById('uploadPanel').classList.toggle('hidden', tab==='url');
+  document.getElementById('urlPanel').classList.toggle('active', tab==='url');
 }
 
-// Mode selection
 function selectMode(mode, el) {
   currentMode = mode;
   document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('modeSelect').value = mode;
 }
+
 function syncMode(val) {
   currentMode = val;
   document.querySelectorAll('.mode-card').forEach((c,i) => {
@@ -418,7 +377,6 @@ function syncMode(val) {
   });
 }
 
-// File handling
 function handleFile(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -426,9 +384,7 @@ function handleFile(e) {
   document.getElementById('uploadTitle').textContent = file.name;
   document.getElementById('uploadSub').textContent = (file.size/1024/1024).toFixed(2) + ' MB — ready to transcribe';
   fileName = file.name.replace(/\.[^.]+$/, '');
-  // Load into audio player
-  const url = URL.createObjectURL(file);
-  document.getElementById('audioEl').src = url;
+  document.getElementById('audioEl').src = URL.createObjectURL(file);
 }
 
 const area = document.getElementById('uploadArea');
@@ -441,15 +397,19 @@ area.addEventListener('drop', e => {
   handleFile({ target: fi });
 });
 
-// Progress
 function setProgress(pct, msg) {
-  const bar = document.getElementById('progressBar');
-  bar.style.display = 'block';
+  document.getElementById('progressBar').style.display = 'block';
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('statusMsg').textContent = msg;
 }
 
-// Main transcribe
+function getStatusMsg(p) {
+  if (p < 20) return 'Uploading file…';
+  if (p < 50) return 'Running AI transcription…';
+  if (p < 80) return 'Processing results…';
+  return 'Almost done…';
+}
+
 async function transcribe() {
   const audioUrl = document.getElementById('audioUrl').value.trim();
   const fileInput = document.getElementById('fileInput');
@@ -464,21 +424,48 @@ async function transcribe() {
   setProgress(10, 'Preparing…');
 
   const formData = new FormData();
-  if (currentTab === 'upload' && file) formData.append('audio', file);
-  if (currentTab === 'url' && audioUrl) formData.append('audioUrl', audioUrl);
-  formData.append('mode', currentMode);
   formData.append('language', document.getElementById('language').value);
 
-  // Animate progress for slow modes
-  let prog = 10;
-  const progInterval = setInterval(() => {
-    if (prog < 85) { prog += currentMode === 'accurate' ? 1 : 3; setProgress(prog, getStatusMsg(prog)); }
-  }, currentMode === 'accurate' ? 2000 : 500);
-
   try {
-    const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
-    const data = await res.json();
+    if (currentTab === 'url' && audioUrl) {
+      // URL mode — send URL directly to backend
+      formData.append('audioUrl', audioUrl);
+      formData.append('mode', currentMode);
+    } else if (currentTab === 'upload' && file) {
+      if (file.size > 4 * 1024 * 1024) {
+        // Large file — upload directly to AssemblyAI first
+        setProgress(15, 'Large file — uploading directly to AI service…');
+        const keyRes = await fetch('/api/assemblykey');
+        const keyData = await keyRes.json();
+        const arrayBuffer = await file.arrayBuffer();
+        const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': keyData.key,
+            'Content-Type': 'application/octet-stream'
+          },
+          body: arrayBuffer
+        });
+        const uploadData = await uploadRes.json();
+        formData.append('audioUrl', uploadData.upload_url);
+        formData.append('mode', 'accurate');
+        setProgress(35, 'File uploaded — starting transcription…');
+      } else {
+        // Small file — send directly
+        formData.append('audio', file);
+        formData.append('mode', currentMode);
+      }
+    }
+
+    let prog = 35;
+    const progInterval = setInterval(() => {
+      if (prog < 88) { prog += currentMode === 'accurate' ? 1 : 4; setProgress(prog, getStatusMsg(prog)); }
+    }, currentMode === 'accurate' ? 2000 : 600);
+
+    const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
+    const data = await response.json();
     clearInterval(progInterval);
+
     if (data.error) throw new Error(data.error);
 
     setProgress(100, 'Done!');
@@ -489,24 +476,18 @@ async function transcribe() {
     srtContent = generateSRT(segments, data.text);
     vttContent = generateVTT(segments, data.text);
 
-    renderTranscript(data.text, segments);
+    renderTranscript(data.text);
     document.getElementById('resultBox').classList.add('show');
     document.getElementById('progressBar').style.display = 'none';
     document.getElementById('statusMsg').textContent = '';
 
-    // Show audio player if file uploaded
-    if (currentTab === 'upload' && file) {
-      document.getElementById('audioPlayer').classList.add('show');
-    }
     if (currentTab === 'url' && audioUrl) {
       document.getElementById('audioEl').src = audioUrl;
-      document.getElementById('audioPlayer').classList.add('show');
     }
-
+    document.getElementById('audioPlayer').classList.add('show');
     showToast('Transcript ready!');
+
   } catch (err) {
-    clearInterval(progInterval);
-    setProgress(0, '');
     document.getElementById('progressBar').style.display = 'none';
     showToast('Error: ' + err.message);
   }
@@ -514,19 +495,9 @@ async function transcribe() {
   btn.disabled = false; btn.textContent = 'Transcribe now →';
 }
 
-function getStatusMsg(p) {
-  if (p < 20) return 'Uploading file…';
-  if (p < 50) return 'Running AI transcription…';
-  if (p < 80) return 'Processing results…';
-  return 'Almost done…';
-}
-
-// Render transcript with clickable timestamps
-function renderTranscript(text, segs) {
+function renderTranscript(text) {
   const container = document.getElementById('transcriptText');
   if (!text) { container.textContent = 'No transcript returned.'; return; }
-
-  // Replace [MM:SS] timestamps with clickable spans
   const html = text.replace(/\[(\d{2}):(\d{2})\]/g, (match, m, s) => {
     const secs = parseInt(m) * 60 + parseInt(s);
     return `<span class="ts" onclick="seekTo(${secs})">[${m}:${s}]</span>`;
@@ -549,24 +520,24 @@ function togglePlay() {
 }
 function seekAudio(e) {
   const bar = document.getElementById('playerBar');
-  const pct = e.offsetX / bar.offsetWidth;
-  audioEl.currentTime = pct * (audioEl.duration || 0);
+  audioEl.currentTime = (e.offsetX / bar.offsetWidth) * (audioEl.duration || 0);
 }
 function seekTo(secs) { audioEl.currentTime = secs; audioEl.play(); document.getElementById('playBtn').textContent = '⏸'; }
 function setVolume(v) { audioEl.volume = v; }
-function fmtTime(s) { if (!s || isNaN(s)) return '0:00'; const m=Math.floor(s/60); return `${m}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
+function fmtTime(s) { if (!s || isNaN(s)) return '0:00'; return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
 
 // Exports
 function generateSRT(segs, fallback) {
   if (segs && segs.length > 0) {
-    return segs.map((s, i) => {
-      const start = s.start !== undefined ? s.start : (s.start_time || 0) / 1000;
-      const end = s.end !== undefined ? s.end : (s.end_time || 0) / 1000;
-      return `${i+1}\n${toSRTTime(start)} --> ${toSRTTime(end)}\n${s.text || s.transcript || ''}\n`;
+    return segs.map((s,i) => {
+      const start = s.start !== undefined ? s.start : (s.start_time||0)/1000;
+      const end = s.end !== undefined ? s.end : (s.end_time||0)/1000;
+      return `${i+1}\n${toSRTTime(start)} --> ${toSRTTime(end)}\n${(s.text||s.transcript||'').trim()}\n`;
     }).join('\n');
   }
-  // Fallback from text
-  return fallback.split('\n').filter(l=>l.trim()).map((l,i) => `${i+1}\n00:0${i}:00,000 --> 00:0${i}:06,000\n${l.replace(/\[\d+:\d+\]\s*/g,'').trim()}\n`).join('\n');
+  return fallback.split('\n').filter(l=>l.trim()).map((l,i) =>
+    `${i+1}\n00:0${i}:00,000 --> 00:0${i}:06,000\n${l.replace(/\[\d+:\d+\]\s*/g,'').trim()}\n`
+  ).join('\n');
 }
 function generateVTT(segs, fallback) {
   return 'WEBVTT\n\n' + generateSRT(segs, fallback).replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
@@ -576,7 +547,6 @@ function toSRTTime(s) {
   return `${pad(h)}:${pad(m)}:${pad(sec)},${String(ms).padStart(3,'0')}`;
 }
 function pad(n) { return String(n).padStart(2,'0'); }
-
 function copyTranscript() { navigator.clipboard.writeText(transcriptContent).then(() => showToast('Copied!')); }
 function downloadTxt() { dl(transcriptContent, fileName+'.txt', 'text/plain'); showToast('TXT downloaded!'); }
 function downloadSrt() { dl(srtContent, fileName+'.srt', 'text/plain'); showToast('SRT downloaded!'); }

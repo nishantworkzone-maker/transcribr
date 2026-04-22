@@ -10,8 +10,9 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
+// For file uploads up to 10MB through Vercel
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 10 * 1024 * 1024 } });
 
 function formatTime(seconds) {
@@ -20,12 +21,16 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-// ── Expose AssemblyAI key safely ──────────────────────────────────
+// ── Expose API keys safely for browser-side uploads ───────────────
 app.get('/api/assemblykey', (req, res) => {
   res.json({ key: process.env.ASSEMBLYAI_API_KEY });
 });
 
-// ── GROQ (Fast mode) ──────────────────────────────────────────────
+app.get('/api/deepgramkey', (req, res) => {
+  res.json({ key: process.env.DEEPGRAM_API_KEY });
+});
+
+// ── GROQ ──────────────────────────────────────────────────────────
 async function transcribeGroq(filePath, language) {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
@@ -39,15 +44,15 @@ async function transcribeGroq(filePath, language) {
     body: form
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'Groq transcription failed');
-  const segments = data.segments || [];
-  const text = segments.length > 0
-    ? segments.map(s => `[${formatTime(s.start)}] ${s.text.trim()}`).join('\n')
+  if (!res.ok) throw new Error(data.error?.message || 'Groq failed');
+  const segs = data.segments || [];
+  const text = segs.length > 0
+    ? segs.map(s => `[${formatTime(s.start)}] ${s.text.trim()}`).join('\n')
     : data.text || '';
-  return { text, segments };
+  return { text, segments: segs };
 }
 
-// ── DEEPGRAM (Balanced mode) ──────────────────────────────────────
+// ── DEEPGRAM ──────────────────────────────────────────────────────
 async function transcribeDeepgram(filePath, audioUrl, language) {
   const params = `?model=nova-2&language=${language||'en'}&punctuate=true&utterances=true&diarize=true`;
   const url = `https://api.deepgram.com/v1/listen${params}`;
@@ -63,7 +68,7 @@ async function transcribeDeepgram(filePath, audioUrl, language) {
 
   const res = await fetch(url, { method: 'POST', headers, body });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.err_msg || 'Deepgram transcription failed');
+  if (!res.ok) throw new Error(data.err_msg || 'Deepgram failed');
 
   const utterances = data.results?.utterances || [];
   const text = utterances.length > 0
@@ -72,15 +77,21 @@ async function transcribeDeepgram(filePath, audioUrl, language) {
   return { text, segments: utterances };
 }
 
-// ── ASSEMBLYAI (Accurate mode) ────────────────────────────────────
+// ── ASSEMBLYAI ────────────────────────────────────────────────────
 async function transcribeAssemblyAI(filePath, audioUrl, language) {
-  const authHeaders = { 'Authorization': process.env.ASSEMBLYAI_API_KEY, 'Content-Type': 'application/json' };
+  const authHeaders = {
+    'Authorization': process.env.ASSEMBLYAI_API_KEY,
+    'Content-Type': 'application/json'
+  };
   let uploadUrl = audioUrl;
 
   if (!audioUrl && filePath) {
     const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
       method: 'POST',
-      headers: { 'Authorization': process.env.ASSEMBLYAI_API_KEY, 'Content-Type': 'application/octet-stream' },
+      headers: {
+        'Authorization': process.env.ASSEMBLYAI_API_KEY,
+        'Content-Type': 'application/octet-stream'
+      },
       body: fs.readFileSync(filePath)
     });
     const uploadData = await uploadRes.json();
@@ -116,7 +127,7 @@ async function transcribeAssemblyAI(filePath, audioUrl, language) {
   return { text, segments: utterances };
 }
 
-// ── Main transcribe route ─────────────────────────────────────────
+// ── Main route ────────────────────────────────────────────────────
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   const { mode, language, audioUrl } = req.body;
   const filePath = req.file?.path;

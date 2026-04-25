@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Transcript — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
+  --green: #34d399; --red: #f87171; --glow: rgba(124,106,255,0.18);
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+/* NAV */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent2); }
+.nav-right { display: flex; align-items: center; gap: 0.8rem; }
+.back-btn { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.2s; }
+.back-btn:hover { color: var(--text); border-color: var(--accent); }
+
+/* MAIN LAYOUT */
+.page { max-width: 900px; margin: 0 auto; padding: 2rem; width: 100%; flex: 1; }
+
+/* HEADER */
+.transcript-header { margin-bottom: 2rem; }
+.transcript-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-word; }
+.meta-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.meta-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; padding: 3px 10px; border-radius: 100px; }
+.meta-chip.mode { color: var(--accent2); border-color: rgba(124,106,255,0.3); background: var(--glow); }
+
+/* EXPORT TOOLBAR */
+.toolbar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.toolbar-label { font-size: 0.78rem; color: var(--muted); margin-right: 0.3rem; }
+.tool-btn { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+.tool-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.tool-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tool-btn.primary:hover { opacity: 0.88; }
+.tool-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.spacer { flex: 1; }
+
+/* SEARCH */
+.search-wrap { position: relative; margin-bottom: 1.2rem; }
+.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.65rem 1rem 0.65rem 2.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: border-color 0.2s; }
+.search-input:focus { outline: none; border-color: var(--accent); }
+.search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+.match-count { position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+
+/* TRANSCRIPT BOX */
+.transcript-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.transcript-box-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); }
+.transcript-box-header h3 { font-size: 0.95rem; font-weight: 600; }
+.word-count { font-size: 0.78rem; color: var(--muted); }
+.transcript-content { padding: 1.5rem; font-size: 0.92rem; line-height: 1.9; color: var(--text); white-space: pre-wrap; word-break: break-word; min-height: 200px; max-height: 60vh; overflow-y: auto; }
+.transcript-content::-webkit-scrollbar { width: 4px; }
+.transcript-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Timestamp styling */
+.transcript-content .timestamp { color: var(--accent2); font-size: 0.8rem; font-weight: 500; margin-right: 6px; }
+.transcript-content .speaker { color: var(--green); font-weight: 600; margin-right: 4px; }
+mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-radius: 2px; padding: 0 1px; }
+
+/* EMPTY / LOADING */
+.loading-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+.loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.65rem 1.4rem; border-radius: 100px; font-size: 0.85rem; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.5rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; }
+
+@media (max-width: 600px) {
+  .page { padding: 1rem; }
+  .toolbar { gap: 0.4rem; }
+  .tool-btn { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <div class="nav-right">
+    <a href="/dashboard.html" class="back-btn">← Dashboard</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="loadingState" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading transcript…</p>
+  </div>
+
+  <div id="mainContent" style="display:none">
+    <!-- Header -->
+    <div class="transcript-header">
+      <h1 class="transcript-title" id="transcriptTitle">—</h1>
+      <div class="meta-row">
+        <span class="meta-chip" id="metaDate">—</span>
+        <span class="meta-chip mode" id="metaMode">—</span>
+        <span class="meta-chip" id="metaLang">—</span>
+        <span class="meta-chip" id="metaWords">—</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Words</div>
+        <div class="stat-value" id="statWords">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Characters</div>
+        <div class="stat-value" id="statChars">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Lines</div>
+        <div class="stat-value" id="statLines">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Engine</div>
+        <div class="stat-value" id="statEngine" style="font-size:1rem">—</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="toolbar-label">Export:</span>
+      <button class="tool-btn primary" onclick="copyText()">📋 Copy</button>
+      <button class="tool-btn" onclick="downloadTxt()">⬇ TXT</button>
+      <button class="tool-btn" onclick="downloadSrt()">⬇ SRT</button>
+      <button class="tool-btn" onclick="downloadVtt()">⬇ VTT</button>
+      <div class="spacer"></div>
+      <button class="tool-btn danger" onclick="deleteTranscript()">🗑 Delete</button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search in transcript…" oninput="searchTranscript(this.value)"/>
+      <span class="match-count" id="matchCount"></span>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-box">
+      <div class="transcript-box-header">
+        <h3>Transcript</h3>
+        <span class="word-count" id="wordCountLabel"></span>
+      </div>
+      <div class="transcript-content" id="transcriptContent"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let sb, currentTranscript = null;
+
+async function init() {
+  // Auth check
+  const res = await fetch('/api/config');
+  const cfg = await res.json();
+  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = '/login.html'; return; }
+
+  // Load transcript from localStorage (set by dashboard "Open" button)
+  const stored = localStorage.getItem('currentTranscript');
+  if (!stored) { window.location.href = '/dashboard.html'; return; }
+
+  currentTranscript = JSON.parse(stored);
+  renderTranscript(currentTranscript);
+}
+
+function renderTranscript(t) {
+  const text = t.transcript || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const lines = text.trim() ? text.trim().split('\n').filter(l => l.trim()).length : 0;
+
+  // Header
+  document.getElementById('transcriptTitle').textContent = t.filename || 'Untitled';
+  document.getElementById('metaDate').textContent = formatDate(t.created_at);
+  document.getElementById('metaMode').textContent = getModeLabel(t.mode);
+  document.getElementById('metaLang').textContent = '🌐 ' + (t.language || 'en').toUpperCase();
+  document.getElementById('metaWords').textContent = words + ' words';
+
+  // Stats
+  document.getElementById('statWords').textContent = words.toLocaleString();
+  document.getElementById('statChars').textContent = text.length.toLocaleString();
+  document.getElementById('statLines').textContent = lines.toLocaleString();
+  document.getElementById('statEngine').textContent = getEngineName(t.mode);
+  document.getElementById('wordCountLabel').textContent = words + ' words';
+
+  // Content — format timestamps and speakers nicely
+  const formatted = formatTranscriptText(text);
+  document.getElementById('transcriptContent').innerHTML = formatted;
+
+  // Page title
+  document.title = (t.filename || 'Transcript') + ' — Transcribr';
+
+  // Show content
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+}
+
+function formatTranscriptText(text) {
+  if (!text) return '<span style="color:var(--muted)">No transcript content.</span>';
+
+  // Escape HTML first
+  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Style [00:00] timestamps
+  const withTimestamps = escaped.replace(
+    /\[(\d{2}:\d{2}(?::\d{2})?)\]/g,
+    '<span class="timestamp">[$1]</span>'
+  );
+
+  // Style Speaker labels
+  const withSpeakers = withTimestamps.replace(
+    /(Speaker [A-Z0-9]+:)/g,
+    '<span class="speaker">$1</span>'
+  );
+
+  return withSpeakers;
+}
+
+function searchTranscript(query) {
+  const text = currentTranscript?.transcript || '';
+  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const formatted = formatTranscriptText(text);
+
+  if (!query.trim()) {
+    document.getElementById('transcriptContent').innerHTML = formatted;
+    document.getElementById('matchCount').textContent = '';
+    return;
+  }
+
+  const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  const matches = (text.match(regex) || []).length;
+  const highlighted = formatted.replace(regex, m => `<mark class="highlight">${m}</mark>`);
+  document.getElementById('transcriptContent').innerHTML = highlighted;
+  document.getElementById('matchCount').textContent = matches > 0 ? `${matches} match${matches>1?'es':''}` : 'No matches';
+
+  // Scroll to first highlight
+  const first = document.querySelector('mark.highlight');
+  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function copyText() {
+  const text = currentTranscript?.transcript || '';
+  navigator.clipboard.writeText(text).then(() => showToast('✅ Copied to clipboard!'));
+}
+
+function downloadTxt() {
+  const text = currentTranscript?.transcript || '';
+  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
+  triggerDownload(text, name + '.txt', 'text/plain');
+  showToast('⬇ Downloaded TXT');
+}
+
+function downloadSrt() {
+  const text = currentTranscript?.transcript || '';
+  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
+  const srt = convertToSrt(text);
+  triggerDownload(srt, name + '.srt', 'text/plain');
+  showToast('⬇ Downloaded SRT');
+}
+
+function downloadVtt() {
+  const text = currentTranscript?.transcript || '';
+  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
+  const vtt = convertToVtt(text);
+  triggerDownload(vtt, name + '.vtt', 'text/vtt');
+  showToast('⬇ Downloaded VTT');
+}
+
+function convertToSrt(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  let srt = '', index = 1;
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^\[(\d{2}:\d{2})\]\s*(.*)/);
+    if (match) {
+      const start = match[1] + ':00,000';
+      const nextMatch = lines[i+1]?.match(/^\[(\d{2}:\d{2})\]/);
+      const end = nextMatch ? nextMatch[1] + ':00,000' : addSeconds(match[1], 5);
+      srt += `${index}\n${start} --> ${end}\n${match[2]}\n\n`;
+      index++;
+    }
+  }
+  return srt || text;
+}
+
+function convertToVtt() {
+  return 'WEBVTT\n\n' + convertToSrt(currentTranscript?.transcript || '').replace(/,/g, '.');
+}
+
+function addSeconds(time, secs) {
+  const [m, s] = time.split(':').map(Number);
+  const total = m * 60 + s + secs;
+  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}:00,000`;
+}
+
+function triggerDownload(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  a.click();
+}
+
+async function deleteTranscript() {
+  if (!confirm('Delete this transcript permanently?')) return;
+  await sb.from('transcriptions').delete().eq('id', currentTranscript.id);
+  localStorage.removeItem('currentTranscript');
+  showToast('🗑 Deleted');
+  setTimeout(() => window.location.href = '/dashboard.html', 1000);
+}
+
+function getModeLabel(mode) {
+  return mode === 'fast' ? '⚡ Fast' : mode === 'balanced' ? '🐬 Balanced' : '🐋 Most Accurate';
+}
+function getEngineName(mode) {
+  return mode === 'fast' ? 'Groq' : mode === 'balanced' ? 'Deepgram' : 'AssemblyAI';
+}
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>

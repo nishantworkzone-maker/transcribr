@@ -17,74 +17,108 @@
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-/* NAV */
 nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--text); text-decoration: none; }
 .logo span { color: var(--accent2); }
-.nav-right { display: flex; align-items: center; gap: 0.8rem; }
 .back-btn { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.2s; }
 .back-btn:hover { color: var(--text); border-color: var(--accent); }
 
-/* MAIN LAYOUT */
 .page { max-width: 900px; margin: 0 auto; padding: 2rem; width: 100%; flex: 1; }
 
-/* HEADER */
-.transcript-header { margin-bottom: 2rem; }
-.transcript-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-word; }
-.meta-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.meta-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; padding: 3px 10px; border-radius: 100px; }
+.transcript-header { margin-bottom: 1.5rem; }
+.transcript-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-word; }
+.meta-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.meta-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; padding: 3px 10px; border-radius: 100px; }
 .meta-chip.mode { color: var(--accent2); border-color: rgba(124,106,255,0.3); background: var(--glow); }
 
-/* EXPORT TOOLBAR */
-.toolbar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
-.toolbar-label { font-size: 0.78rem; color: var(--muted); margin-right: 0.3rem; }
-.tool-btn { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.4rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
+.stat-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; }
+
+/* ── PLAYER ── */
+.player-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem 1.4rem; margin-bottom: 1.4rem; }
+
+.upload-strip { display: flex; align-items: center; gap: 0.8rem; padding: 0.75rem 1rem; background: var(--surface2); border: 1px dashed var(--border2); border-radius: 10px; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s; }
+.upload-strip:hover { border-color: var(--accent); background: var(--glow); }
+.upload-strip input { display: none; }
+.upload-strip-text { font-size: 0.82rem; color: var(--muted); }
+.upload-strip-text strong { color: var(--accent2); }
+.upload-strip-btn { margin-left: auto; background: var(--accent); color: #fff; border: none; padding: 0.3rem 0.85rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; pointer-events: none; }
+
+.waveform-wrap { position: relative; height: 64px; background: var(--surface2); border-radius: 10px; overflow: hidden; margin-bottom: 0.9rem; cursor: pointer; }
+.waveform-canvas { width: 100%; height: 100%; display: block; }
+.waveform-progress { position: absolute; top: 0; left: 0; height: 100%; background: rgba(124,106,255,0.18); pointer-events: none; width: 0%; }
+.waveform-cursor { position: absolute; top: 0; width: 2px; background: var(--accent); height: 100%; pointer-events: none; left: 0%; box-shadow: 0 0 8px var(--accent); }
+
+.controls-row { display: flex; align-items: center; gap: 0.9rem; }
+.play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s, opacity 0.15s; }
+.play-btn:hover { transform: scale(1.08); }
+.seek-wrap { flex: 1; position: relative; height: 4px; background: var(--border2); border-radius: 2px; cursor: pointer; }
+.seek-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; pointer-events: none; }
+.seek-thumb { position: absolute; top: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%,-50%); left: 0%; pointer-events: none; box-shadow: 0 0 0 3px rgba(124,106,255,0.25); }
+.time-display { font-size: 0.78rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 82px; text-align: right; }
+.vol-wrap { display: flex; align-items: center; gap: 6px; }
+.vol-icon { font-size: 0.9rem; cursor: pointer; user-select: none; }
+.vol-slider { width: 60px; accent-color: var(--accent); cursor: pointer; }
+
+.follow-row { display: flex; align-items: center; gap: 8px; margin-top: 0.9rem; }
+.follow-label { font-size: 0.78rem; color: var(--muted); }
+.toggle-switch { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track { position: absolute; inset: 0; background: var(--border2); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+.toggle-track::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
+input:checked + .toggle-track { background: var(--accent); }
+input:checked + .toggle-track::after { transform: translateX(16px); }
+
+/* ── TOOLBAR ── */
+.toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; padding: 0.8rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.toolbar-label { font-size: 0.75rem; color: var(--muted); margin-right: 0.2rem; }
+.tool-btn { display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.35rem 0.8rem; border-radius: 7px; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
 .tool-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .tool-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.tool-btn.primary:hover { opacity: 0.88; }
+.tool-btn.primary:hover { opacity: 0.88; color: #fff; }
 .tool-btn.danger:hover { border-color: var(--red); color: var(--red); }
 .spacer { flex: 1; }
 
-/* SEARCH */
-.search-wrap { position: relative; margin-bottom: 1.2rem; }
-.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.65rem 1rem 0.65rem 2.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: border-color 0.2s; }
+.search-wrap { position: relative; margin-bottom: 1rem; }
+.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.6rem 1rem 0.6rem 2.4rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; transition: border-color 0.2s; }
 .search-input:focus { outline: none; border-color: var(--accent); }
-.search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
-.match-count { position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+.search-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.85rem; pointer-events: none; }
+.match-count { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); font-size: 0.73rem; color: var(--muted); }
 
-/* TRANSCRIPT BOX */
+/* ── TRANSCRIPT ── */
 .transcript-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.transcript-box-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); }
-.transcript-box-header h3 { font-size: 0.95rem; font-weight: 600; }
-.word-count { font-size: 0.78rem; color: var(--muted); }
-.transcript-content { padding: 1.5rem; font-size: 0.92rem; line-height: 1.9; color: var(--text); white-space: pre-wrap; word-break: break-word; min-height: 200px; max-height: 60vh; overflow-y: auto; }
+.transcript-box-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.3rem; border-bottom: 1px solid var(--border); }
+.transcript-box-header h3 { font-size: 0.92rem; font-weight: 600; }
+.word-count { font-size: 0.75rem; color: var(--muted); }
+
+.transcript-content { padding: 1rem; font-size: 0.9rem; line-height: 1.85; min-height: 200px; max-height: 55vh; overflow-y: auto; scroll-behavior: smooth; }
 .transcript-content::-webkit-scrollbar { width: 4px; }
 .transcript-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-/* Timestamp styling */
-.transcript-content .timestamp { color: var(--accent2); font-size: 0.8rem; font-weight: 500; margin-right: 6px; }
-.transcript-content .speaker { color: var(--green); font-weight: 600; margin-right: 4px; }
+.t-line { display: flex; gap: 0.7rem; padding: 0.45rem 0.6rem; border-radius: 8px; cursor: pointer; transition: background 0.15s; border-left: 2px solid transparent; margin-bottom: 1px; }
+.t-line:hover { background: rgba(255,255,255,0.03); }
+.t-line.active { background: rgba(124,106,255,0.12); border-left-color: var(--accent); }
+.t-line .ts { font-size: 0.71rem; color: var(--accent2); font-weight: 500; white-space: nowrap; padding-top: 3px; min-width: 36px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.t-line .body { flex: 1; }
+.t-line .spk { font-size: 0.71rem; font-weight: 600; color: var(--green); margin-bottom: 2px; }
+.t-line .txt { font-size: 0.88rem; color: var(--text); }
+.t-line.active .txt { color: #fff; }
+.plain-text { white-space: pre-wrap; word-break: break-word; padding: 0.5rem; font-size: 0.88rem; line-height: 1.9; color: var(--text); }
 mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-radius: 2px; padding: 0 1px; }
 
-/* EMPTY / LOADING */
 .loading-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-.loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+.loading-spinner { width: 30px; height: 30px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* TOAST */
-.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.65rem 1.4rem; border-radius: 100px; font-size: 0.85rem; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.6rem 1.3rem; border-radius: 100px; font-size: 0.83rem; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* STATS ROW */
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.5rem; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
-.stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-value { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; }
 
 @media (max-width: 600px) {
   .page { padding: 1rem; }
-  .toolbar { gap: 0.4rem; }
-  .tool-btn { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .vol-wrap { display: none; }
 }
 </style>
 </head>
@@ -92,9 +126,7 @@ mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-
 
 <nav>
   <a href="/" class="logo">Transcribr<span>.</span></a>
-  <div class="nav-right">
-    <a href="/dashboard.html" class="back-btn">← Dashboard</a>
-  </div>
+  <a href="/dashboard.html" class="back-btn">← Dashboard</a>
 </nav>
 
 <div class="page">
@@ -104,38 +136,61 @@ mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-
   </div>
 
   <div id="mainContent" style="display:none">
-    <!-- Header -->
+
     <div class="transcript-header">
       <h1 class="transcript-title" id="transcriptTitle">—</h1>
       <div class="meta-row">
         <span class="meta-chip" id="metaDate">—</span>
         <span class="meta-chip mode" id="metaMode">—</span>
         <span class="meta-chip" id="metaLang">—</span>
-        <span class="meta-chip" id="metaWords">—</span>
       </div>
     </div>
 
-    <!-- Stats -->
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Words</div>
-        <div class="stat-value" id="statWords">0</div>
+      <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value" id="statWords">0</div></div>
+      <div class="stat-card"><div class="stat-label">Characters</div><div class="stat-value" id="statChars">0</div></div>
+      <div class="stat-card"><div class="stat-label">Lines</div><div class="stat-value" id="statLines">0</div></div>
+      <div class="stat-card"><div class="stat-label">Engine</div><div class="stat-value" id="statEngine" style="font-size:0.9rem;padding-top:6px">—</div></div>
+    </div>
+
+    <!-- PLAYER -->
+    <div class="player-card">
+      <label class="upload-strip" id="uploadStrip">
+        <input type="file" id="audioFileInput" accept="audio/*,video/*" onchange="loadAudioFile(this)"/>
+        <span style="font-size:1.3rem">🎵</span>
+        <div class="upload-strip-text"><strong>Load audio file</strong> to enable playback &amp; real-time sync</div>
+        <span class="upload-strip-btn">Browse</span>
+      </label>
+
+      <div class="waveform-wrap" id="waveformWrap" onclick="seekFromWaveform(event)">
+        <canvas class="waveform-canvas" id="waveformCanvas"></canvas>
+        <div class="waveform-progress" id="waveformProgress"></div>
+        <div class="waveform-cursor" id="waveformCursor" style="display:none"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Characters</div>
-        <div class="stat-value" id="statChars">0</div>
+
+      <div class="controls-row">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause">▶</button>
+        <div class="seek-wrap" id="seekWrap" onclick="seekFromBar(event)">
+          <div class="seek-fill" id="seekFill"></div>
+          <div class="seek-thumb" id="seekThumb"></div>
+        </div>
+        <div class="time-display"><span id="currentTime">0:00</span> / <span id="duration">0:00</span></div>
+        <div class="vol-wrap">
+          <span class="vol-icon" onclick="toggleMute()" title="Mute">🔊</span>
+          <input type="range" class="vol-slider" id="volSlider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)"/>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Lines</div>
-        <div class="stat-value" id="statLines">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Engine</div>
-        <div class="stat-value" id="statEngine" style="font-size:1rem">—</div>
+
+      <div class="follow-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="followToggle" checked/>
+          <span class="toggle-track"></span>
+        </label>
+        <span class="follow-label">Follow Audio</span>
       </div>
     </div>
 
-    <!-- Toolbar -->
+    <!-- TOOLBAR -->
     <div class="toolbar">
       <span class="toolbar-label">Export:</span>
       <button class="tool-btn primary" onclick="copyText()">📋 Copy</button>
@@ -146,203 +201,245 @@ mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-
       <button class="tool-btn danger" onclick="deleteTranscript()">🗑 Delete</button>
     </div>
 
-    <!-- Search -->
+    <!-- SEARCH -->
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="text" class="search-input" id="searchInput" placeholder="Search in transcript…" oninput="searchTranscript(this.value)"/>
       <span class="match-count" id="matchCount"></span>
     </div>
 
-    <!-- Transcript -->
+    <!-- TRANSCRIPT -->
     <div class="transcript-box">
       <div class="transcript-box-header">
         <h3>Transcript</h3>
-        <span class="word-count" id="wordCountLabel"></span>
+        <span class="word-count" id="wordCountLabel">0 words</span>
       </div>
       <div class="transcript-content" id="transcriptContent"></div>
     </div>
+
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+<audio id="audioEl" style="display:none" preload="metadata"></audio>
 
 <script>
-let sb, currentTranscript = null;
+let sb, currentTranscript = null, parsedLines = [], activeLineIdx = -1, audioLoaded = false;
+const audio = document.getElementById('audioEl');
 
 async function init() {
-  // Auth check
   const res = await fetch('/api/config');
   const cfg = await res.json();
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = '/login.html'; return; }
-
-  // Load transcript from localStorage (set by dashboard "Open" button)
   const stored = localStorage.getItem('currentTranscript');
   if (!stored) { window.location.href = '/dashboard.html'; return; }
-
   currentTranscript = JSON.parse(stored);
-  renderTranscript(currentTranscript);
+  renderPage(currentTranscript);
+  drawWaveform();
 }
 
-function renderTranscript(t) {
+function renderPage(t) {
   const text = t.transcript || '';
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   const lines = text.trim() ? text.trim().split('\n').filter(l => l.trim()).length : 0;
-
-  // Header
   document.getElementById('transcriptTitle').textContent = t.filename || 'Untitled';
   document.getElementById('metaDate').textContent = formatDate(t.created_at);
   document.getElementById('metaMode').textContent = getModeLabel(t.mode);
   document.getElementById('metaLang').textContent = '🌐 ' + (t.language || 'en').toUpperCase();
-  document.getElementById('metaWords').textContent = words + ' words';
-
-  // Stats
   document.getElementById('statWords').textContent = words.toLocaleString();
   document.getElementById('statChars').textContent = text.length.toLocaleString();
   document.getElementById('statLines').textContent = lines.toLocaleString();
   document.getElementById('statEngine').textContent = getEngineName(t.mode);
   document.getElementById('wordCountLabel').textContent = words + ' words';
-
-  // Content — format timestamps and speakers nicely
-  const formatted = formatTranscriptText(text);
-  document.getElementById('transcriptContent').innerHTML = formatted;
-
-  // Page title
   document.title = (t.filename || 'Transcript') + ' — Transcribr';
-
-  // Show content
+  parsedLines = parseLines(text);
+  renderLines(parsedLines);
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('mainContent').style.display = 'block';
 }
 
-function formatTranscriptText(text) {
-  if (!text) return '<span style="color:var(--muted)">No transcript content.</span>';
-
-  // Escape HTML first
-  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  // Style [00:00] timestamps
-  const withTimestamps = escaped.replace(
-    /\[(\d{2}:\d{2}(?::\d{2})?)\]/g,
-    '<span class="timestamp">[$1]</span>'
-  );
-
-  // Style Speaker labels
-  const withSpeakers = withTimestamps.replace(
-    /(Speaker [A-Z0-9]+:)/g,
-    '<span class="speaker">$1</span>'
-  );
-
-  return withSpeakers;
+function parseLines(text) {
+  if (!text) return [];
+  return text.split('\n').filter(l => l.trim()).map(line => {
+    const tsMatch = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
+    const timeStr = tsMatch ? tsMatch[1] : null;
+    const timeSec = timeStr ? toSecs(timeStr) : null;
+    const rest = tsMatch ? line.slice(tsMatch[0].length) : line;
+    const spkMatch = rest.match(/^(Speaker [A-Z0-9]+):\s*/i);
+    const speaker = spkMatch ? spkMatch[1] : null;
+    const txt = spkMatch ? rest.slice(spkMatch[0].length) : rest;
+    return { timeStr, timeSec, speaker, text: txt };
+  });
 }
 
-function searchTranscript(query) {
-  const text = currentTranscript?.transcript || '';
-  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const formatted = formatTranscriptText(text);
+function toSecs(ts) {
+  const p = ts.split(':').map(Number);
+  return p.length === 3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
+}
 
-  if (!query.trim()) {
-    document.getElementById('transcriptContent').innerHTML = formatted;
-    document.getElementById('matchCount').textContent = '';
+function renderLines(lines, query) {
+  const container = document.getElementById('transcriptContent');
+  if (!lines.length) { container.innerHTML = '<span style="color:var(--muted)">No content.</span>'; return; }
+  if (lines.every(l => l.timeSec === null)) {
+    let html = lines.map(l => escHtml(l.text)).join('\n');
+    if (query) html = html.replace(new RegExp(escHtml(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark class="highlight">${m}</mark>`);
+    container.innerHTML = `<div class="plain-text">${html}</div>`;
     return;
   }
+  container.innerHTML = lines.map((l, i) => {
+    let txt = escHtml(l.text);
+    if (query) txt = txt.replace(new RegExp(escHtml(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark class="highlight">${m}</mark>`);
+    return `<div class="t-line" id="line-${i}" onclick="seekToLine(${i})">
+      <span class="ts">${l.timeStr ? fmtSecs(l.timeSec) : ''}</span>
+      <div class="body">${l.speaker ? `<div class="spk">${escHtml(l.speaker)}</div>` : ''}<div class="txt">${txt}</div></div>
+    </div>`;
+  }).join('');
+}
 
-  const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-  const matches = (text.match(regex) || []).length;
-  const highlighted = formatted.replace(regex, m => `<mark class="highlight">${m}</mark>`);
-  document.getElementById('transcriptContent').innerHTML = highlighted;
-  document.getElementById('matchCount').textContent = matches > 0 ? `${matches} match${matches>1?'es':''}` : 'No matches';
+// ── Audio ──
+function loadAudioFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  audio.src = URL.createObjectURL(file);
+  audioLoaded = true;
+  document.getElementById('uploadStrip').style.display = 'none';
+  document.getElementById('waveformCursor').style.display = 'block';
+  audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('duration').textContent = fmtSecs(audio.duration);
+  }, { once: true });
+  showToast('🎵 Audio loaded — press ▶ to play!');
+}
 
-  // Scroll to first highlight
+function togglePlay() {
+  if (!audioLoaded) { showToast('⬆ Load an audio file first'); return; }
+  audio.paused ? audio.play() : audio.pause();
+}
+
+audio.addEventListener('play', () => { document.getElementById('playBtn').textContent = '⏸'; });
+audio.addEventListener('pause', () => { document.getElementById('playBtn').textContent = '▶'; });
+audio.addEventListener('ended', () => { document.getElementById('playBtn').textContent = '▶'; });
+
+audio.addEventListener('timeupdate', () => {
+  const t = audio.currentTime, dur = audio.duration || 0;
+  const pct = dur ? (t / dur * 100) : 0;
+  document.getElementById('currentTime').textContent = fmtSecs(t);
+  document.getElementById('seekFill').style.width = pct + '%';
+  document.getElementById('seekThumb').style.left = pct + '%';
+  document.getElementById('waveformProgress').style.width = pct + '%';
+  document.getElementById('waveformCursor').style.left = pct + '%';
+  highlightLine(t);
+});
+
+function seekFromBar(e) {
+  if (!audioLoaded || !audio.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+}
+
+function seekFromWaveform(e) {
+  if (!audioLoaded || !audio.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+}
+
+function seekToLine(idx) {
+  const line = parsedLines[idx];
+  if (line.timeSec === null) return;
+  if (!audioLoaded) { showToast('⬆ Load the audio file first'); return; }
+  audio.currentTime = line.timeSec;
+  if (audio.paused) audio.play();
+}
+
+function setVolume(v) { audio.volume = v; }
+function toggleMute() {
+  audio.muted = !audio.muted;
+  document.querySelector('.vol-icon').textContent = audio.muted ? '🔇' : '🔊';
+}
+
+function highlightLine(t) {
+  let idx = -1;
+  for (let i = 0; i < parsedLines.length; i++) {
+    if (parsedLines[i].timeSec !== null && parsedLines[i].timeSec <= t) idx = i;
+  }
+  if (idx === activeLineIdx) return;
+  activeLineIdx = idx;
+  document.querySelectorAll('.t-line.active').forEach(el => el.classList.remove('active'));
+  if (idx >= 0) {
+    const el = document.getElementById('line-' + idx);
+    if (el) {
+      el.classList.add('active');
+      if (document.getElementById('followToggle').checked) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+}
+
+// ── Waveform ──
+function drawWaveform() {
+  const canvas = document.getElementById('waveformCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.offsetWidth || 860;
+  const H = 64;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const bars = Math.floor(W / 3);
+  for (let i = 0; i < bars; i++) {
+    const h = 6 + Math.abs(Math.sin(i*0.37)*Math.sin(i*0.11+1.2)*(H*0.8));
+    const x = i * 3, y = (H - h) / 2;
+    const grad = ctx.createLinearGradient(0, y, 0, y+h);
+    grad.addColorStop(0, 'rgba(124,106,255,0.85)');
+    grad.addColorStop(1, 'rgba(167,139,250,0.25)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, 2, h, 1);
+    ctx.fill();
+  }
+}
+
+// ── Search ──
+function searchTranscript(query) {
+  renderLines(parsedLines, query.trim() || null);
+  if (!query.trim()) { document.getElementById('matchCount').textContent = ''; return; }
+  const total = parsedLines.reduce((n, l) => n + (l.text.match(new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi')) || []).length, 0);
+  document.getElementById('matchCount').textContent = total > 0 ? `${total} match${total>1?'es':''}` : 'No matches';
   const first = document.querySelector('mark.highlight');
   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function copyText() {
-  const text = currentTranscript?.transcript || '';
-  navigator.clipboard.writeText(text).then(() => showToast('✅ Copied to clipboard!'));
-}
+// ── Export ──
+function copyText() { navigator.clipboard.writeText(currentTranscript?.transcript||'').then(()=>showToast('✅ Copied!')); }
+function downloadTxt() { dl(currentTranscript?.transcript||'', baseName()+'.txt','text/plain'); showToast('⬇ TXT downloaded'); }
+function downloadSrt() { dl(makeSrt(), baseName()+'.srt','text/plain'); showToast('⬇ SRT downloaded'); }
+function downloadVtt() { dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'), baseName()+'.vtt','text/vtt'); showToast('⬇ VTT downloaded'); }
 
-function downloadTxt() {
-  const text = currentTranscript?.transcript || '';
-  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
-  triggerDownload(text, name + '.txt', 'text/plain');
-  showToast('⬇ Downloaded TXT');
+function makeSrt() {
+  const tl = parsedLines.filter(l=>l.timeSec!==null);
+  return tl.map((l,i)=>`${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec??l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`).join('\n');
 }
-
-function downloadSrt() {
-  const text = currentTranscript?.transcript || '';
-  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
-  const srt = convertToSrt(text);
-  triggerDownload(srt, name + '.srt', 'text/plain');
-  showToast('⬇ Downloaded SRT');
-}
-
-function downloadVtt() {
-  const text = currentTranscript?.transcript || '';
-  const name = (currentTranscript?.filename || 'transcript').replace(/\.[^.]+$/, '');
-  const vtt = convertToVtt(text);
-  triggerDownload(vtt, name + '.vtt', 'text/vtt');
-  showToast('⬇ Downloaded VTT');
-}
-
-function convertToSrt(text) {
-  const lines = text.split('\n').filter(l => l.trim());
-  let srt = '', index = 1;
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(/^\[(\d{2}:\d{2})\]\s*(.*)/);
-    if (match) {
-      const start = match[1] + ':00,000';
-      const nextMatch = lines[i+1]?.match(/^\[(\d{2}:\d{2})\]/);
-      const end = nextMatch ? nextMatch[1] + ':00,000' : addSeconds(match[1], 5);
-      srt += `${index}\n${start} --> ${end}\n${match[2]}\n\n`;
-      index++;
-    }
-  }
-  return srt || text;
-}
-
-function convertToVtt() {
-  return 'WEBVTT\n\n' + convertToSrt(currentTranscript?.transcript || '').replace(/,/g, '.');
-}
-
-function addSeconds(time, secs) {
-  const [m, s] = time.split(':').map(Number);
-  const total = m * 60 + s + secs;
-  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}:00,000`;
-}
-
-function triggerDownload(content, filename, type) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], { type }));
-  a.download = filename;
-  a.click();
-}
+function s2srt(s){s=s||0;const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.floor(s%60),ms=Math.round((s%1)*1000);return`${pad(h)}:${pad(m)}:${pad(sec)},${String(ms).padStart(3,'0')}`;}
+function baseName(){return(currentTranscript?.filename||'transcript').replace(/\.[^.]+$/,'');}
+function dl(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
   await sb.from('transcriptions').delete().eq('id', currentTranscript.id);
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
-  setTimeout(() => window.location.href = '/dashboard.html', 1000);
+  setTimeout(()=>window.location.href='/dashboard.html',1000);
 }
 
-function getModeLabel(mode) {
-  return mode === 'fast' ? '⚡ Fast' : mode === 'balanced' ? '🐬 Balanced' : '🐋 Most Accurate';
-}
-function getEngineName(mode) {
-  return mode === 'fast' ? 'Groq' : mode === 'balanced' ? 'Deepgram' : 'AssemblyAI';
-}
-function formatDate(d) {
-  return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function fmtSecs(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function pad(n){return String(n).padStart(2,'0');}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function getModeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
+function getEngineName(m){return m==='fast'?'Groq':m==='balanced'?'Deepgram':'AssemblyAI';}
+function formatDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 init();
 </script>

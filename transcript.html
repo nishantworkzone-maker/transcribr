@@ -9,437 +9,632 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
-  --green: #34d399; --red: #f87171; --glow: rgba(124,106,255,0.18);
+  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27; --surface3: #22222f;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --text: #f0f0f8; --muted: #777888; --accent: #7c6aff; --accent2: #a78bfa;
+  --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+  --glow: rgba(124,106,255,0.15);
 }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
-.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--text); text-decoration: none; }
+/* ── NAV ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 2rem; border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.97); backdrop-filter: blur(14px);
+  position: sticky; top: 0; z-index: 200;
+}
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); text-decoration: none; }
 .logo span { color: var(--accent2); }
-.back-btn { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.2s; }
-.back-btn:hover { color: var(--text); border-color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 0.6rem; }
+.btn { display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; font-size: 0.8rem; padding: 0.38rem 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted); white-space: nowrap; }
+.btn:hover { color: var(--text); border-color: var(--accent); }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.accent:hover { opacity: 0.88; }
+.btn.danger:hover { border-color: var(--red); color: var(--red); }
+.back-link { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
+.back-link:hover { color: var(--text); }
 
-.page { max-width: 900px; margin: 0 auto; padding: 2rem; width: 100%; flex: 1; }
+/* ── FILE INFO BAR ── */
+.file-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+}
+.file-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
+.file-meta { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); font-size: 0.73rem; padding: 3px 9px; border-radius: 100px; }
+.chip.purple { color: var(--accent2); border-color: rgba(124,106,255,0.3); background: var(--glow); }
+.chip.green { color: var(--green); border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.08); }
+.file-actions { margin-left: auto; display: flex; gap: 0.5rem; }
 
-.transcript-header { margin-bottom: 1.5rem; }
-.transcript-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-word; }
-.meta-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.meta-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; padding: 3px 10px; border-radius: 100px; }
-.meta-chip.mode { color: var(--accent2); border-color: rgba(124,106,255,0.3); background: var(--glow); }
+/* ── MAIN BODY ── */
+.body-wrap {
+  flex: 1; display: flex; overflow: hidden;
+  /* leave room for sticky audio bar at bottom */
+  padding-bottom: 90px;
+}
 
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.4rem; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
-.stat-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; }
+/* ── LEFT: TRANSCRIPT ── */
+.transcript-panel {
+  flex: 1; display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); min-width: 0;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1.4rem; border-bottom: 1px solid var(--border);
+  background: var(--surface); position: sticky; top: 57px; z-index: 10;
+}
+.panel-title { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.word-badge { font-size: 0.72rem; color: var(--muted); }
 
-/* ── PLAYER ── */
-.player-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem 1.4rem; margin-bottom: 1.4rem; }
-
-.upload-strip { display: flex; align-items: center; gap: 0.8rem; padding: 0.75rem 1rem; background: var(--surface2); border: 1px dashed var(--border2); border-radius: 10px; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s; }
-.upload-strip:hover { border-color: var(--accent); background: var(--glow); }
-.upload-strip input { display: none; }
-.upload-strip-text { font-size: 0.82rem; color: var(--muted); }
-.upload-strip-text strong { color: var(--accent2); }
-.upload-strip-btn { margin-left: auto; background: var(--accent); color: #fff; border: none; padding: 0.3rem 0.85rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; pointer-events: none; }
-
-.waveform-wrap { position: relative; height: 64px; background: var(--surface2); border-radius: 10px; overflow: hidden; margin-bottom: 0.9rem; cursor: pointer; }
-.waveform-canvas { width: 100%; height: 100%; display: block; }
-.waveform-progress { position: absolute; top: 0; left: 0; height: 100%; background: rgba(124,106,255,0.18); pointer-events: none; width: 0%; }
-.waveform-cursor { position: absolute; top: 0; width: 2px; background: var(--accent); height: 100%; pointer-events: none; left: 0%; box-shadow: 0 0 8px var(--accent); }
-
-.controls-row { display: flex; align-items: center; gap: 0.9rem; }
-.play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s, opacity 0.15s; }
-.play-btn:hover { transform: scale(1.08); }
-.seek-wrap { flex: 1; position: relative; height: 4px; background: var(--border2); border-radius: 2px; cursor: pointer; }
-.seek-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; pointer-events: none; }
-.seek-thumb { position: absolute; top: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%,-50%); left: 0%; pointer-events: none; box-shadow: 0 0 0 3px rgba(124,106,255,0.25); }
-.time-display { font-size: 0.78rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 82px; text-align: right; }
-.vol-wrap { display: flex; align-items: center; gap: 6px; }
-.vol-icon { font-size: 0.9rem; cursor: pointer; user-select: none; }
-.vol-slider { width: 60px; accent-color: var(--accent); cursor: pointer; }
-
-.follow-row { display: flex; align-items: center; gap: 8px; margin-top: 0.9rem; }
-.follow-label { font-size: 0.78rem; color: var(--muted); }
-.toggle-switch { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-.toggle-track { position: absolute; inset: 0; background: var(--border2); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
-.toggle-track::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
-input:checked + .toggle-track { background: var(--accent); }
-input:checked + .toggle-track::after { transform: translateX(16px); }
-
-/* ── TOOLBAR ── */
-.toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; padding: 0.8rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
-.toolbar-label { font-size: 0.75rem; color: var(--muted); margin-right: 0.2rem; }
-.tool-btn { display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.35rem 0.8rem; border-radius: 7px; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
-.tool-btn:hover { border-color: var(--accent); color: var(--accent2); }
-.tool-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.tool-btn.primary:hover { opacity: 0.88; color: #fff; }
-.tool-btn.danger:hover { border-color: var(--red); color: var(--red); }
-.spacer { flex: 1; }
-
-.search-wrap { position: relative; margin-bottom: 1rem; }
-.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.6rem 1rem 0.6rem 2.4rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; transition: border-color 0.2s; }
+.search-bar { padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 103px; z-index: 9; }
+.search-inner { position: relative; }
+.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.5rem 2.5rem 0.5rem 2rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; transition: border-color 0.2s; }
 .search-input:focus { outline: none; border-color: var(--accent); }
-.search-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.85rem; pointer-events: none; }
-.match-count { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); font-size: 0.73rem; color: var(--muted); }
+.si { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--muted); pointer-events: none; }
+.match-ct { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 0.7rem; color: var(--muted); }
 
-/* ── TRANSCRIPT ── */
-.transcript-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.transcript-box-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.3rem; border-bottom: 1px solid var(--border); }
-.transcript-box-header h3 { font-size: 0.92rem; font-weight: 600; }
-.word-count { font-size: 0.75rem; color: var(--muted); }
+.transcript-scroll { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; }
+.transcript-scroll::-webkit-scrollbar { width: 3px; }
+.transcript-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-.transcript-content { padding: 1rem; font-size: 0.9rem; line-height: 1.85; min-height: 200px; max-height: 55vh; overflow-y: auto; scroll-behavior: smooth; }
-.transcript-content::-webkit-scrollbar { width: 4px; }
-.transcript-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-.t-line { display: flex; gap: 0.7rem; padding: 0.45rem 0.6rem; border-radius: 8px; cursor: pointer; transition: background 0.15s; border-left: 2px solid transparent; margin-bottom: 1px; }
+/* Lines */
+.t-line {
+  display: flex; gap: 0.75rem; padding: 0.5rem 0.6rem;
+  border-radius: 8px; cursor: pointer; transition: background 0.15s;
+  border-left: 2px solid transparent; margin-bottom: 1px;
+}
 .t-line:hover { background: rgba(255,255,255,0.03); }
-.t-line.active { background: rgba(124,106,255,0.12); border-left-color: var(--accent); }
-.t-line .ts { font-size: 0.71rem; color: var(--accent2); font-weight: 500; white-space: nowrap; padding-top: 3px; min-width: 36px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
-.t-line .body { flex: 1; }
-.t-line .spk { font-size: 0.71rem; font-weight: 600; color: var(--green); margin-bottom: 2px; }
-.t-line .txt { font-size: 0.88rem; color: var(--text); }
-.t-line.active .txt { color: #fff; }
-.plain-text { white-space: pre-wrap; word-break: break-word; padding: 0.5rem; font-size: 0.88rem; line-height: 1.9; color: var(--text); }
-mark.highlight { background: rgba(124,106,255,0.35); color: var(--text); border-radius: 2px; padding: 0 1px; }
+.t-line.active { background: rgba(124,106,255,0.11); border-left-color: var(--accent); }
+.t-ts { font-size: 0.68rem; color: var(--accent2); font-weight: 600; white-space: nowrap; padding-top: 3px; min-width: 34px; font-variant-numeric: tabular-nums; flex-shrink: 0; opacity: 0.75; }
+.t-body { flex: 1; }
+.t-spk { font-size: 0.69rem; font-weight: 700; margin-bottom: 2px; }
+.t-txt { font-size: 0.88rem; line-height: 1.75; color: var(--text); }
+.t-line.active .t-txt { color: #fff; }
+.t-line.active .t-ts { opacity: 1; }
 
-.loading-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-.loading-spinner { width: 30px; height: 30px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+.plain-text { white-space: pre-wrap; word-break: break-word; font-size: 0.88rem; line-height: 1.9; color: var(--text); padding: 0.3rem 0.5rem; }
+mark.hl { background: rgba(124,106,255,0.32); color: var(--text); border-radius: 2px; padding: 0 1px; }
+
+/* Speaker colors */
+.spk-0 { color: var(--green); }
+.spk-1 { color: var(--accent2); }
+.spk-2 { color: var(--yellow); }
+.spk-3 { color: #f472b6; }
+.spk-4 { color: #38bdf8; }
+
+/* ── RIGHT: INSIGHTS ── */
+.insights-panel {
+  width: 280px; flex-shrink: 0; overflow-y: auto;
+  background: var(--surface); padding: 1.2rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+.insights-panel::-webkit-scrollbar { width: 3px; }
+.insights-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.ins-section { }
+.ins-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 0.6rem; }
+
+/* Stat grid */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.75rem; }
+.stat-box-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-box-val { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; }
+.stat-box-val.small { font-size: 0.88rem; font-family: 'DM Sans', sans-serif; font-weight: 500; padding-top: 2px; color: var(--text); }
+
+/* Speaker breakdown */
+.spk-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.spk-row { }
+.spk-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.spk-name { font-size: 0.78rem; font-weight: 600; }
+.spk-pct { font-size: 0.72rem; color: var(--muted); }
+.spk-bar-wrap { height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+.spk-bar-fill { height: 100%; border-radius: 2px; }
+
+/* Engine info */
+.engine-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; display: flex; align-items: center; gap: 0.7rem; }
+.engine-icon { font-size: 1.5rem; }
+.engine-name { font-size: 0.85rem; font-weight: 600; }
+.engine-sub { font-size: 0.72rem; color: var(--muted); }
+
+/* Export buttons in sidebar */
+.export-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.exp-btn { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.8rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; width: 100%; text-align: left; }
+.exp-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.exp-btn.cp { background: var(--accent); border-color: var(--accent); color: #fff; }
+.exp-btn.cp:hover { opacity: 0.88; }
+.exp-btn .exp-icon { width: 22px; text-align: center; font-size: 0.9rem; }
+
+/* ── STICKY AUDIO BAR ── */
+.audio-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+  background: rgba(13,13,20,0.97); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border2);
+  padding: 0.65rem 1.8rem; display: flex; align-items: center; gap: 1rem;
+  min-height: 72px;
+}
+
+.audio-upload-hint { display: flex; align-items: center; gap: 0.7rem; }
+.audio-file-label { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.38rem 0.9rem; border-radius: 8px; font-size: 0.78rem; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+.audio-file-label:hover { border-color: var(--accent); color: var(--text); }
+.audio-file-label input { display: none; }
+.audio-hint-txt { font-size: 0.75rem; color: var(--muted); }
+
+.play-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s, opacity 0.15s; }
+.play-btn:hover { transform: scale(1.08); }
+.play-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+.seek-area { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.seek-track { position: relative; height: 4px; background: var(--border2); border-radius: 2px; cursor: pointer; }
+.seek-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; pointer-events: none; }
+.seek-thumb { position: absolute; top: 50%; width: 11px; height: 11px; background: #fff; border-radius: 50%; border: 2px solid var(--accent); transform: translate(-50%,-50%); left: 0%; pointer-events: none; box-shadow: 0 0 0 3px rgba(124,106,255,0.2); }
+.seek-times { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.audio-right { display: flex; align-items: center; gap: 0.8rem; flex-shrink: 0; }
+.speed-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.28rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+.speed-btn:hover, .speed-btn.active { border-color: var(--accent); color: var(--accent2); }
+.follow-toggle { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.toggle-pill { position: relative; width: 32px; height: 18px; flex-shrink: 0; }
+.toggle-pill input { opacity: 0; width: 0; height: 0; position: absolute; }
+.pill-track { position: absolute; inset: 0; background: var(--border2); border-radius: 18px; transition: background 0.2s; cursor: pointer; }
+.pill-track::after { content: ''; position: absolute; width: 12px; height: 12px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
+input:checked + .pill-track { background: var(--accent); }
+input:checked + .pill-track::after { transform: translateX(14px); }
+.vol-grp { display: flex; align-items: center; gap: 5px; }
+.vol-icon { font-size: 0.85rem; cursor: pointer; user-select: none; }
+.vol-range { width: 55px; accent-color: var(--accent); cursor: pointer; }
+
+/* LOADING */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 4rem; color: var(--muted); gap: 1rem; }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.6rem 1.3rem; border-radius: 100px; font-size: 0.83rem; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+/* TOAST */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.55rem 1.2rem; border-radius: 100px; font-size: 0.82rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 600px) {
-  .page { padding: 1rem; }
-  .stats-row { grid-template-columns: repeat(2,1fr); }
-  .vol-wrap { display: none; }
+@media (max-width: 720px) {
+  .insights-panel { display: none; }
+  .file-name { max-width: 200px; }
+  .audio-right { display: none; }
 }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <a href="/" class="logo">Transcribr<span>.</span></a>
-  <a href="/dashboard.html" class="back-btn">← Dashboard</a>
+  <div class="nav-actions">
+    <a href="/dashboard.html" class="back-link">← Dashboard</a>
+    <button class="btn danger" onclick="deleteTranscript()">🗑 Delete</button>
+  </div>
 </nav>
 
-<div class="page">
-  <div id="loadingState" class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>Loading transcript…</p>
+<!-- FILE INFO BAR -->
+<div class="file-bar" id="fileBar" style="display:none">
+  <div>
+    <div class="file-name" id="fileName">—</div>
+    <div class="file-meta" style="margin-top:5px">
+      <span class="chip" id="chipDate">—</span>
+      <span class="chip purple" id="chipMode">—</span>
+      <span class="chip" id="chipLang">—</span>
+      <span class="chip green" id="chipWords">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-state" id="loadingState">
+  <div class="spinner"></div>
+  <span>Loading transcript…</span>
+</div>
+
+<!-- MAIN BODY -->
+<div class="body-wrap" id="bodyWrap" style="display:none">
+
+  <!-- LEFT: TRANSCRIPT -->
+  <div class="transcript-panel">
+    <div class="panel-header">
+      <span class="panel-title">Transcript</span>
+      <span class="word-badge" id="wordBadge">0 words</span>
+    </div>
+    <div class="search-bar">
+      <div class="search-inner">
+        <span class="si">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="Search in transcript…" oninput="doSearch(this.value)"/>
+        <span class="match-ct" id="matchCt"></span>
+      </div>
+    </div>
+    <div class="transcript-scroll" id="transcriptScroll">
+      <div id="transcriptLines"></div>
+    </div>
   </div>
 
-  <div id="mainContent" style="display:none">
+  <!-- RIGHT: INSIGHTS -->
+  <div class="insights-panel">
 
-    <div class="transcript-header">
-      <h1 class="transcript-title" id="transcriptTitle">—</h1>
-      <div class="meta-row">
-        <span class="meta-chip" id="metaDate">—</span>
-        <span class="meta-chip mode" id="metaMode">—</span>
-        <span class="meta-chip" id="metaLang">—</span>
+    <!-- Stats -->
+    <div class="ins-section">
+      <div class="ins-label">Overview</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-box-label">Words</div><div class="stat-box-val" id="insWords">0</div></div>
+        <div class="stat-box"><div class="stat-box-label">Lines</div><div class="stat-box-val" id="insLines">0</div></div>
+        <div class="stat-box"><div class="stat-box-label">Characters</div><div class="stat-box-val" id="insChars">0</div></div>
+        <div class="stat-box"><div class="stat-box-label">Speakers</div><div class="stat-box-val" id="insSpeakers">—</div></div>
       </div>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value" id="statWords">0</div></div>
-      <div class="stat-card"><div class="stat-label">Characters</div><div class="stat-value" id="statChars">0</div></div>
-      <div class="stat-card"><div class="stat-label">Lines</div><div class="stat-value" id="statLines">0</div></div>
-      <div class="stat-card"><div class="stat-label">Engine</div><div class="stat-value" id="statEngine" style="font-size:0.9rem;padding-top:6px">—</div></div>
+    <!-- Speaker breakdown -->
+    <div class="ins-section" id="spkSection" style="display:none">
+      <div class="ins-label">Speakers</div>
+      <div class="spk-list" id="spkList"></div>
     </div>
 
-    <!-- PLAYER -->
-    <div class="player-card">
-      <label class="upload-strip" id="uploadStrip">
-        <input type="file" id="audioFileInput" accept="audio/*,video/*" onchange="loadAudioFile(this)"/>
-        <span style="font-size:1.3rem">🎵</span>
-        <div class="upload-strip-text"><strong>Load audio file</strong> to enable playback &amp; real-time sync</div>
-        <span class="upload-strip-btn">Browse</span>
-      </label>
-
-      <div class="waveform-wrap" id="waveformWrap" onclick="seekFromWaveform(event)">
-        <canvas class="waveform-canvas" id="waveformCanvas"></canvas>
-        <div class="waveform-progress" id="waveformProgress"></div>
-        <div class="waveform-cursor" id="waveformCursor" style="display:none"></div>
-      </div>
-
-      <div class="controls-row">
-        <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause">▶</button>
-        <div class="seek-wrap" id="seekWrap" onclick="seekFromBar(event)">
-          <div class="seek-fill" id="seekFill"></div>
-          <div class="seek-thumb" id="seekThumb"></div>
-        </div>
-        <div class="time-display"><span id="currentTime">0:00</span> / <span id="duration">0:00</span></div>
-        <div class="vol-wrap">
-          <span class="vol-icon" onclick="toggleMute()" title="Mute">🔊</span>
-          <input type="range" class="vol-slider" id="volSlider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)"/>
-        </div>
-      </div>
-
-      <div class="follow-row">
-        <label class="toggle-switch">
-          <input type="checkbox" id="followToggle" checked/>
-          <span class="toggle-track"></span>
-        </label>
-        <span class="follow-label">Follow Audio</span>
+    <!-- Engine -->
+    <div class="ins-section">
+      <div class="ins-label">Engine</div>
+      <div class="engine-box">
+        <div class="engine-icon" id="engineIcon">⚡</div>
+        <div><div class="engine-name" id="engineName">—</div><div class="engine-sub" id="engineSub">—</div></div>
       </div>
     </div>
 
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-      <span class="toolbar-label">Export:</span>
-      <button class="tool-btn primary" onclick="copyText()">📋 Copy</button>
-      <button class="tool-btn" onclick="downloadTxt()">⬇ TXT</button>
-      <button class="tool-btn" onclick="downloadSrt()">⬇ SRT</button>
-      <button class="tool-btn" onclick="downloadVtt()">⬇ VTT</button>
-      <div class="spacer"></div>
-      <button class="tool-btn danger" onclick="deleteTranscript()">🗑 Delete</button>
-    </div>
-
-    <!-- SEARCH -->
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" class="search-input" id="searchInput" placeholder="Search in transcript…" oninput="searchTranscript(this.value)"/>
-      <span class="match-count" id="matchCount"></span>
-    </div>
-
-    <!-- TRANSCRIPT -->
-    <div class="transcript-box">
-      <div class="transcript-box-header">
-        <h3>Transcript</h3>
-        <span class="word-count" id="wordCountLabel">0 words</span>
+    <!-- Date -->
+    <div class="ins-section">
+      <div class="ins-label">Created</div>
+      <div class="stat-box" style="grid-column:span 2">
+        <div class="stat-box-val small" id="insDate">—</div>
       </div>
-      <div class="transcript-content" id="transcriptContent"></div>
+    </div>
+
+    <!-- Language -->
+    <div class="ins-section">
+      <div class="ins-label">Language</div>
+      <div class="stat-box">
+        <div class="stat-box-val small" id="insLang">—</div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="ins-section">
+      <div class="ins-label">Export</div>
+      <div class="export-list">
+        <button class="exp-btn cp" onclick="copyText()"><span class="exp-icon">📋</span> Copy to clipboard</button>
+        <button class="exp-btn" onclick="downloadTxt()"><span class="exp-icon">📄</span> Download TXT</button>
+        <button class="exp-btn" onclick="downloadSrt()"><span class="exp-icon">🎬</span> Download SRT</button>
+        <button class="exp-btn" onclick="downloadVtt()"><span class="exp-icon">💬</span> Download VTT</button>
+      </div>
     </div>
 
   </div>
 </div>
 
+<!-- STICKY AUDIO BAR (bottom) -->
+<div class="audio-bar" id="audioBar">
+
+  <!-- Left: upload or playing file name -->
+  <div class="audio-upload-hint" id="uploadHint">
+    <label class="audio-file-label">
+      <input type="file" accept="audio/*,video/*" onchange="loadAudio(this)"/>
+      🎵 Load audio
+    </label>
+    <span class="audio-hint-txt">Optional — enables playback sync</span>
+  </div>
+  <div id="nowPlaying" style="display:none; font-size:0.75rem; color:var(--muted); white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis;"></div>
+
+  <!-- Play/Pause -->
+  <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+
+  <!-- Seek -->
+  <div class="seek-area">
+    <div class="seek-track" id="seekTrack" onclick="seekClick(event)">
+      <div class="seek-fill" id="seekFill"></div>
+      <div class="seek-thumb" id="seekThumb"></div>
+    </div>
+    <div class="seek-times">
+      <span id="curTime">0:00</span>
+      <span id="durTime">0:00</span>
+    </div>
+  </div>
+
+  <!-- Right controls -->
+  <div class="audio-right">
+    <!-- Speed -->
+    <div style="display:flex;gap:3px;">
+      <button class="speed-btn" onclick="setSpeed(0.75)">0.75×</button>
+      <button class="speed-btn active" id="sp1" onclick="setSpeed(1)">1×</button>
+      <button class="speed-btn" onclick="setSpeed(1.25)">1.25×</button>
+      <button class="speed-btn" onclick="setSpeed(1.5)">1.5×</button>
+    </div>
+    <!-- Follow -->
+    <label class="follow-toggle">
+      <span class="toggle-pill">
+        <input type="checkbox" id="followTgl" checked/>
+        <span class="pill-track"></span>
+      </span>
+      Follow
+    </label>
+    <!-- Volume -->
+    <div class="vol-grp">
+      <span class="vol-icon" onclick="toggleMute()">🔊</span>
+      <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
+    </div>
+  </div>
+
+</div>
+
 <div class="toast" id="toast"></div>
-<audio id="audioEl" style="display:none" preload="metadata"></audio>
+<audio id="audioEl" preload="metadata"></audio>
 
 <script>
-let sb, currentTranscript = null, parsedLines = [], activeLineIdx = -1, audioLoaded = false;
+// ─── State ────────────────────────────────────────────────────────
+let sb, T = null, lines = [], activeIdx = -1;
 const audio = document.getElementById('audioEl');
+const SPEAKER_COLORS = ['spk-0','spk-1','spk-2','spk-3','spk-4'];
+const spkColorMap = {};
 
+// ─── Boot ─────────────────────────────────────────────────────────
 async function init() {
-  const res = await fetch('/api/config');
-  const cfg = await res.json();
-  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = '/login.html'; return; }
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = '/login.html'; return; }
+  } catch(e) { /* offline preview — continue */ }
+
   const stored = localStorage.getItem('currentTranscript');
-  if (!stored) { window.location.href = '/dashboard.html'; return; }
-  currentTranscript = JSON.parse(stored);
-  renderPage(currentTranscript);
-  drawWaveform();
+  if (!stored) { location.href = '/dashboard.html'; return; }
+
+  T = JSON.parse(stored);
+  render(T);
 }
 
-function renderPage(t) {
+// ─── Render ───────────────────────────────────────────────────────
+function render(t) {
   const text = t.transcript || '';
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const lines = text.trim() ? text.trim().split('\n').filter(l => l.trim()).length : 0;
-  document.getElementById('transcriptTitle').textContent = t.filename || 'Untitled';
-  document.getElementById('metaDate').textContent = formatDate(t.created_at);
-  document.getElementById('metaMode').textContent = getModeLabel(t.mode);
-  document.getElementById('metaLang').textContent = '🌐 ' + (t.language || 'en').toUpperCase();
-  document.getElementById('statWords').textContent = words.toLocaleString();
-  document.getElementById('statChars').textContent = text.length.toLocaleString();
-  document.getElementById('statLines').textContent = lines.toLocaleString();
-  document.getElementById('statEngine').textContent = getEngineName(t.mode);
-  document.getElementById('wordCountLabel').textContent = words + ' words';
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+  // File bar
+  document.getElementById('fileName').textContent = t.filename || 'Untitled';
+  document.getElementById('chipDate').textContent = fmtDate(t.created_at);
+  document.getElementById('chipMode').textContent = modeLabel(t.mode);
+  document.getElementById('chipLang').textContent = '🌐 ' + (t.language || 'en').toUpperCase();
+  document.getElementById('chipWords').textContent = wordCount + ' words';
+  document.getElementById('fileBar').style.display = 'flex';
+
+  // Insights
+  document.getElementById('insWords').textContent = wordCount.toLocaleString();
+  document.getElementById('insChars').textContent = text.length.toLocaleString();
+  document.getElementById('insDate').textContent = fmtDate(t.created_at);
+  document.getElementById('insLang').textContent = (t.language || 'en').toUpperCase();
+
+  const ei = t.mode === 'fast' ? '⚡' : t.mode === 'balanced' ? '🐬' : '🐋';
+  const en = t.mode === 'fast' ? 'Groq' : t.mode === 'balanced' ? 'Deepgram' : 'AssemblyAI';
+  const es = t.mode === 'fast' ? 'Fastest — Whisper' : t.mode === 'balanced' ? 'Best for calls' : 'Highest accuracy';
+  document.getElementById('engineIcon').textContent = ei;
+  document.getElementById('engineName').textContent = en;
+  document.getElementById('engineSub').textContent = es;
+
+  // Parse & render lines
+  lines = parseLines(text);
+  renderLines(lines, null);
+
+  // Speaker breakdown
+  buildSpeakerInsights(lines, wordCount);
+
+  // Word badge / line count
+  document.getElementById('wordBadge').textContent = wordCount + ' words';
+  document.getElementById('insLines').textContent = lines.length.toLocaleString();
+
+  // Speaker count
+  const spks = new Set(lines.map(l => l.speaker).filter(Boolean));
+  document.getElementById('insSpeakers').textContent = spks.size || '—';
+
   document.title = (t.filename || 'Transcript') + ' — Transcribr';
-  parsedLines = parseLines(text);
-  renderLines(parsedLines);
   document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('mainContent').style.display = 'block';
+  document.getElementById('bodyWrap').style.display = 'flex';
 }
 
+// ─── Parse transcript text into line objects ──────────────────────
 function parseLines(text) {
-  if (!text) return [];
+  if (!text.trim()) return [];
   return text.split('\n').filter(l => l.trim()).map(line => {
-    const tsMatch = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
-    const timeStr = tsMatch ? tsMatch[1] : null;
-    const timeSec = timeStr ? toSecs(timeStr) : null;
-    const rest = tsMatch ? line.slice(tsMatch[0].length) : line;
-    const spkMatch = rest.match(/^(Speaker [A-Z0-9]+):\s*/i);
-    const speaker = spkMatch ? spkMatch[1] : null;
-    const txt = spkMatch ? rest.slice(spkMatch[0].length) : rest;
+    const tsM = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
+    const timeStr = tsM ? tsM[1] : null;
+    const timeSec = timeStr ? ts2s(timeStr) : null;
+    const rest = tsM ? line.slice(tsM[0].length) : line;
+    const spkM = rest.match(/^(Speaker [A-Z0-9]+):\s*/i);
+    const speaker = spkM ? spkM[1] : null;
+    const txt = spkM ? rest.slice(spkM[0].length) : rest;
     return { timeStr, timeSec, speaker, text: txt };
   });
 }
 
-function toSecs(ts) {
+function ts2s(ts) {
   const p = ts.split(':').map(Number);
   return p.length === 3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
 }
 
-function renderLines(lines, query) {
-  const container = document.getElementById('transcriptContent');
-  if (!lines.length) { container.innerHTML = '<span style="color:var(--muted)">No content.</span>'; return; }
-  if (lines.every(l => l.timeSec === null)) {
-    let html = lines.map(l => escHtml(l.text)).join('\n');
-    if (query) html = html.replace(new RegExp(escHtml(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark class="highlight">${m}</mark>`);
-    container.innerHTML = `<div class="plain-text">${html}</div>`;
+// ─── Render lines ─────────────────────────────────────────────────
+function renderLines(ls, query) {
+  const el = document.getElementById('transcriptLines');
+  if (!ls.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">No content.</div>'; return; }
+
+  const hasTimestamps = ls.some(l => l.timeSec !== null);
+
+  if (!hasTimestamps) {
+    let html = ls.map(l => escH(l.text)).join('\n');
+    if (query) html = highlight(html, query);
+    el.innerHTML = `<div class="plain-text">${html}</div>`;
     return;
   }
-  container.innerHTML = lines.map((l, i) => {
-    let txt = escHtml(l.text);
-    if (query) txt = txt.replace(new RegExp(escHtml(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark class="highlight">${m}</mark>`);
-    return `<div class="t-line" id="line-${i}" onclick="seekToLine(${i})">
-      <span class="ts">${l.timeStr ? fmtSecs(l.timeSec) : ''}</span>
-      <div class="body">${l.speaker ? `<div class="spk">${escHtml(l.speaker)}</div>` : ''}<div class="txt">${txt}</div></div>
+
+  el.innerHTML = ls.map((l, i) => {
+    if (!spkColorMap[l.speaker] && l.speaker) {
+      const idx = Object.keys(spkColorMap).length % SPEAKER_COLORS.length;
+      spkColorMap[l.speaker] = SPEAKER_COLORS[idx];
+    }
+    const spkClass = l.speaker ? spkColorMap[l.speaker] || 'spk-0' : '';
+    let txt = escH(l.text);
+    if (query) txt = highlight(txt, query);
+    return `<div class="t-line" id="ln${i}" onclick="lineClick(${i})">
+      <span class="t-ts">${l.timeStr ? fmtS(l.timeSec) : ''}</span>
+      <div class="t-body">
+        ${l.speaker ? `<div class="t-spk ${spkClass}">${escH(l.speaker)}</div>` : ''}
+        <div class="t-txt">${txt}</div>
+      </div>
     </div>`;
   }).join('');
 }
 
-// ── Audio ──
-function loadAudioFile(input) {
-  const file = input.files[0];
-  if (!file) return;
+function highlight(html, q) {
+  return html.replace(new RegExp(escH(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m => `<mark class="hl">${m}</mark>`);
+}
+
+// ─── Speaker insights ────────────────────────────────────────────
+function buildSpeakerInsights(ls, totalWords) {
+  const spks = {};
+  ls.forEach(l => {
+    if (!l.speaker) return;
+    if (!spks[l.speaker]) spks[l.speaker] = 0;
+    spks[l.speaker] += (l.text.match(/\S+/g) || []).length;
+  });
+  const entries = Object.entries(spks);
+  if (!entries.length) return;
+
+  document.getElementById('spkSection').style.display = 'block';
+  const colors = ['#34d399','#a78bfa','#fbbf24','#f472b6','#38bdf8'];
+  document.getElementById('spkList').innerHTML = entries.map(([name, wc], i) => {
+    const pct = totalWords ? Math.round(wc / totalWords * 100) : 0;
+    const color = colors[i % colors.length];
+    return `<div class="spk-row">
+      <div class="spk-row-top">
+        <span class="spk-name" style="color:${color}">${escH(name)}</span>
+        <span class="spk-pct">${pct}% · ${wc} words</span>
+      </div>
+      <div class="spk-bar-wrap"><div class="spk-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Search ───────────────────────────────────────────────────────
+function doSearch(q) {
+  renderLines(lines, q.trim() || null);
+  if (!q.trim()) { document.getElementById('matchCt').textContent = ''; return; }
+  const n = lines.reduce((acc, l) => acc + (l.text.match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'))||[]).length, 0);
+  document.getElementById('matchCt').textContent = n ? `${n} match${n>1?'es':''}` : 'No matches';
+  const first = document.querySelector('mark.hl');
+  if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ─── Audio ───────────────────────────────────────────────────────
+function loadAudio(input) {
+  const file = input.files[0]; if (!file) return;
   audio.src = URL.createObjectURL(file);
-  audioLoaded = true;
-  document.getElementById('uploadStrip').style.display = 'none';
-  document.getElementById('waveformCursor').style.display = 'block';
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('uploadHint').style.display = 'none';
+  document.getElementById('nowPlaying').style.display = 'block';
+  document.getElementById('nowPlaying').textContent = '🎵 ' + file.name;
   audio.addEventListener('loadedmetadata', () => {
-    document.getElementById('duration').textContent = fmtSecs(audio.duration);
+    document.getElementById('durTime').textContent = fmtS(audio.duration);
   }, { once: true });
-  showToast('🎵 Audio loaded — press ▶ to play!');
+  showToast('🎵 Audio loaded!');
 }
 
 function togglePlay() {
-  if (!audioLoaded) { showToast('⬆ Load an audio file first'); return; }
   audio.paused ? audio.play() : audio.pause();
 }
-
-audio.addEventListener('play', () => { document.getElementById('playBtn').textContent = '⏸'; });
-audio.addEventListener('pause', () => { document.getElementById('playBtn').textContent = '▶'; });
-audio.addEventListener('ended', () => { document.getElementById('playBtn').textContent = '▶'; });
+audio.addEventListener('play', () => document.getElementById('playBtn').textContent = '⏸');
+audio.addEventListener('pause', () => document.getElementById('playBtn').textContent = '▶');
+audio.addEventListener('ended', () => document.getElementById('playBtn').textContent = '▶');
 
 audio.addEventListener('timeupdate', () => {
-  const t = audio.currentTime, dur = audio.duration || 0;
-  const pct = dur ? (t / dur * 100) : 0;
-  document.getElementById('currentTime').textContent = fmtSecs(t);
+  const t = audio.currentTime, d = audio.duration || 0, pct = d ? t/d*100 : 0;
+  document.getElementById('curTime').textContent = fmtS(t);
   document.getElementById('seekFill').style.width = pct + '%';
   document.getElementById('seekThumb').style.left = pct + '%';
-  document.getElementById('waveformProgress').style.width = pct + '%';
-  document.getElementById('waveformCursor').style.left = pct + '%';
-  highlightLine(t);
+  syncActiveLine(t);
 });
 
-function seekFromBar(e) {
-  if (!audioLoaded || !audio.duration) return;
+function seekClick(e) {
+  if (!audio.duration) return;
   const r = e.currentTarget.getBoundingClientRect();
   audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
 }
 
-function seekFromWaveform(e) {
-  if (!audioLoaded || !audio.duration) return;
-  const r = e.currentTarget.getBoundingClientRect();
-  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
-}
-
-function seekToLine(idx) {
-  const line = parsedLines[idx];
-  if (line.timeSec === null) return;
-  if (!audioLoaded) { showToast('⬆ Load the audio file first'); return; }
-  audio.currentTime = line.timeSec;
-  if (audio.paused) audio.play();
-}
-
-function setVolume(v) { audio.volume = v; }
-function toggleMute() {
-  audio.muted = !audio.muted;
-  document.querySelector('.vol-icon').textContent = audio.muted ? '🔇' : '🔊';
-}
-
-function highlightLine(t) {
-  let idx = -1;
-  for (let i = 0; i < parsedLines.length; i++) {
-    if (parsedLines[i].timeSec !== null && parsedLines[i].timeSec <= t) idx = i;
+function lineClick(idx) {
+  const l = lines[idx];
+  if (l.timeSec !== null && audio.src) {
+    audio.currentTime = l.timeSec;
+    if (audio.paused) audio.play();
   }
-  if (idx === activeLineIdx) return;
-  activeLineIdx = idx;
-  document.querySelectorAll('.t-line.active').forEach(el => el.classList.remove('active'));
+}
+
+function syncActiveLine(t) {
+  let idx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].timeSec !== null && lines[i].timeSec <= t) idx = i;
+  }
+  if (idx === activeIdx) return;
+  activeIdx = idx;
+  document.querySelectorAll('.t-line.active').forEach(e => e.classList.remove('active'));
   if (idx >= 0) {
-    const el = document.getElementById('line-' + idx);
+    const el = document.getElementById('ln' + idx);
     if (el) {
       el.classList.add('active');
-      if (document.getElementById('followToggle').checked) {
+      if (document.getElementById('followTgl').checked) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }
 }
 
-// ── Waveform ──
-function drawWaveform() {
-  const canvas = document.getElementById('waveformCanvas');
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.parentElement.offsetWidth || 860;
-  const H = 64;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const bars = Math.floor(W / 3);
-  for (let i = 0; i < bars; i++) {
-    const h = 6 + Math.abs(Math.sin(i*0.37)*Math.sin(i*0.11+1.2)*(H*0.8));
-    const x = i * 3, y = (H - h) / 2;
-    const grad = ctx.createLinearGradient(0, y, 0, y+h);
-    grad.addColorStop(0, 'rgba(124,106,255,0.85)');
-    grad.addColorStop(1, 'rgba(167,139,250,0.25)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.roundRect(x, y, 2, h, 1);
-    ctx.fill();
-  }
+const speeds = [0.75, 1, 1.25, 1.5];
+function setSpeed(s) {
+  audio.playbackRate = s;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
 }
 
-// ── Search ──
-function searchTranscript(query) {
-  renderLines(parsedLines, query.trim() || null);
-  if (!query.trim()) { document.getElementById('matchCount').textContent = ''; return; }
-  const total = parsedLines.reduce((n, l) => n + (l.text.match(new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi')) || []).length, 0);
-  document.getElementById('matchCount').textContent = total > 0 ? `${total} match${total>1?'es':''}` : 'No matches';
-  const first = document.querySelector('mark.highlight');
-  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+function toggleMute() {
+  audio.muted = !audio.muted;
+  document.querySelector('.vol-icon').textContent = audio.muted ? '🔇' : '🔊';
 }
 
-// ── Export ──
-function copyText() { navigator.clipboard.writeText(currentTranscript?.transcript||'').then(()=>showToast('✅ Copied!')); }
-function downloadTxt() { dl(currentTranscript?.transcript||'', baseName()+'.txt','text/plain'); showToast('⬇ TXT downloaded'); }
-function downloadSrt() { dl(makeSrt(), baseName()+'.srt','text/plain'); showToast('⬇ SRT downloaded'); }
-function downloadVtt() { dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'), baseName()+'.vtt','text/vtt'); showToast('⬇ VTT downloaded'); }
+// ─── Export ──────────────────────────────────────────────────────
+function copyText() { navigator.clipboard.writeText(T?.transcript||'').then(()=>showToast('✅ Copied!')); }
+function downloadTxt() { dl(T?.transcript||'', base()+'.txt','text/plain'); showToast('⬇ TXT saved'); }
+function downloadSrt() { dl(makeSrt(), base()+'.srt','text/plain'); showToast('⬇ SRT saved'); }
+function downloadVtt() { dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'), base()+'.vtt','text/vtt'); showToast('⬇ VTT saved'); }
 
 function makeSrt() {
-  const tl = parsedLines.filter(l=>l.timeSec!==null);
-  return tl.map((l,i)=>`${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec??l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`).join('\n');
+  const tl = lines.filter(l => l.timeSec !== null);
+  return tl.map((l,i) =>
+    `${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec ?? l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`
+  ).join('\n');
 }
-function s2srt(s){s=s||0;const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.floor(s%60),ms=Math.round((s%1)*1000);return`${pad(h)}:${pad(m)}:${pad(sec)},${String(ms).padStart(3,'0')}`;}
-function baseName(){return(currentTranscript?.filename||'transcript').replace(/\.[^.]+$/,'');}
-function dl(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+function s2srt(s){s=s||0;const h=~~(s/3600),m=~~((s%3600)/60),sec=~~(s%60),ms=Math.round((s%1)*1000);return`${p2(h)}:${p2(m)}:${p2(sec)},${String(ms).padStart(3,'0')}`;}
+function base(){return(T?.filename||'transcript').replace(/\.[^.]+$/,'');}
+function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 
+// ─── Delete ──────────────────────────────────────────────────────
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  await sb.from('transcriptions').delete().eq('id', currentTranscript.id);
+  if (sb) await sb.from('transcriptions').delete().eq('id', T.id);
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
-  setTimeout(()=>window.location.href='/dashboard.html',1000);
+  setTimeout(() => location.href = '/dashboard.html', 900);
 }
 
-function fmtSecs(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
-function pad(n){return String(n).padStart(2,'0');}
-function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function getModeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
-function getEngineName(m){return m==='fast'?'Groq':m==='balanced'?'Deepgram':'AssemblyAI';}
-function formatDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+// ─── Helpers ─────────────────────────────────────────────────────
+function fmtS(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${~~(s/60)}:${p2(s%60)}`;}
+function p2(n){return String(n).padStart(2,'0');}
+function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function modeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
+function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
 init();
 </script>

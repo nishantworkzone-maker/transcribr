@@ -436,6 +436,17 @@ function render(t) {
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('bodyWrap').style.display = 'flex';
 }
+// Auto-load audio if transcribed from URL
+if (T.audio_url) {
+  audio.src = T.audio_url;
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('uploadHint').style.display = 'none';
+  document.getElementById('nowPlaying').style.display = 'block';
+  document.getElementById('nowPlaying').textContent = '🔗 URL audio';
+  audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('durTime').textContent = fmtS(audio.duration);
+  }, { once: true });
+}
 
 // ─── Parse transcript text into line objects ──────────────────────
 function parseLines(text) {

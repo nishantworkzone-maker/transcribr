@@ -21,6 +21,14 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
+// ── Supabase config for frontend ──────────────────────────────────
+app.get('/api/config', (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseKey: process.env.SUPABASE_ANON_KEY
+  });
+});
+
 // ── Expose API keys safely for browser-side uploads ───────────────
 app.get('/api/assemblykey', (req, res) => {
   res.json({ key: process.env.ASSEMBLYAI_API_KEY });

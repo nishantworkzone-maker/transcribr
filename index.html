@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Transcribr — AI Transcription</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -670,6 +671,29 @@ async function transcribe() {
     initWaveform();
     document.getElementById('progressWrap').style.display = 'none';
     showToast('Transcript ready!');
+    // Save to Supabase if user is logged in
+try {
+  const cfgRes = await fetch('/api/config');
+  const cfg = await cfgRes.json();
+  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const audioUrlToSave = currentTab === 'url'
+      ? document.getElementById('audioUrl').value.trim()
+      : null;
+    await sb.from('transcriptions').insert({
+      user_id: session.user.id,
+      filename: fileName || 'transcript',
+      transcript: transcriptContent,
+      mode: currentMode,
+      language: document.getElementById('language').value,
+      audio_url: audioUrlToSave
+    });
+    showToast('✅ Saved to your dashboard!');
+  }
+} catch(e) {
+  console.log('Save skipped:', e.message);
+}
 
   } catch (err) {
     document.getElementById('progressWrap').style.display = 'none';

@@ -2,10 +2,12 @@
   "version": 2,
   "builds": [
     { "src": "server.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" }
+    { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/transcribe", "dest": "/server.js" },
+    { "src": "/api/(.*)", "dest": "/server.js" },
+    { "src": "/login.html", "dest": "/login.html" },
+    { "src": "/dashboard.html", "dest": "/dashboard.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

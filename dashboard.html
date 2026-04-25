@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
+  --green: #34d399; --red: #f87171; --glow: rgba(124,106,255,0.18);
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+/* NAV */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent2); }
+.nav-right { display: flex; align-items: center; gap: 1rem; }
+.user-info { display: flex; align-items: center; gap: 8px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #fff; }
+.user-email { font-size: 0.85rem; color: var(--muted); }
+.plan-badge { background: var(--glow); border: 1px solid rgba(124,106,255,0.3); color: var(--accent2); font-size: 0.72rem; padding: 2px 8px; border-radius: 100px; font-weight: 500; }
+.plan-badge.paid { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: var(--green); }
+.logout-btn { background: transparent; border: 1px solid var(--border2); color: var(--muted); padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* LAYOUT */
+.layout { display: flex; min-height: calc(100vh - 57px); }
+.sidebar { width: 220px; border-right: 1px solid var(--border); padding: 1.5rem 1rem; flex-shrink: 0; }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.8rem; border-radius: 8px; color: var(--muted); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; margin-bottom: 2px; text-decoration: none; }
+.sidebar-item:hover, .sidebar-item.active { background: var(--glow); color: var(--text); }
+.sidebar-item.active { border: 1px solid rgba(124,106,255,0.2); }
+.sidebar-divider { height: 1px; background: var(--border); margin: 0.8rem 0; }
+.sidebar-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; padding: 0 0.8rem; margin-bottom: 0.5rem; }
+
+/* MAIN */
+.main { flex: 1; padding: 2rem; overflow-y: auto; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.page-title { font-size: 1.5rem; font-weight: 700; }
+.transcribe-btn { background: var(--accent); color: #fff; border: none; padding: 0.6rem 1.4rem; border-radius: 100px; font-size: 0.88rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+.transcribe-btn:hover { opacity: 0.88; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; }
+.stat-card-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; }
+.stat-card-value { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; }
+.stat-card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+/* FILES TABLE */
+.files-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.files-header { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
+.files-header h3 { font-size: 1rem; font-weight: 600; }
+.search-input { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.4rem 0.8rem; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; width: 200px; }
+.search-input:focus { outline: none; border-color: var(--accent); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 0.7rem 1.5rem; font-size: 0.75rem; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+td { padding: 0.9rem 1.5rem; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.file-name { font-weight: 500; color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-mode { font-size: 0.78rem; }
+.status-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.actions-cell { display: flex; gap: 0.4rem; }
+.action-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 0.28rem 0.65rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+.action-btn:hover { border-color: var(--accent); color: var(--text); }
+.action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.empty-state p { margin-bottom: 1.2rem; }
+
+/* UPGRADE BANNER */
+.upgrade-banner { background: linear-gradient(135deg, rgba(124,106,255,0.15), rgba(167,139,250,0.1)); border: 1px solid rgba(124,106,255,0.25); border-radius: 14px; padding: 1.4rem 1.8rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.upgrade-text h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+.upgrade-text p { font-size: 0.85rem; color: var(--muted); }
+.upgrade-cta { background: var(--accent); color: #fff; border: none; padding: 0.55rem 1.3rem; border-radius: 100px; font-size: 0.85rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.4rem 1.8rem; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+.modal-close { background: transparent; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 0.2rem; }
+.modal-body { padding: 1.8rem; }
+
+/* Upload Modal */
+.input-tabs { display: flex; background: var(--surface2); border-radius: 10px; padding: 3px; margin-bottom: 1.4rem; }
+.tab-btn { flex: 1; padding: 0.45rem; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.tab-btn.active { background: var(--accent); color: #fff; }
+
+.drop-zone { border: 2px dashed var(--border2); border-radius: 14px; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; position: relative; transition: all 0.2s; margin-bottom: 1.2rem; }
+.drop-zone.has-files, .drop-zone.dragover { border-color: var(--accent); background: var(--glow); border-style: solid; }
+.drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 2rem; margin-bottom: 0.7rem; display: block; }
+.drop-zone h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; }
+.drop-zone p { color: var(--muted); font-size: 0.82rem; }
+.formats { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-top: 0.8rem; }
+.fmt { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.7rem; padding: 2px 8px; border-radius: 100px; }
+
+.file-list { margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.file-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem; }
+.file-item-name { font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+.file-item-size { font-size: 0.78rem; color: var(--muted); }
+.file-remove { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0 4px; }
+.file-remove:hover { color: var(--red); }
+
+.url-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; margin-bottom: 1.2rem; }
+.url-input:focus { outline: none; border-color: var(--accent); }
+
+.mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.2rem; }
+.mode-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+.mode-card.selected { border-color: var(--accent); background: var(--glow); }
+.mode-card.locked { opacity: 0.5; cursor: not-allowed; }
+.mode-emoji { font-size: 1.3rem; display: block; margin-bottom: 0.25rem; }
+.mode-name { font-size: 0.82rem; font-weight: 600; display: block; }
+.mode-sub { font-size: 0.7rem; color: var(--muted); display: block; }
+.lock-badge { position: absolute; top: 4px; right: 4px; background: var(--accent); color: #fff; font-size: 0.6rem; padding: 1px 5px; border-radius: 100px; }
+
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1.2rem; }
+.opt-group label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+.opt-group select { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.55rem 0.8rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; appearance: none; }
+
+.toggle-list { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.4rem; }
+.toggle-item { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+.toggle-item:last-child { border-bottom: none; }
+.toggle-label span { font-size: 0.86rem; font-weight: 500; display: block; }
+.toggle-label small { font-size: 0.75rem; color: var(--muted); }
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--border2); border-radius: 100px; cursor: pointer; transition: background 0.2s; }
+.slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+.toggle input:checked + .slider { background: var(--accent); }
+.toggle input:checked + .slider::before { transform: translateX(16px); }
+
+.progress-wrap { margin-bottom: 1rem; display: none; }
+.progress-bar { height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0; transition: width 0.4s; }
+.progress-status { font-size: 0.82rem; color: var(--muted); text-align: center; margin-top: 6px; }
+
+.modal-submit { width: 100%; padding: 0.85rem; background: var(--accent); color: #fff; border: none; border-radius: 100px; font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity 0.2s; }
+.modal-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 0.7rem 1.1rem; font-size: 0.85rem; transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 999; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media(max-width:768px) { .sidebar{display:none;} .stats-row{grid-template-columns:1fr 1fr;} }
+@media(max-width:480px) { .main{padding:1rem;} .settings-grid,.mode-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <div class="nav-right">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">N</div>
+      <span class="user-email" id="userEmail">Loading...</span>
+      <span class="plan-badge" id="planBadge">Free</span>
+    </div>
+    <button class="logout-btn" onclick="signOut()">Sign out</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Menu</div>
+    <a class="sidebar-item active" href="/dashboard.html">📁 Recent Files</a>
+    <a class="sidebar-item" href="/pricing.html">⭐ Upgrade Plan</a>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Account</div>
+    <a class="sidebar-item" href="#" onclick="signOut()">🚪 Sign Out</a>
+  </aside>
+
+  <main class="main">
+    <!-- Upgrade banner for free users -->
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none">
+      <div class="upgrade-text">
+        <h4>🚀 Upgrade to Pro</h4>
+        <p>Get unlimited transcriptions, larger files and AssemblyAI access for just ₹299/month</p>
+      </div>
+      <button class="upgrade-cta" onclick="window.location.href='/pricing.html'">Upgrade Now</button>
+    </div>
+
+    <div class="page-header">
+      <h1 class="page-title">📁 Recent Files</h1>
+      <button class="transcribe-btn" onclick="openModal()">
+        ☁️ Transcribe Files
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">Total Transcripts</div>
+        <div class="stat-card-value" id="totalCount">0</div>
+        <div class="stat-card-sub">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Today's Usage</div>
+        <div class="stat-card-value" id="todayCount">0</div>
+        <div class="stat-card-sub" id="todayLimit">of 5 free</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Plan</div>
+        <div class="stat-card-value" id="planName" style="font-size:1.2rem;padding-top:0.3rem">Free</div>
+        <div class="stat-card-sub">current plan</div>
+      </div>
+    </div>
+
+    <!-- Files table -->
+    <div class="files-section">
+      <div class="files-header">
+        <h3>Transcripts</h3>
+        <input type="text" class="search-input" placeholder="Search..." oninput="filterFiles(this.value)"/>
+      </div>
+      <div class="table-wrap">
+        <table id="filesTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Duration</th>
+              <th>Mode</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="filesBody">
+            <tr><td colspan="6">
+              <div class="empty-state">
+                <span class="empty-icon">🎙</span>
+                <p>No transcripts yet</p>
+                <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">Transcribe your first file</button>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>☁️ Transcribe Files</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="input-tabs">
+        <button class="tab-btn active" onclick="switchInputTab('file')">📁 Upload File</button>
+        <button class="tab-btn" onclick="switchInputTab('url')">🔗 Paste URL</button>
+      </div>
+
+      <!-- File upload -->
+      <div id="fileTab">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept="audio/*,video/*" multiple onchange="handleFiles(event)"/>
+          <span class="drop-icon">🎙</span>
+          <h4>Drag & Drop files here</h4>
+          <p>MP3, MP4, M4A, WAV, OGG, OPUS, WEBM, WMV</p>
+          <div class="formats">
+            <span class="fmt">MP3</span><span class="fmt">MP4</span><span class="fmt">WAV</span>
+            <span class="fmt">M4A</span><span class="fmt">OGG</span><span class="fmt">WEBM</span>
+          </div>
+        </div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+
+      <!-- URL input -->
+      <div id="urlTab" style="display:none">
+        <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3 or call recording URL"/>
+        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1.2rem">💡 Supports direct audio/video URLs and private call recording links</p>
+      </div>
+
+      <!-- Mode selection -->
+      <div class="mode-grid" id="modeGrid">
+        <div class="mode-card selected" onclick="selectMode('fast',this)" id="mode-fast">
+          <span class="mode-emoji">⚡</span>
+          <span class="mode-name">Fast</span>
+          <span class="mode-sub">Groq · Instant</span>
+        </div>
+        <div class="mode-card" onclick="selectMode('balanced',this)" id="mode-balanced">
+          <span class="mode-emoji">🐬</span>
+          <span class="mode-name">Balanced</span>
+          <span class="mode-sub">Deepgram · Calls</span>
+        </div>
+        <div class="mode-card" onclick="selectMode('accurate',this)" id="mode-accurate">
+          <span class="mode-emoji">🐋</span>
+          <span class="mode-name">Most Accurate</span>
+          <span class="mode-sub">AssemblyAI</span>
+          <span class="lock-badge" id="accurateLock" style="display:none">🔒 Pro</span>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="settings-grid">
+        <div class="opt-group">
+          <label>Language</label>
+          <select id="langSelect">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="ar">Arabic</option>
+            <option value="ja">Japanese</option>
+            <option value="zh">Chinese</option>
+            <option value="pt">Portuguese</option>
+          </select>
+        </div>
+        <div class="opt-group">
+          <label>Mode</label>
+          <select id="modeSelectDrop" onchange="syncModeFromSelect(this.value)">
+            <option value="fast">⚡ Fast (Groq)</option>
+            <option value="balanced">🐬 Balanced (Deepgram)</option>
+            <option value="accurate">🐋 Most Accurate (AssemblyAI) — Pro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toggle-list">
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>👥 Recognize Speakers</span>
+            <small>Label each speaker in the transcript</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-speakers" checked/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>🔤 Transcribe to English</span>
+            <small>Auto-translate to English</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-english"/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>🎵 Restore Audio</span>
+            <small>Remove background noise</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-restore"/><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-status" id="progressStatus">Processing...</div>
+      </div>
+
+      <button class="modal-submit" id="transcribeSubmit" onclick="startTranscription()">
+        Transcribe now →
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let sb, currentUser, userProfile;
+let selectedFiles = [];
+let currentMode = 'fast';
+let currentInputTab = 'file';
+let allTranscriptions = [];
+
+async function init() {
+  const res = await fetch('/api/config');
+  const cfg = await res.json();
+  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = '/login.html'; return; }
+
+  currentUser = session.user;
+  await loadProfile();
+  await loadTranscriptions();
+  setupUI();
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  userProfile = data;
+  const email = currentUser.email || '';
+  document.getElementById('userEmail').textContent = email;
+  document.getElementById('userAvatar').textContent = email[0]?.toUpperCase() || 'U';
+
+  const isPaid = data?.plan === 'paid' || data?.is_admin;
+  const planText = data?.is_admin ? 'Admin' : (isPaid ? 'Pro' : 'Free');
+  document.getElementById('planBadge').textContent = planText;
+  document.getElementById('planBadge').classList.toggle('paid', isPaid);
+  document.getElementById('planName').textContent = planText;
+
+  if (!isPaid) {
+    document.getElementById('upgradeBanner').style.display = 'flex';
+    document.getElementById('accurateLock').style.display = 'block';
+    document.getElementById('mode-accurate').classList.add('locked');
+  }
+}
+
+async function loadTranscriptions() {
+  const { data } = await sb.from('transcriptions')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  allTranscriptions = data || [];
+  renderTable(allTranscriptions);
+
+  document.getElementById('totalCount').textContent = allTranscriptions.length;
+  const today = new Date().toDateString();
+  const todayCount = allTranscriptions.filter(t => new Date(t.created_at).toDateString() === today).length;
+  document.getElementById('todayCount').textContent = todayCount;
+}
+
+function renderTable(transcriptions) {
+  const tbody = document.getElementById('filesBody');
+  if (!transcriptions.length) {
+    tbody.innerHTML = `<tr><td colspan="6">
+      <div class="empty-state">
+        <span class="empty-icon">🎙</span>
+        <p>No transcripts yet</p>
+        <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">Transcribe your first file</button>
+      </div>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = transcriptions.map(t => `
+    <tr>
+      <td><div class="file-name">${escHtml(t.filename || 'Recording')}</div></td>
+      <td style="color:var(--muted);font-size:0.82rem">${formatDate(t.created_at)}</td>
+      <td style="color:var(--muted);font-size:0.82rem">${t.duration_seconds ? fmtDuration(t.duration_seconds) : '—'}</td>
+      <td><span class="file-mode">${getModeLabel(t.mode)}</span></td>
+      <td><span class="status-dot"><span class="dot"></span>Done</span></td>
+      <td>
+        <div class="actions-cell">
+          <button class="action-btn" onclick="openTranscript('${t.id}')">Open</button>
+          <button class="action-btn" onclick="downloadTxt('${t.id}')">TXT</button>
+          <button class="action-btn danger" onclick="deleteTranscript('${t.id}')">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterFiles(query) {
+  const filtered = allTranscriptions.filter(t =>
+    (t.filename||'').toLowerCase().includes(query.toLowerCase())
+  );
+  renderTable(filtered);
+}
+
+function setupUI() {
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    handleFilesFromList(e.dataTransfer.files);
+  });
+}
+
+function switchInputTab(tab) {
+  currentInputTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) =>
+    b.classList.toggle('active', (i===0&&tab==='file')||(i===1&&tab==='url')));
+  document.getElementById('fileTab').style.display = tab==='file'?'block':'none';
+  document.getElementById('urlTab').style.display = tab==='url'?'block':'none';
+
+  // Groq not available for URL
+  const fastCard = document.getElementById('mode-fast');
+  if (tab === 'url') {
+    fastCard.classList.add('locked');
+    fastCard.title = 'Groq does not support URLs — use Balanced or Accurate';
+    if (currentMode === 'fast') selectMode('balanced', document.getElementById('mode-balanced'));
+  } else {
+    fastCard.classList.remove('locked');
+    fastCard.title = '';
+  }
+}
+
+function handleFiles(e) { handleFilesFromList(e.target.files); }
+function handleFilesFromList(files) {
+  Array.from(files).forEach(f => {
+    if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f);
+  });
+  renderFileList();
+  if (selectedFiles.length) document.getElementById('dropZone').classList.add('has-files');
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = selectedFiles.map((f,i) => `
+    <div class="file-item">
+      <span class="file-item-name">🎵 ${escHtml(f.name)}</span>
+      <span class="file-item-size">${(f.size/1024/1024).toFixed(1)} MB</span>
+      <button class="file-remove" onclick="removeFile(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderFileList();
+  if (!selectedFiles.length) document.getElementById('dropZone').classList.remove('has-files');
+}
+
+function selectMode(mode, el) {
+  const isPaid = userProfile?.plan==='paid' || userProfile?.is_admin;
+  if (mode === 'accurate' && !isPaid) {
+    showToast('🔒 AssemblyAI is available for Pro users only');
+    window.location.href = '/pricing.html';
+    return;
+  }
+  if (mode === 'fast' && currentInputTab === 'url') {
+    showToast('⚡ Groq does not support URLs — use Balanced or Accurate');
+    return;
+  }
+  currentMode = mode;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('modeSelectDrop').value = mode;
+}
+
+function syncModeFromSelect(val) {
+  const el = document.getElementById('mode-'+val);
+  if (el) selectMode(val, el);
+}
+
+async function startTranscription() {
+  const audioUrl = document.getElementById('audioUrl').value.trim();
+  if (currentInputTab === 'file' && !selectedFiles.length) { showToast('Please select a file first'); return; }
+  if (currentInputTab === 'url' && !audioUrl) { showToast('Please paste an audio URL first'); return; }
+
+  const btn = document.getElementById('transcribeSubmit');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  document.getElementById('progressWrap').style.display = 'block';
+  setProgress(10, 'Preparing…');
+
+  const lang = document.getElementById('tog-english').checked ? 'en' : document.getElementById('langSelect').value;
+  const filesToProcess = currentInputTab === 'file' ? selectedFiles : [null];
+
+  for (const file of filesToProcess) {
+    try {
+      const formData = new FormData();
+      formData.append('language', lang);
+      formData.append('mode', currentMode);
+      formData.append('userId', currentUser.id);
+
+      if (currentInputTab === 'url') {
+        setProgress(15, 'Fetching audio from URL…');
+        try {
+          const audioRes = await fetch(audioUrl);
+          const blob = await audioRes.blob();
+          setProgress(30, 'Uploading to AI…');
+          if (currentMode === 'accurate') {
+            const keyRes = await fetch('/api/assemblykey');
+            const { key } = await keyRes.json();
+            const upRes = await fetch('https://api.assemblyai.com/v2/upload', {
+              method: 'POST', headers: { 'Authorization': key, 'Content-Type': 'application/octet-stream' }, body: blob
+            });
+            const { upload_url } = await upRes.json();
+            formData.append('audioUrl', upload_url);
+          } else {
+            formData.append('audio', blob, 'recording.wav');
+          }
+        } catch {
+          formData.append('audioUrl', audioUrl);
+        }
+      } else {
+        if (file.size > 4 * 1024 * 1024) {
+          setProgress(15, 'Large file — uploading directly…');
+          const keyRes = await fetch('/api/assemblykey');
+          const { key } = await keyRes.json();
+          const upRes = await fetch('https://api.assemblyai.com/v2/upload', {
+            method: 'POST', headers: { 'Authorization': key, 'Content-Type': 'application/octet-stream' }, body: await file.arrayBuffer()
+          });
+          const { upload_url } = await upRes.json();
+          formData.append('audioUrl', upload_url);
+          formData.append('mode', 'accurate');
+        } else {
+          formData.append('audio', file);
+        }
+      }
+
+      let prog = 35;
+      const iv = setInterval(() => {
+        if (prog < 88) { prog += currentMode==='accurate'?1:4; setProgress(prog, getMsg(prog)); }
+      }, currentMode==='accurate'?2000:600);
+
+      const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+      const data = await res.json();
+      clearInterval(iv);
+      if (data.error) throw new Error(data.error);
+
+      setProgress(95, 'Saving transcript…');
+
+      // Save to Supabase
+      await sb.from('transcriptions').insert({
+        user_id: currentUser.id,
+        filename: file?.name || (audioUrl.split('/').pop() || 'recording'),
+        transcript: data.text,
+        mode: currentMode,
+        language: lang
+      });
+
+      setProgress(100, 'Done!');
+      showToast(`✅ ${file?.name || 'Recording'} transcribed!`);
+
+    } catch (err) {
+      showToast('Error: ' + err.message);
+    }
+  }
+
+  btn.disabled = false; btn.textContent = 'Transcribe now →';
+  document.getElementById('progressWrap').style.display = 'none';
+  closeModal();
+  selectedFiles = [];
+  await loadTranscriptions();
+}
+
+function setProgress(pct, msg) {
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressStatus').textContent = msg;
+}
+function getMsg(p) {
+  if (p<30) return 'Uploading…';
+  if (p<60) return 'Transcribing…';
+  if (p<85) return 'Processing…';
+  return 'Almost done…';
+}
+
+function openModal() { document.getElementById('uploadModal').classList.add('show'); }
+function closeModal() { document.getElementById('uploadModal').classList.remove('show'); }
+
+async function openTranscript(id) {
+  const t = allTranscriptions.find(x => x.id === id);
+  if (!t) return;
+  localStorage.setItem('currentTranscript', JSON.stringify(t));
+  window.location.href = '/transcript.html';
+}
+
+async function downloadTxt(id) {
+  const t = allTranscriptions.find(x => x.id === id);
+  if (!t) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([t.transcript||''], {type:'text/plain'}));
+  a.download = (t.filename||'transcript') + '.txt';
+  a.click();
+  showToast('Downloaded!');
+}
+
+async function deleteTranscript(id) {
+  if (!confirm('Delete this transcript?')) return;
+  await sb.from('transcriptions').delete().eq('id', id);
+  showToast('Deleted');
+  await loadTranscriptions();
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.href = '/';
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function fmtDuration(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return m>0 ? `${m}m ${sec}s` : `${sec}s`;
+}
+function getModeLabel(mode) {
+  return mode==='fast'?'⚡ Fast':mode==='balanced'?'🐬 Balanced':'🐋 Accurate';
+}
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -228,4 +228,26 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+// 🔥 AUDIO PROXY (fix CORS)
+app.get('/api/audio', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).send('Missing URL');
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return res.status(500).send('Failed to fetch audio');
+    }
+
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const buffer = await response.arrayBuffer();
+res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('Audio proxy error:', err);
+    res.status(500).send('Audio proxy failed');
+  }
+});
 export default app;

@@ -451,7 +451,7 @@ function render(t) {
 
   // Auto-load URL audio
   if (t.audio_url) {
-    audio.src = t.audio_url;
+    audio.src = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
     audioLoaded = true;
     document.getElementById('playBtn').disabled = false;
     document.getElementById('noAudioMsg').style.display = 'none';

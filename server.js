@@ -10,9 +10,8 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '50kb' }));
 
-// For file uploads up to 10MB through Vercel
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 10 * 1024 * 1024 } });
 
 function formatTime(seconds) {
@@ -21,7 +20,7 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-// ── Supabase config for frontend ──────────────────────────────────
+// ── Supabase config ───────────────────────────────────────────────
 app.get('/api/config', (req, res) => {
   res.json({
     supabaseUrl: process.env.SUPABASE_URL,
@@ -29,13 +28,60 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// ── Expose API keys safely for browser-side uploads ───────────────
+// ── API key endpoints ─────────────────────────────────────────────
 app.get('/api/assemblykey', (req, res) => {
   res.json({ key: process.env.ASSEMBLYAI_API_KEY });
 });
-
 app.get('/api/deepgramkey', (req, res) => {
   res.json({ key: process.env.DEEPGRAM_API_KEY });
+});
+
+// ── TRANSLATE endpoint (uses Groq LLM — fast + free tier) ─────────
+app.post('/api/translate', async (req, res) => {
+  const { text, targetLanguage } = req.body;
+  if (!text || !targetLanguage) {
+    return res.status(400).json({ error: 'text and targetLanguage are required' });
+  }
+
+  try {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 8000,
+        temperature: 0.3,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional transcript translator. Translate the given transcript to ${targetLanguage}. 
+Rules:
+- Keep all speaker labels exactly as-is (e.g. "Speaker 1:", "Speaker 2:")
+- Keep all timestamps exactly as-is (e.g. [0:05], [1:23])
+- Only translate the spoken text content
+- Keep the same line structure
+- Do NOT add any explanation, preamble, or notes — return ONLY the translated transcript`
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ]
+      })
+    });
+
+    const data = await groqRes.json();
+    if (!groqRes.ok) throw new Error(data.error?.message || 'Translation failed');
+
+    const translated = data.choices?.[0]?.message?.content || '';
+    res.json({ translated });
+  } catch (err) {
+    console.error('Translate error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── GROQ ──────────────────────────────────────────────────────────
@@ -60,10 +106,20 @@ async function transcribeGroq(filePath, language) {
   return { text, segments: segs };
 }
 
-// ── DEEPGRAM ──────────────────────────────────────────────────────
+// ── DEEPGRAM (with PII redaction) ─────────────────────────────────
 async function transcribeDeepgram(filePath, audioUrl, language) {
-  const params = `?model=nova-2&language=${language||'en'}&punctuate=true&utterances=true&diarize=true`;
-  const url = `https://api.deepgram.com/v1/listen${params}`;
+  // Added: redact=pii&redact=numbers&redact=ssn for PII masking
+  const params = [
+    `model=nova-2`,
+    `language=${language||'en'}`,
+    `punctuate=true`,
+    `utterances=true`,
+    `diarize=true`,
+    `redact=pii`,
+    `redact=numbers`,
+    `redact=ssn`
+  ].join('&');
+  const url = `https://api.deepgram.com/v1/listen?${params}`;
   let body, headers = { 'Authorization': `Token ${process.env.DEEPGRAM_API_KEY}` };
 
   if (audioUrl) {
@@ -85,7 +141,7 @@ async function transcribeDeepgram(filePath, audioUrl, language) {
   return { text, segments: utterances };
 }
 
-// ── ASSEMBLYAI ────────────────────────────────────────────────────
+// ── ASSEMBLYAI (with PII redaction) ──────────────────────────────
 async function transcribeAssemblyAI(filePath, audioUrl, language) {
   const authHeaders = {
     'Authorization': process.env.ASSEMBLYAI_API_KEY,
@@ -114,7 +170,22 @@ async function transcribeAssemblyAI(filePath, audioUrl, language) {
       language_code: language || 'en',
       speaker_labels: true,
       punctuate: true,
-      format_text: true
+      format_text: true,
+      // PII redaction — replaces sensitive data with [PII] in transcript
+      redact_pii: true,
+      redact_pii_audio: false, // keep audio intact, only redact text
+      redact_pii_policies: [
+        'person_name',
+        'phone_number',
+        'email_address',
+        'ssn',
+        'credit_card_number',
+        'date_of_birth',
+        'location',
+        'medical_process',
+        'banking_information'
+      ],
+      redact_pii_sub: 'hash' // replaces with [PII] style hash
     })
   });
   const { id } = await transcriptRes.json();
@@ -135,7 +206,7 @@ async function transcribeAssemblyAI(filePath, audioUrl, language) {
   return { text, segments: utterances };
 }
 
-// ── Main route ────────────────────────────────────────────────────
+// ── Main transcribe route ─────────────────────────────────────────
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   const { mode, language, audioUrl } = req.body;
   const filePath = req.file?.path;

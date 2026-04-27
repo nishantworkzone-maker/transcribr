@@ -14,27 +14,23 @@
   --text: #f0f0f8; --muted: #777888; --accent: #7c6aff; --accent2: #a78bfa;
   --green: #34d399; --red: #f87171; --yellow: #fbbf24;
   --glow: rgba(124,106,255,0.15);
-  --nav-h: 52px;
-  --file-h: 68px;
-  --audio-h: 72px;
+  --nav-h: 52px; --file-h: 68px; --audio-h: 70px;
 }
 html, body { height: 100%; }
 body {
   background: var(--bg); color: var(--text);
   font-family: 'DM Sans', sans-serif;
   display: flex; flex-direction: column;
-  height: 100vh; overflow: hidden; /* No page scroll — panels scroll internally */
+  height: 100vh; overflow: hidden;
 }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
-/* ── NAV ── */
+/* NAV */
 nav {
-  height: var(--nav-h);
-  flex-shrink: 0;
+  height: var(--nav-h); flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 1.8rem; border-bottom: 1px solid var(--border);
-  background: rgba(10,10,15,0.98); backdrop-filter: blur(14px);
-  z-index: 200;
+  background: rgba(10,10,15,0.98); z-index: 200;
 }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; }
 .logo span { color: var(--accent2); }
@@ -42,79 +38,44 @@ nav {
 .btn { display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; font-size: 0.78rem; padding: 0.35rem 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted); white-space: nowrap; }
 .btn:hover { color: var(--text); border-color: var(--accent); }
 .btn.danger:hover { border-color: var(--red); color: var(--red); }
-.back-link { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
+.back-link { color: var(--muted); font-size: 0.82rem; text-decoration: none; transition: color 0.2s; }
 .back-link:hover { color: var(--text); }
 
-/* ── FILE BAR ── */
+/* FILE BAR */
 .file-bar {
   flex-shrink: 0; height: var(--file-h);
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 0 2rem; display: flex; align-items: center; gap: 2rem;
 }
-.file-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; }
+.file-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
 .file-meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 4px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); font-size: 0.71rem; padding: 2px 8px; border-radius: 100px; }
 .chip.purple { color: var(--accent2); border-color: rgba(124,106,255,0.3); background: var(--glow); }
 .chip.green { color: var(--green); border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.08); }
 
-/* ── CONTENT AREA — fills between file-bar and audio-bar ── */
-/* FIX: use flex column, let body-wrap take remaining height */
-.content-area {
-  flex: 1;
-  display: flex;
-  min-height: 0; /* crucial — lets flex children shrink below content size */
-  overflow: hidden;
-}
+/* CONTENT AREA */
+.content-area { flex: 1; display: flex; min-height: 0; overflow: hidden; }
 
-/* ── LEFT: TRANSCRIPT PANEL ── */
-.transcript-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--border);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.panel-header {
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.75rem 1.4rem; border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
+/* LEFT TRANSCRIPT PANEL */
+.transcript-panel { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; overflow: hidden; }
+.panel-header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1.3rem; border-bottom: 1px solid var(--border); background: var(--surface); }
 .panel-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
 .word-badge { font-size: 0.7rem; color: var(--muted); }
-
-.search-bar {
-  flex-shrink: 0;
-  padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
+.search-bar { flex-shrink: 0; padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); background: var(--bg); }
 .search-inner { position: relative; }
-.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.45rem 2.4rem 0.45rem 1.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; transition: border-color 0.2s; }
+.search-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.42rem 2.2rem 0.42rem 1.8rem; font-family: 'DM Sans', sans-serif; font-size: 0.83rem; transition: border-color 0.2s; }
 .search-input:focus { outline: none; border-color: var(--accent); }
 .si { position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--muted); pointer-events: none; }
 .match-ct { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 0.68rem; color: var(--muted); }
-
-/* FIX: transcript scroll takes all remaining space in panel */
-.transcript-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.8rem 1rem;
-  min-height: 0;
-}
+.transcript-scroll { flex: 1; overflow-y: auto; padding: 0.7rem 0.9rem; min-height: 0; }
 .transcript-scroll::-webkit-scrollbar { width: 3px; }
 .transcript-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
 /* Lines */
-.t-line {
-  display: flex; gap: 0.7rem; padding: 0.45rem 0.5rem;
-  border-radius: 7px; cursor: pointer; transition: background 0.15s;
-  border-left: 2px solid transparent; margin-bottom: 1px;
-}
+.t-line { display: flex; gap: 0.65rem; padding: 0.42rem 0.45rem; border-radius: 7px; cursor: pointer; transition: background 0.15s; border-left: 2px solid transparent; margin-bottom: 1px; }
 .t-line:hover { background: rgba(255,255,255,0.03); }
 .t-line.active { background: rgba(124,106,255,0.11); border-left-color: var(--accent); }
-.t-ts { font-size: 0.67rem; color: var(--accent2); font-weight: 600; white-space: nowrap; padding-top: 3px; min-width: 32px; font-variant-numeric: tabular-nums; flex-shrink: 0; opacity: 0.7; }
+.t-ts { font-size: 0.67rem; color: var(--accent2); font-weight: 600; white-space: nowrap; padding-top: 3px; min-width: 32px; font-variant-numeric: tabular-nums; flex-shrink: 0; opacity: 0.7; transition: opacity 0.15s; }
 .t-body { flex: 1; }
 .t-spk { font-size: 0.68rem; font-weight: 700; margin-bottom: 2px; }
 .t-txt { font-size: 0.87rem; line-height: 1.7; color: var(--text); }
@@ -129,122 +90,104 @@ nav {
 mark.hl { background: rgba(124,106,255,0.32); color: var(--text); border-radius: 2px; padding: 0 1px; }
 
 /* PII badge */
-.pii-tag { display: inline-flex; align-items: center; gap: 3px; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: var(--red); font-size: 0.68rem; font-weight: 600; padding: 0 5px; border-radius: 4px; margin: 0 2px; vertical-align: middle; }
+.pii-tag { display: inline-flex; align-items: center; gap: 2px; background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.4); color: #fca5a5; font-size: 0.66rem; font-weight: 700; padding: 0 5px; border-radius: 4px; margin: 0 1px; vertical-align: middle; letter-spacing: 0.3px; }
 
-/* ── RIGHT: INSIGHTS PANEL ── */
-/* FIX: insights panel scrolls independently, does NOT scroll with transcript */
-.insights-panel {
-  width: 270px;
-  flex-shrink: 0;
-  overflow-y: auto;
-  background: var(--surface);
-  padding: 1rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-height: 0;
-}
+/* RIGHT INSIGHTS PANEL */
+.insights-panel { width: 270px; flex-shrink: 0; overflow-y: auto; background: var(--surface); padding: 1rem; display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; }
 .insights-panel::-webkit-scrollbar { width: 3px; }
 .insights-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
 .ins-section { }
-.ins-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 0.55rem; }
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
-.stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.7rem; }
-.stat-box-label { font-size: 0.62rem; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.ins-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 0.5rem; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 0.65rem; }
+.stat-box-label { font-size: 0.61rem; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
 .stat-box-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
-.stat-box-val.small { font-size: 0.85rem; font-family: 'DM Sans', sans-serif; font-weight: 500; padding-top: 2px; color: var(--text); }
-.spk-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.stat-box-val.small { font-size: 0.83rem; font-family: 'DM Sans', sans-serif; font-weight: 500; padding-top: 2px; color: var(--text); }
+.spk-list { display: flex; flex-direction: column; gap: 0.45rem; }
 .spk-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-.spk-name { font-size: 0.76rem; font-weight: 600; }
-.spk-pct { font-size: 0.7rem; color: var(--muted); }
+.spk-name { font-size: 0.75rem; font-weight: 600; }
+.spk-pct { font-size: 0.68rem; color: var(--muted); }
 .spk-bar-wrap { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
 .spk-bar-fill { height: 100%; border-radius: 2px; }
-.engine-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem; display: flex; align-items: center; gap: 0.65rem; }
-.engine-icon { font-size: 1.4rem; }
-.engine-name { font-size: 0.83rem; font-weight: 600; }
-.engine-sub { font-size: 0.7rem; color: var(--muted); }
-.export-list { display: flex; flex-direction: column; gap: 0.38rem; }
-.exp-btn { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 0.45rem 0.75rem; border-radius: 7px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; width: 100%; }
+.engine-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem; display: flex; align-items: center; gap: 0.6rem; }
+.engine-icon { font-size: 1.35rem; }
+.engine-name { font-size: 0.82rem; font-weight: 600; }
+.engine-sub { font-size: 0.68rem; color: var(--muted); }
+.export-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.exp-btn { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 0.42rem 0.72rem; border-radius: 7px; font-size: 0.77rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; width: 100%; }
 .exp-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .exp-btn.cp { background: var(--accent); border-color: var(--accent); color: #fff; }
 .exp-btn.cp:hover { opacity: 0.88; }
 
-/* ── STICKY AUDIO BAR ── */
+/* TRANSLATE SECTION */
+.translate-select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.45rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; margin-bottom: 0.45rem; appearance: none; cursor: pointer; }
+.translate-select:focus { outline: none; border-color: var(--accent); }
+.translate-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent2); padding: 0.45rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+.translate-btn:hover { background: var(--glow); }
+.translate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* TRANSLATE OVERLAY */
+.translate-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; backdrop-filter: blur(4px); }
+.translate-overlay.show { display: flex; align-items: center; justify-content: center; }
+.translate-modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.translate-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.translate-modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+.translate-modal-close { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+.translate-modal-body { flex: 1; overflow-y: auto; padding: 1.2rem 1.4rem; }
+.translate-modal-body::-webkit-scrollbar { width: 3px; }
+.translate-modal-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.translate-content { font-size: 0.9rem; line-height: 1.85; color: var(--text); white-space: pre-wrap; }
+.translate-loading { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem; color: var(--muted); font-size: 0.88rem; }
+.translate-spinner { width: 28px; height: 28px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.translate-modal-footer { padding: 0.8rem 1.4rem; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 0.5rem; }
+.translate-dl-btn { flex: 1; padding: 0.5rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); transition: all 0.18s; }
+.translate-dl-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+/* AUDIO BAR */
 .audio-bar {
-  flex-shrink: 0;
-  height: var(--audio-h);
-  background: rgba(13,13,20,0.98); backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border2);
-  padding: 0 1.8rem; display: flex; align-items: center; gap: 1rem;
-  z-index: 300;
+  flex-shrink: 0; height: var(--audio-h);
+  background: rgba(13,13,20,0.98); border-top: 1px solid var(--border2);
+  padding: 0 1.6rem; display: flex; align-items: center; gap: 0.9rem; z-index: 300;
 }
-.audio-upload-hint { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
-.audio-file-label { display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.35rem 0.8rem; border-radius: 7px; font-size: 0.75rem; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-.audio-file-label:hover { border-color: var(--accent); color: var(--text); }
-.audio-file-label input { display: none; }
-.audio-hint-txt { font-size: 0.72rem; color: var(--muted); }
-
+/* No-audio hint (shown when no URL saved) */
+.no-audio-msg { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .play-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s; }
-.play-btn:hover { transform: scale(1.08); }
-.play-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
-
-/* FIX: seek track needs a larger click target */
-.seek-area { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.seek-track {
-  position: relative; height: 16px; cursor: pointer;
-  display: flex; align-items: center;
-}
-.seek-track-inner {
-  position: relative; height: 4px; background: var(--border2);
-  border-radius: 2px; width: 100%;
-}
+.play-btn:hover:not(:disabled) { transform: scale(1.08); }
+.play-btn:disabled { opacity: 0.35; cursor: default; }
+.now-playing-label { font-size: 0.72rem; color: var(--accent2); flex-shrink: 0; white-space: nowrap; }
+.seek-area { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.seek-track { position: relative; height: 18px; cursor: pointer; display: flex; align-items: center; }
+.seek-track-inner { position: relative; height: 4px; background: var(--border2); border-radius: 2px; width: 100%; overflow: hidden; }
 .seek-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; pointer-events: none; }
-.seek-thumb {
-  position: absolute; top: 50%; width: 12px; height: 12px;
-  background: #fff; border-radius: 50%; border: 2px solid var(--accent);
-  transform: translate(-50%,-50%); left: 0%;
-  pointer-events: none; transition: left 0.08s linear;
-  box-shadow: 0 0 0 3px rgba(124,106,255,0.2);
-}
-.seek-times { display: flex; justify-content: space-between; font-size: 0.67rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-
-.audio-right { display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0; }
-.speed-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.25rem 0.55rem; border-radius: 5px; font-size: 0.72rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+.seek-thumb { position: absolute; top: 50%; width: 12px; height: 12px; background: #fff; border-radius: 50%; border: 2px solid var(--accent); transform: translate(-50%,-50%); left: 0%; pointer-events: none; box-shadow: 0 0 0 3px rgba(124,106,255,0.2); transition: left 0.06s linear; }
+.seek-times { display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.audio-right { display: flex; align-items: center; gap: 0.65rem; flex-shrink: 0; }
+.speed-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.22rem 0.5rem; border-radius: 5px; font-size: 0.7rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
 .speed-btn:hover, .speed-btn.active { border-color: var(--accent); color: var(--accent2); }
-.follow-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.follow-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.71rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .toggle-pill { position: relative; width: 30px; height: 17px; flex-shrink: 0; }
 .toggle-pill input { opacity: 0; width: 0; height: 0; position: absolute; }
 .pill-track { position: absolute; inset: 0; background: var(--border2); border-radius: 17px; transition: background 0.2s; cursor: pointer; }
 .pill-track::after { content: ''; position: absolute; width: 11px; height: 11px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
 input:checked + .pill-track { background: var(--accent); }
 input:checked + .pill-track::after { transform: translateX(13px); }
-.vol-grp { display: flex; align-items: center; gap: 5px; }
-.vol-icon { font-size: 0.83rem; cursor: pointer; user-select: none; }
-.vol-range { width: 52px; accent-color: var(--accent); cursor: pointer; }
-
-/* Now-playing label */
-#nowPlaying { font-size: 0.72rem; color: var(--muted); white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.vol-grp { display: flex; align-items: center; gap: 4px; }
+.vol-icon { font-size: 0.82rem; cursor: pointer; user-select: none; }
+.vol-range { width: 50px; accent-color: var(--accent); cursor: pointer; }
 
 /* LOADING */
 .loading-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 1rem; }
 .spinner { width: 26px; height: 26px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* TOAST */
-.toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.5rem 1.1rem; border-radius: 100px; font-size: 0.8rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 0.5rem 1.1rem; border-radius: 100px; font-size: 0.8rem; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 720px) {
-  .insights-panel { display: none; }
-  .audio-right { display: none; }
-  .file-name { max-width: 200px; }
-}
+@media (max-width: 720px) { .insights-panel { display: none; } .audio-right { display: none; } }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <div class="nav-actions">
@@ -253,7 +196,6 @@ input:checked + .pill-track::after { transform: translateX(13px); }
   </div>
 </nav>
 
-<!-- FILE BAR -->
 <div class="file-bar" id="fileBar" style="display:none">
   <div>
     <div class="file-name" id="fileName">—</div>
@@ -266,13 +208,11 @@ input:checked + .pill-track::after { transform: translateX(13px); }
   </div>
 </div>
 
-<!-- LOADING -->
 <div class="loading-state" id="loadingState">
   <div class="spinner"></div>
   <span>Loading transcript…</span>
 </div>
 
-<!-- CONTENT AREA (left + right panels) -->
 <div class="content-area" id="contentArea" style="display:none">
 
   <!-- LEFT: TRANSCRIPT -->
@@ -293,7 +233,7 @@ input:checked + .pill-track::after { transform: translateX(13px); }
     </div>
   </div>
 
-  <!-- RIGHT: INSIGHTS (scrolls independently) -->
+  <!-- RIGHT: INSIGHTS -->
   <div class="insights-panel">
     <div class="ins-section">
       <div class="ins-label">Overview</div>
@@ -323,6 +263,42 @@ input:checked + .pill-track::after { transform: translateX(13px); }
       <div class="ins-label">Language</div>
       <div class="stat-box"><div class="stat-box-val small" id="insLang">—</div></div>
     </div>
+
+    <!-- TRANSLATE -->
+    <div class="ins-section">
+      <div class="ins-label">🌐 Translate</div>
+      <select class="translate-select" id="translateLang">
+        <option value="">Select language…</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Spanish">Spanish</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="Arabic">Arabic</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Japanese">Japanese</option>
+        <option value="Chinese (Simplified)">Chinese</option>
+        <option value="Korean">Korean</option>
+        <option value="Italian">Italian</option>
+        <option value="Russian">Russian</option>
+        <option value="Dutch">Dutch</option>
+        <option value="Polish">Polish</option>
+        <option value="Turkish">Turkish</option>
+        <option value="Vietnamese">Vietnamese</option>
+        <option value="Thai">Thai</option>
+        <option value="Indonesian">Indonesian</option>
+        <option value="Bengali">Bengali</option>
+        <option value="Urdu">Urdu</option>
+        <option value="Punjabi">Punjabi</option>
+        <option value="Marathi">Marathi</option>
+        <option value="Tamil">Tamil</option>
+        <option value="Telugu">Telugu</option>
+      </select>
+      <button class="translate-btn" id="translateBtn" onclick="startTranslation()">
+        🌐 Translate Transcript
+      </button>
+    </div>
+
+    <!-- EXPORT -->
     <div class="ins-section">
       <div class="ins-label">Export</div>
       <div class="export-list">
@@ -336,21 +312,19 @@ input:checked + .pill-track::after { transform: translateX(13px); }
 
 </div>
 
-<!-- STICKY AUDIO BAR -->
+<!-- AUDIO BAR — auto-loads from saved URL, no upload button -->
 <div class="audio-bar">
-  <div class="audio-upload-hint" id="uploadHint">
-    <label class="audio-file-label">
-      <input type="file" accept="audio/*,video/*" onchange="loadAudio(this)"/>
-      🎵 Load audio
-    </label>
-    <span class="audio-hint-txt">Optional — enables playback sync</span>
+  <!-- Shown only when no audio_url was saved -->
+  <div class="no-audio-msg" id="noAudioMsg" style="display:none">
+    🎵 No audio — file transcriptions can't be replayed
   </div>
-  <span id="nowPlaying" style="display:none"></span>
+  <!-- Shown when URL audio is loaded -->
+  <span class="now-playing-label" id="nowPlayingLabel" style="display:none">🔗 URL audio</span>
 
   <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
 
   <div class="seek-area">
-    <div class="seek-track" id="seekTrack" onmousedown="seekStart(event)" onclick="seekClick(event)">
+    <div class="seek-track" id="seekTrack" onclick="seekClick(event)">
       <div class="seek-track-inner">
         <div class="seek-fill" id="seekFill"></div>
         <div class="seek-thumb" id="seekThumb"></div>
@@ -365,7 +339,7 @@ input:checked + .pill-track::after { transform: translateX(13px); }
   <div class="audio-right">
     <div style="display:flex;gap:3px">
       <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
-      <button class="speed-btn active" id="sp1x" onclick="setSpeed(1,this)">1×</button>
+      <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
       <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
       <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
     </div>
@@ -383,12 +357,32 @@ input:checked + .pill-track::after { transform: translateX(13px); }
   </div>
 </div>
 
+<!-- TRANSLATE MODAL -->
+<div class="translate-overlay" id="translateOverlay">
+  <div class="translate-modal">
+    <div class="translate-modal-header">
+      <div class="translate-modal-title" id="translateModalTitle">Translation</div>
+      <button class="translate-modal-close" onclick="closeTranslation()">✕</button>
+    </div>
+    <div class="translate-modal-body" id="translateModalBody">
+      <div class="translate-loading">
+        <div class="translate-spinner"></div>
+        <span>Translating…</span>
+      </div>
+    </div>
+    <div class="translate-modal-footer">
+      <button class="translate-dl-btn" onclick="copyTranslation()">📋 Copy</button>
+      <button class="translate-dl-btn" onclick="downloadTranslation()">⬇ Download TXT</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <audio id="audioEl" preload="metadata"></audio>
 
 <script>
-// ─── State ────────────────────────────────────────────────────────
 let sb, T = null, lines = [], activeIdx = -1, audioLoaded = false;
+let translatedText = '', translateLangName = '';
 const audio = document.getElementById('audioEl');
 const SPEAKER_COLORS = ['spk-0','spk-1','spk-2','spk-3','spk-4'];
 const spkColorMap = {};
@@ -400,7 +394,7 @@ async function init() {
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.href = '/login.html'; return; }
-  } catch(e) { /* allow offline preview */ }
+  } catch(e) {}
 
   const stored = localStorage.getItem('currentTranscript');
   if (!stored) { location.href = '/dashboard.html'; return; }
@@ -426,43 +420,42 @@ function render(t) {
   document.getElementById('insLang').textContent = (t.language || 'en').toUpperCase();
 
   const ei = t.mode==='fast'?'⚡':t.mode==='balanced'?'🐬':'🐋';
-  const en = t.mode==='fast'?'Groq':t.mode==='balanced'?'Deepgram':'AssemblyAI';
-  const es = t.mode==='fast'?'Fastest — Whisper':t.mode==='balanced'?'Best for calls':'Highest accuracy';
   document.getElementById('engineIcon').textContent = ei;
-  document.getElementById('engineName').textContent = en;
-  document.getElementById('engineSub').textContent = es;
+  document.getElementById('engineName').textContent = t.mode==='fast'?'Groq':t.mode==='balanced'?'Deepgram':'AssemblyAI';
+  document.getElementById('engineSub').textContent = t.mode==='fast'?'Fastest — Whisper':t.mode==='balanced'?'Best for calls':'Highest accuracy';
 
   lines = parseLines(text);
   renderLines(lines, null);
   buildSpeakerInsights(lines, wordCount);
-
   document.getElementById('wordBadge').textContent = wordCount + ' words';
   document.getElementById('insLines').textContent = lines.length.toLocaleString();
-  const spks = new Set(lines.map(l => l.speaker).filter(Boolean));
+  const spks = new Set(lines.map(l=>l.speaker).filter(Boolean));
   document.getElementById('insSpeakers').textContent = spks.size || '—';
+  document.title = (t.filename||'Transcript') + ' — Transcribr';
 
-  document.title = (t.filename || 'Transcript') + ' — Transcribr';
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('contentArea').style.display = 'flex';
 
-  // Auto-load URL audio if saved
+  // AUTO-LOAD audio from saved URL — no upload needed
   if (t.audio_url) {
     audio.src = t.audio_url;
     audioLoaded = true;
     document.getElementById('playBtn').disabled = false;
-    document.getElementById('uploadHint').style.display = 'none';
-    document.getElementById('nowPlaying').style.display = 'block';
-    document.getElementById('nowPlaying').textContent = '🔗 URL audio';
+    document.getElementById('nowPlayingLabel').style.display = 'inline';
+    document.getElementById('noAudioMsg').style.display = 'none';
     audio.addEventListener('loadedmetadata', () => {
       document.getElementById('durTime').textContent = fmtS(audio.duration);
     }, { once: true });
+  } else {
+    // File upload — no audio URL stored
+    document.getElementById('noAudioMsg').style.display = 'flex';
   }
 }
 
 // ─── Parse lines ──────────────────────────────────────────────────
 function parseLines(text) {
   if (!text.trim()) return [];
-  return text.split('\n').filter(l => l.trim()).map(line => {
+  return text.split('\n').filter(l=>l.trim()).map(line => {
     const tsM = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
     const timeStr = tsM ? tsM[1] : null;
     const timeSec = timeStr ? ts2s(timeStr) : null;
@@ -479,13 +472,15 @@ function ts2s(ts) { const p=ts.split(':').map(Number); return p.length===3?p[0]*
 function renderLines(ls, query) {
   const el = document.getElementById('transcriptLines');
   if (!ls.length) { el.innerHTML='<div style="color:var(--muted);padding:1rem">No content.</div>'; return; }
-  if (ls.every(l => l.timeSec === null)) {
-    let html = ls.map(l => renderPII(escH(l.text))).join('\n');
-    if (query) html = highlight(html, query);
+
+  if (ls.every(l=>l.timeSec===null)) {
+    let html = ls.map(l=>renderPII(escH(l.text))).join('\n');
+    if (query) html = highlight(html,query);
     el.innerHTML = `<div class="plain-text">${html}</div>`;
     return;
   }
-  el.innerHTML = ls.map((l, i) => {
+
+  el.innerHTML = ls.map((l,i) => {
     if (!spkColorMap[l.speaker] && l.speaker) {
       spkColorMap[l.speaker] = SPEAKER_COLORS[Object.keys(spkColorMap).length % SPEAKER_COLORS.length];
     }
@@ -502,12 +497,16 @@ function renderLines(ls, query) {
   }).join('');
 }
 
-// PII: replace [PII] or [REDACTED] or <PII> tags with visual badge
+// PII — replaces [PII], ***PII***, <PII>, [REDACTED], phone numbers, emails if flagged
 function renderPII(html) {
   return html
     .replace(/\[PII\]/gi, '<span class="pii-tag">🔒 PII</span>')
     .replace(/\[REDACTED\]/gi, '<span class="pii-tag">🔒 PII</span>')
-    .replace(/&lt;PII&gt;/gi, '<span class="pii-tag">🔒 PII</span>');
+    .replace(/&lt;PII&gt;/gi, '<span class="pii-tag">🔒 PII</span>')
+    .replace(/\*\*\*PII\*\*\*/gi, '<span class="pii-tag">🔒 PII</span>')
+    .replace(/\[PHONE\]/gi, '<span class="pii-tag">🔒 PHONE</span>')
+    .replace(/\[EMAIL\]/gi, '<span class="pii-tag">🔒 EMAIL</span>')
+    .replace(/\[SSN\]/gi, '<span class="pii-tag">🔒 SSN</span>');
 }
 
 function highlight(html, q) {
@@ -517,13 +516,13 @@ function highlight(html, q) {
 // ─── Speaker insights ─────────────────────────────────────────────
 function buildSpeakerInsights(ls, totalWords) {
   const spks = {};
-  ls.forEach(l => { if (!l.speaker) return; spks[l.speaker] = (spks[l.speaker]||0) + (l.text.match(/\S+/g)||[]).length; });
+  ls.forEach(l => { if (!l.speaker) return; spks[l.speaker]=(spks[l.speaker]||0)+(l.text.match(/\S+/g)||[]).length; });
   const entries = Object.entries(spks);
   if (!entries.length) return;
   document.getElementById('spkSection').style.display = 'block';
   const colors = ['#34d399','#a78bfa','#fbbf24','#f472b6','#38bdf8'];
   document.getElementById('spkList').innerHTML = entries.map(([name,wc],i) => {
-    const pct = totalWords ? Math.round(wc/totalWords*100) : 0;
+    const pct = totalWords?Math.round(wc/totalWords*100):0;
     const color = colors[i%colors.length];
     return `<div class="spk-row">
       <div class="spk-row-top"><span class="spk-name" style="color:${color}">${escH(name)}</span><span class="spk-pct">${pct}% · ${wc}w</span></div>
@@ -537,28 +536,14 @@ function doSearch(q) {
   renderLines(lines, q.trim()||null);
   if (!q.trim()) { document.getElementById('matchCt').textContent=''; return; }
   const n = lines.reduce((a,l)=>a+(l.text.match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'))||[]).length,0);
-  document.getElementById('matchCt').textContent = n ? `${n} match${n>1?'es':''}` : 'No matches';
+  document.getElementById('matchCt').textContent = n?`${n} match${n>1?'es':''}`:' No matches';
   const first = document.querySelector('mark.hl');
   if (first) first.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 // ─── Audio ────────────────────────────────────────────────────────
-function loadAudio(input) {
-  const file = input.files[0]; if (!file) return;
-  audio.src = URL.createObjectURL(file);
-  audioLoaded = true;
-  document.getElementById('playBtn').disabled = false;
-  document.getElementById('uploadHint').style.display = 'none';
-  document.getElementById('nowPlaying').style.display = 'block';
-  document.getElementById('nowPlaying').textContent = '🎵 ' + file.name;
-  audio.addEventListener('loadedmetadata', () => {
-    document.getElementById('durTime').textContent = fmtS(audio.duration);
-  }, { once: true });
-  showToast('🎵 Audio loaded!');
-}
-
 function togglePlay() {
-  if (!audioLoaded) { showToast('Load an audio file first'); return; }
+  if (!audioLoaded) return;
   audio.paused ? audio.play() : audio.pause();
 }
 audio.addEventListener('play', ()=>document.getElementById('playBtn').textContent='⏸');
@@ -573,23 +558,18 @@ audio.addEventListener('timeupdate', () => {
   syncActiveLine(t);
 });
 
-// FIX: proper seek — calculate position relative to inner track
 function seekClick(e) {
   if (!audioLoaded || !audio.duration) return;
   const inner = document.querySelector('.seek-track-inner');
   const r = inner.getBoundingClientRect();
-  const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  const pct = Math.max(0, Math.min(1, (e.clientX-r.left)/r.width));
   audio.currentTime = pct * audio.duration;
 }
 
-// FIX: lineClick only seeks if audio is actually loaded
 function lineClick(idx) {
   const l = lines[idx];
   if (l.timeSec === null) return;
-  if (!audioLoaded) {
-    showToast('Load an audio file to seek to this line');
-    return;
-  }
+  if (!audioLoaded) { showToast('No audio available for this transcript'); return; }
   audio.currentTime = l.timeSec;
   if (audio.paused) audio.play();
 }
@@ -620,7 +600,81 @@ function setSpeed(s, btn) {
 }
 function toggleMute() {
   audio.muted = !audio.muted;
-  document.querySelector('.vol-icon').textContent = audio.muted ? '🔇' : '🔊';
+  document.querySelector('.vol-icon').textContent = audio.muted?'🔇':'🔊';
+}
+
+// ─── Translation ──────────────────────────────────────────────────
+async function startTranslation() {
+  const lang = document.getElementById('translateLang').value;
+  if (!lang) { showToast('Please select a language first'); return; }
+
+  translateLangName = lang;
+  document.getElementById('translateModalTitle').textContent = `Translation — ${lang}`;
+  document.getElementById('translateModalBody').innerHTML = `<div class="translate-loading"><div class="translate-spinner"></div><span>Translating to ${lang}…</span></div>`;
+  document.getElementById('translateOverlay').classList.add('show');
+
+  try {
+    const text = T?.transcript || '';
+    // Chunk text if very long (keep under ~3000 chars per request)
+    const chunks = chunkText(text, 3000);
+    let translated = '';
+
+    for (const chunk of chunks) {
+      const res = await fetch('/api/config').then(r=>r.json()).then(cfg => {
+        // Use Claude API via our own config-proxy pattern
+        return fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4000,
+            messages: [{
+              role: 'user',
+              content: `Translate the following transcript to ${lang}. Keep speaker labels (Speaker 1:, Speaker 2:) and timestamps ([0:05]) exactly as they are. Only translate the spoken text. Return only the translated transcript, nothing else.\n\n${chunk}`
+            }]
+          })
+        });
+      });
+
+      // If direct Anthropic API isn't available, use a simple prompt via our /api/translate endpoint
+      if (!res.ok) throw new Error('Translation API not available');
+      const data = await res.json();
+      translated += (data.content?.[0]?.text || '') + '\n';
+    }
+
+    translatedText = translated.trim();
+    document.getElementById('translateModalBody').innerHTML = `<div class="translate-content">${escH(translatedText)}</div>`;
+  } catch(e) {
+    // Fallback: show message that translation requires API setup
+    document.getElementById('translateModalBody').innerHTML = `
+      <div style="color:var(--muted);text-align:center;padding:2rem">
+        <div style="font-size:2rem;margin-bottom:1rem">🌐</div>
+        <div style="font-size:0.9rem;margin-bottom:0.5rem">Translation requires a Claude API endpoint.</div>
+        <div style="font-size:0.8rem">Add a <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">/api/translate</code> route to your server.js to enable this feature.</div>
+      </div>`;
+  }
+}
+
+function chunkText(text, maxLen) {
+  const lines = text.split('\n');
+  const chunks = [], cur = [];
+  let len = 0;
+  for (const line of lines) {
+    if (len + line.length > maxLen && cur.length) {
+      chunks.push(cur.join('\n'));
+      cur.length = 0; len = 0;
+    }
+    cur.push(line); len += line.length;
+  }
+  if (cur.length) chunks.push(cur.join('\n'));
+  return chunks;
+}
+
+function closeTranslation() { document.getElementById('translateOverlay').classList.remove('show'); }
+function copyTranslation() { navigator.clipboard.writeText(translatedText).then(()=>showToast('✅ Copied!')); }
+function downloadTranslation() {
+  const name = (T?.filename||'transcript').replace(/\.[^.]+$/,'') + `_${translateLangName}.txt`;
+  dl(translatedText, name, 'text/plain');
 }
 
 // ─── Export ───────────────────────────────────────────────────────

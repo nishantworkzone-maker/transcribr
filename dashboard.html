@@ -609,13 +609,14 @@ async function startTranscription() {
 
       setProgress(95, 'Saving transcript…');
 
-      // Save to Supabase
+      // Save to Supabase — include audio_url so transcript.html can auto-play
       await sb.from('transcriptions').insert({
         user_id: currentUser.id,
         filename: file?.name || (audioUrl.split('/').pop() || 'recording'),
         transcript: data.text,
         mode: currentMode,
-        language: lang
+        language: lang,
+        audio_url: currentInputTab === 'url' ? audioUrl : null
       });
 
       setProgress(100, 'Done!');

@@ -1,20 +1,19 @@
 export default async function handler(req, res) {
   const { url } = req.query;
 
-  if (!url) {
-    return res.status(400).send('Missing URL');
-  }
+  if (!url) return res.status(400).send('Missing URL');
 
   try {
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
-        'Accept': '*/*'
+        'Accept': '*/*',
+        'Referer': url,
       }
     });
 
     if (!response.ok) {
-      console.error('Fetch failed:', response.status);
+      console.error('Fetch failed status:', response.status);
       return res.status(500).send('Failed to fetch audio');
     }
 

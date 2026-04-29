@@ -1,84 +1,65 @@
 // middleware/auth.js
-// Checks if the user is logged in before allowing access to protected routes
-// It reads the user's token from the request header and verifies it with Supabase
-
 import { createClient } from '@supabase/supabase-js';
 
-// Create a Supabase admin client using your service key
-// This is only used on the SERVER — never expose this key in the browser
-function getSupabaseAdmin() {
+function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_ANON_KEY; // use anon key for auth
 
-  if (!url) {
-    throw new Error('Missing environment variable: SUPABASE_URL — please add it in Vercel → Settings → Environment Variables');
-  }
-  if (!key) {
-    throw new Error('Missing environment variable: SUPABASE_SERVICE_KEY — please add it in Vercel → Settings → Environment Variables');
+  if (!url || !key) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
   }
 
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  return createClient(url, key);
 }
 
-/**
- * Middleware: requires user to be authenticated
- * Attach the user to req.user if valid, or return 401 Unauthorized
- */
-export async function requireAuth(req, res, next) {
-  // Get the Authorization header — looks like: "Bearer eyJhbGci..."
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: 'Not authenticated. Please log in first.'
-    });
-  }
-
-  const token = authHeader.split(' ')[1]; // Extract just the token part
-
+// Optional auth → allows guest + logged-in users
+export async function optionalAuth(req, res, next) {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const token = req.headers.authorization?.split('Bearer ')[1];
 
-    if (error || !user) {
-      return res.status(401).json({
-        error: 'Invalid or expired session. Please log in again.'
-      });
+    if (!token) {
+      req.user = null; // guest user
+      return next();
     }
 
-    // Attach user to request so later middlewares/routes can use it
-    req.user = user;
-    next(); // Continue to the next middleware or route handler
+    const supabase = getSupabaseClient();
 
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
+      req.user = null; // invalid token → treat as guest
+    } else {
+      req.user = data.user; // logged-in user
+    }
+
+    next();
   } catch (err) {
-    console.error('Auth middleware error:', err.message);
-    return res.status(500).json({ error: 'Authentication check failed' });
+    console.error('Auth error:', err.message);
+    req.user = null;
+    next(); // do NOT block
   }
 }
 
-/**
- * Optional auth: attaches user if token is present, but doesn't block if missing
- * Useful for routes that work for both guests and logged-in users
- */
-export async function optionalAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    req.user = null;
-    return next();
-  }
-
-  const token = authHeader.split(' ')[1];
-
+// Strict auth → ONLY for protected routes (like subscription)
+export async function requireAuth(req, res, next) {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data: { user } } = await supabase.auth.getUser(token);
-    req.user = user || null;
-  } catch {
-    req.user = null;
-  }
+    const token = req.headers.authorization?.split('Bearer ')[1];
 
-  next();
+    if (!token) {
+      return res.status(401).json({ error: 'Login required' });
+    }
+
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    req.user = data.user;
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Auth failed: ' + err.message });
+  }
 }

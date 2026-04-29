@@ -1,14 +1,12 @@
 // routes/transcribe.js
-// This file handles the main transcription endpoint: POST /api/transcribe
-// It picks the right engine based on the user's mode selection and plan
 
 import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
-import path from 'path';
 
-import { requireAuth } from '../middleware/auth.js';
-import { checkUsageLimit, checkEngineAccess, recordUsage, saveTranscript } from '../middleware/usage.js';
+import { optionalAuth } from '../middleware/auth.js';
+import { checkUsage } from '../middleware/usage.js';
+
 import { transcribeGroq } from '../engines/groq.js';
 import { transcribeDeepgram } from '../engines/deepgram.js';
 import { transcribeAssemblyAI } from '../engines/assemblyai.js';
@@ -16,23 +14,22 @@ import { detectAndMaskPII } from '../services/pii.js';
 
 const router = express.Router();
 
-// Multer handles file uploads — stores them temporarily in /tmp
 const upload = multer({
   dest: '/tmp/',
-  limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+  limits: { fileSize: 25 * 1024 * 1024 }
 });
 
-// Main transcription route
-// Protected by: requireAuth → checkUsageLimit → checkEngineAccess
 router.post('/',
-  requireAuth,
-  checkUsageLimit,
-  checkEngineAccess,
+  optionalAuth,   // ✅ allow guest + logged-in
+  checkUsage,     // ✅ limit logged users only
   upload.single('audio'),
   async (req, res) => {
+
     const { mode = 'fast', language = 'en', audioUrl, enablePII = 'false', title = '' } = req.body;
     const filePath = req.file?.path;
-    const userId = req.user.id;
+
+    // ✅ user may be null (guest)
+    const userId = req.user?.id || null;
 
     try {
       if (!filePath && !audioUrl) {
@@ -42,7 +39,7 @@ router.post('/',
       let result;
       const shouldMaskPII = enablePII === 'true';
 
-      // Pick the engine based on mode
+      // 🎯 Engine selection
       if (mode === 'fast') {
         result = await transcribeGroq(filePath, language);
       } else if (mode === 'balanced') {
@@ -53,42 +50,46 @@ router.post('/',
         return res.status(400).json({ error: `Unknown mode: ${mode}` });
       }
 
-      // Apply PII masking if requested and engine didn't already handle it
+      // 🔐 PII handling
       let maskedText = null;
       let piiDetected = false;
+
       if (shouldMaskPII && result.engine === 'groq') {
-        // Groq doesn't mask PII automatically — we do it ourselves
         const piiResult = detectAndMaskPII(result.text);
         maskedText = piiResult.masked;
         piiDetected = piiResult.detected.length > 0;
       } else if (shouldMaskPII) {
-        // Deepgram and AssemblyAI already redact PII in their output
         maskedText = result.text;
         piiDetected = true;
       }
 
-      // Record the usage in database
-      const duration = result.segments?.[result.segments.length - 1]?.end || 0;
-      await recordUsage(userId, result.engine, duration, title);
+      // ✅ Only save & track if user is logged in
+      let saved = null;
 
-      // Save the full transcript
-      const saved = await saveTranscript(userId, {
-        title: title || req.file?.originalname || 'Untitled',
-        text: result.text,
-        maskedText,
-        audioUrl,
-        engine: result.engine,
-        language,
-        piiDetected,
-        speakerCount: countSpeakers(result.text)
-      });
+      if (userId) {
+        const { recordUsage, saveTranscript } = await import('../middleware/usage.js');
 
-      // Clean up the temp file
+        const duration = result.segments?.[result.segments.length - 1]?.end || 0;
+
+        await recordUsage(userId, result.engine, duration, title);
+
+        saved = await saveTranscript(userId, {
+          title: title || req.file?.originalname || 'Untitled',
+          text: result.text,
+          maskedText,
+          audioUrl,
+          engine: result.engine,
+          language,
+          piiDetected,
+          speakerCount: countSpeakers(result.text)
+        });
+      }
+
+      // 🧹 cleanup
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
-      // Send the response back to the browser
       res.json({
         success: true,
         text: result.text,
@@ -97,11 +98,10 @@ router.post('/',
         engine: result.engine,
         segments: result.segments,
         transcriptId: saved?.id || null,
-        usageCount: req.usageCount + 1
+        userType: userId ? 'logged-in' : 'guest'
       });
 
     } catch (err) {
-      // Clean up temp file on error
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -112,7 +112,6 @@ router.post('/',
   }
 );
 
-// Helper: count unique speakers mentioned in transcript text
 function countSpeakers(text) {
   const matches = text.match(/Speaker \d+/g) || [];
   return new Set(matches).size || 1;

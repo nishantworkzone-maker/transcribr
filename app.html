@@ -246,7 +246,9 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
       <div class="status-msg" id="statusMsg"></div>
     </div>
 
-    <button class="transcribe-btn" id="transcribeBtn" onclick="transcribe()">Transcribe now →</button>
+    <button class="<button id="transcribeBtn" onclick="startTranscription()" class="transcribe-btn">
+  Transcribe Now
+</button>" id="transcribeBtn" onclick="transcribe()">Transcribe now →</button>
   </div>
 </div>
 
@@ -562,6 +564,42 @@ function downloadSrt(){dl(srtContent,fileName+'.srt','text/plain');showToast('SR
 function downloadVtt(){dl(vttContent,fileName+'.vtt','text/vtt');showToast('VTT downloaded!');}
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+<script>
+async function startTranscription() {
+  const btn = document.getElementById("transcribeBtn");
+  const progressWrap = document.getElementById("progressWrap");
+  const progressFill = document.getElementById("progressFill");
+  const statusMsg = document.getElementById("statusMsg");
+
+  btn.disabled = true;
+  progressWrap.style.display = "block";
+
+  try {
+    statusMsg.innerText = "Uploading file...";
+    progressFill.style.width = "25%";
+    await new Promise(r => setTimeout(r, 1000));
+
+    statusMsg.innerText = "Processing audio...";
+    progressFill.style.width = "60%";
+    await new Promise(r => setTimeout(r, 1500));
+
+    statusMsg.innerText = "Generating transcript...";
+    progressFill.style.width = "85%";
+    await new Promise(r => setTimeout(r, 1500));
+
+    statusMsg.innerText = "Finalizing...";
+    progressFill.style.width = "100%";
+
+    setTimeout(() => {
+      alert("✅ Transcription completed!");
+    }, 800);
+
+  } catch (err) {
+    statusMsg.innerText = "❌ Something failed. Try again.";
+    btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>

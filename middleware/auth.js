@@ -1,65 +1,42 @@
 // middleware/auth.js
 import { createClient } from '@supabase/supabase-js';
 
-function getSupabaseClient() {
+function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY; // use anon key for auth
-
-  if (!url || !key) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
-  }
-
-  return createClient(url, key);
+  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
-// Optional auth → allows guest + logged-in users
-export async function optionalAuth(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split('Bearer ')[1];
-
-    if (!token) {
-      req.user = null; // guest user
-      return next();
-    }
-
-    const supabase = getSupabaseClient();
-
-    const { data, error } = await supabase.auth.getUser(token);
-
-    if (error || !data?.user) {
-      req.user = null; // invalid token → treat as guest
-    } else {
-      req.user = data.user; // logged-in user
-    }
-
-    next();
-  } catch (err) {
-    console.error('Auth error:', err.message);
-    req.user = null;
-    next(); // do NOT block
-  }
-}
-
-// Strict auth → ONLY for protected routes (like subscription)
+// requireAuth: BLOCKS request if no token — use for delete/save routes only
 export async function requireAuth(req, res, next) {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Not authenticated. Please log in first.' });
+  }
   try {
-    const token = req.headers.authorization?.split('Bearer ')[1];
-
-    if (!token) {
-      return res.status(401).json({ error: 'Login required' });
-    }
-
-    const supabase = getSupabaseClient();
-
-    const { data, error } = await supabase.auth.getUser(token);
-
-    if (error || !data?.user) {
-      return res.status(401).json({ error: 'Invalid session' });
-    }
-
-    req.user = data.user;
+    const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(token);
+    if (error || !user) return res.status(401).json({ error: 'Invalid or expired session.' });
+    req.user = user;
     next();
   } catch (err) {
-    return res.status(500).json({ error: 'Auth failed: ' + err.message });
+    res.status(500).json({ error: 'Auth check failed: ' + err.message });
   }
+}
+
+// optionalAuth: NEVER blocks — guests get req.user = null, logged-in users get req.user = {...}
+// This is what the /api/transcribe route uses
+export async function optionalAuth(req, res, next) {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+  if (!token) {
+    req.user = null;
+    return next(); // guest — let them through
+  }
+  try {
+    const { data: { user } } = await getSupabaseAdmin().auth.getUser(token);
+    req.user = user || null;
+  } catch {
+    req.user = null; // token failed — still treat as guest, don't block
+  }
+  next();
 }

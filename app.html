@@ -16,8 +16,6 @@
 }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
-
-/* NAV */
 nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); letter-spacing: -0.3px; text-decoration: none; }
 .logo span { color: var(--accent2); }
@@ -27,19 +25,13 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .nav-dash:hover { color: var(--text); border-color: var(--accent); }
 .nav-signout { background: transparent; border: none; color: var(--muted); font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0.4rem; transition: color 0.2s; }
 .nav-signout:hover { color: var(--red); }
-
-/* MAIN */
 .app-wrap { max-width: 780px; margin: 0 auto; padding: 3rem 2rem 5rem; }
 .page-header { margin-bottom: 2rem; }
 .page-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
 .page-header p { color: var(--muted); font-size: 0.92rem; }
-
-/* TABS */
 .input-tabs { display: flex; margin-bottom: 1.4rem; background: var(--surface); border-radius: 11px; padding: 4px; width: fit-content; }
 .tab-btn { padding: 0.48rem 1.3rem; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 0.86rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
 .tab-btn.active { background: var(--accent); color: #fff; }
-
-/* UPLOAD */
 .upload-area { background: var(--surface); border: 2px dashed var(--border2); border-radius: 18px; padding: 2.8rem 2rem; text-align: center; cursor: pointer; position: relative; transition: border-color 0.2s, background 0.2s; }
 .upload-area.dragover, .upload-area.has-file { border-style: solid; border-color: var(--accent); background: rgba(124,106,255,0.04); }
 .upload-icon { font-size: 2.5rem; margin-bottom: 0.9rem; display: block; }
@@ -54,16 +46,12 @@ input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; wi
 .url-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 11px; padding: 0.9rem 1.1rem; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; }
 .url-input:focus { outline: none; border-color: var(--accent); }
 .url-hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.45rem; }
-
-/* MODE */
 .mode-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.4rem 0 1.2rem; }
 .mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 0.9rem; text-align: center; cursor: pointer; transition: all 0.2s; }
 .mode-card.selected { border-color: var(--accent); background: var(--glow); }
 .mode-emoji { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; }
 .mode-name { font-size: 0.85rem; font-weight: 600; display: block; }
 .mode-desc { font-size: 0.72rem; color: var(--muted); display: block; margin-top: 1px; }
-
-/* SETTINGS */
 .settings-row { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
 .settings-title { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin-bottom: 0.8rem; letter-spacing: 0.3px; text-transform: uppercase; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0; border-top: 1px solid var(--border); }
@@ -77,23 +65,16 @@ input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; wi
 .toggle-slider::before { content: ''; position: absolute; width: 15px; height: 15px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
 .toggle input:checked + .toggle-slider { background: var(--accent); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(17px); }
-
-/* LANG */
 .lang-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem; }
 .opt-group label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
 .opt-group select { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 9px; padding: 0.55rem 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; appearance: none; }
-
-/* PROGRESS */
 .progress-wrap { margin: 0.8rem 0; display: none; }
 .progress-bar { height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; width: 0; transition: width 0.4s ease; }
 .status-msg { font-size: 0.83rem; color: var(--muted); text-align: center; margin-top: 0.5rem; min-height: 18px; }
-
 .transcribe-btn { width: 100%; padding: 0.95rem; background: var(--accent); color: #fff; border: none; border-radius: 100px; font-size: 0.98rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity 0.2s, transform 0.15s; margin-top: 0.3rem; }
 .transcribe-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
 .transcribe-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* RESULT */
 #resultPage { display: none; min-height: 100vh; }
 #resultPage.show { display: flex; flex-direction: column; }
 .result-nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 0.8rem; }
@@ -131,14 +112,10 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
 .plain-transcript { font-size: 0.9rem; line-height: 2; color: var(--text); white-space: pre-wrap; }
 .plain-transcript .ts-link { color: var(--accent2); font-size: 0.78rem; cursor: pointer; margin-right: 5px; padding: 1px 5px; border-radius: 4px; background: rgba(124,106,255,0.1); }
 .plain-transcript .ts-link:hover { background: rgba(124,106,255,0.22); }
-
-/* Save bar */
 .save-bar { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); border-radius: 10px; padding: 0.7rem 1rem; margin: 1rem 0; display: none; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--green); }
 .save-bar.show { display: flex; }
-
 .toast { position: fixed; bottom: 1.8rem; right: 1.8rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 11px; padding: 0.75rem 1.1rem; font-size: 0.85rem; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 999; }
 .toast.show { transform: translateY(0); opacity: 1; }
-
 @media(max-width:600px) {
   nav { padding: 1rem 1.2rem; }
   .mode-row, .lang-select-row { grid-template-columns: 1fr; }
@@ -149,7 +126,6 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <div class="nav-right">
@@ -159,7 +135,6 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
   </div>
 </nav>
 
-<!-- UPLOAD APP -->
 <div id="appPage">
   <div class="app-wrap">
     <div class="page-header">
@@ -177,7 +152,7 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
         <input type="file" id="fileInput" accept="audio/*,video/*" onchange="handleFile(event)"/>
         <span class="upload-icon">🎙</span>
         <h3 id="uploadTitle">Drop your file here</h3>
-        <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A and more (up to 100MB)</p>
+        <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A and more (up to 25MB)</p>
         <div class="upload-formats">
           <span class="fmt-badge">MP3</span><span class="fmt-badge">MP4</span>
           <span class="fmt-badge">WAV</span><span class="fmt-badge">M4A</span>
@@ -187,8 +162,8 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
     </div>
 
     <div class="url-panel" id="urlPanel">
-      <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3 or call recording URL"/>
-      <p class="url-hint">💡 Supports direct audio/video URLs and private call recording links</p>
+      <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3"/>
+      <p class="url-hint">💡 Supports direct audio/video URLs</p>
     </div>
 
     <div class="mode-row">
@@ -226,18 +201,14 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
     </div>
 
     <div class="settings-row">
-      <div class="settings-title">Speaker & Audio Settings</div>
+      <div class="settings-title">Settings</div>
       <div class="toggle-row">
         <div class="toggle-label"><span>👥 Recognize Speakers</span><small>Label each section with who is speaking</small></div>
         <label class="toggle"><input type="checkbox" id="tog-speakers" checked/><span class="toggle-slider"></span></label>
       </div>
       <div class="toggle-row">
-        <div class="toggle-label"><span>🔤 Transcribe to English</span><small>Transcribe the original audio directly to English</small></div>
+        <div class="toggle-label"><span>🔤 Force English Output</span><small>Translate transcript to English</small></div>
         <label class="toggle"><input type="checkbox" id="tog-english"/><span class="toggle-slider"></span></label>
-      </div>
-      <div class="toggle-row">
-        <div class="toggle-label"><span>🎵 Restore Audio</span><small>Remove background noise and enhance speech quality</small></div>
-        <label class="toggle"><input type="checkbox" id="tog-restore"/><span class="toggle-slider"></span></label>
       </div>
     </div>
 
@@ -246,13 +217,10 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
       <div class="status-msg" id="statusMsg"></div>
     </div>
 
-    <button class="<button id="transcribeBtn" onclick="startTranscription()" class="transcribe-btn">
-  Transcribe Now
-</button>" id="transcribeBtn" onclick="transcribe()">Transcribe now →</button>
+    <button id="transcribeBtn" onclick="transcribe()" class="transcribe-btn">Transcribe now →</button>
   </div>
 </div>
 
-<!-- RESULT PAGE -->
 <div id="resultPage">
   <div class="result-nav">
     <div class="result-nav-left">
@@ -298,18 +266,36 @@ let fileName = 'transcript', currentMode = 'fast', currentTab = 'upload';
 let utterances = [], localFileUrl = null, animFrameId = null, waveBarData = [];
 const audioEl = document.getElementById('audioEl');
 
-// ── Auth gate — redirect if not logged in ──────────────────────────
+// ── Guest limit (localStorage) ─────────────────────────────────────
+const GUEST_LIMIT = 3;
+function getGuestUsage() { return parseInt(localStorage.getItem('transcribr_guest_count') || '0'); }
+function incrementGuestUsage() { localStorage.setItem('transcribr_guest_count', getGuestUsage() + 1); }
+function isGuestLimitReached() { return getGuestUsage() >= GUEST_LIMIT; }
+
+// ── Auth helpers ───────────────────────────────────────────────────
+async function getAuthToken() {
+  if (!sb) return null;
+  const { data: { session } } = await sb.auth.getSession();
+  return session?.access_token || null;
+}
+
+// ── Boot: init Supabase, get session, allow guests ─────────────────
 async function boot() {
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { location.href = '/login.html'; return; }
-    currentUser = session.user;
-    const name = currentUser.user_metadata?.full_name || currentUser.email;
-    document.getElementById('navUser').textContent = '👤 ' + name.split(' ')[0];
+    if (session) {
+      currentUser = session.user;
+      const name = currentUser.user_metadata?.full_name || currentUser.email;
+      document.getElementById('navUser').textContent = '👤 ' + name.split(' ')[0];
+    } else {
+      // Guest — show remaining free uses
+      const remaining = GUEST_LIMIT - getGuestUsage();
+      document.getElementById('navUser').textContent = `Guest · ${remaining} free left`;
+    }
   } catch(e) {
-    console.error('Auth error:', e);
+    console.error('Boot error:', e);
   }
 }
 boot();
@@ -373,13 +359,22 @@ function getMsg(p) {
   return 'Almost done…';
 }
 
-// ── Transcribe ─────────────────────────────────────────────────────
+// ── Main transcribe function ───────────────────────────────────────
 async function transcribe() {
   const audioUrl = document.getElementById('audioUrl').value.trim();
   const fileInput = document.getElementById('fileInput');
   const file = fileInput.files[0];
+
   if (currentTab === 'upload' && !file) { showToast('Please upload an audio file first'); return; }
   if (currentTab === 'url' && !audioUrl) { showToast('Please paste an audio URL first'); return; }
+
+  // Check guest limit BEFORE starting
+  const token = await getAuthToken();
+  if (!token && isGuestLimitReached()) {
+    showToast('Free limit reached — please sign in to continue');
+    setTimeout(() => location.href = '/login.html', 1500);
+    return;
+  }
 
   const btn = document.getElementById('transcribeBtn');
   btn.disabled = true; btn.textContent = 'Processing…';
@@ -388,8 +383,10 @@ async function transcribe() {
   const lang = document.getElementById('tog-english').checked ? 'en' : document.getElementById('language').value;
   const formData = new FormData();
   formData.append('language', lang);
+  formData.append('mode', currentMode);
 
   try {
+    // Handle URL tab
     if (currentTab === 'url' && audioUrl) {
       setProgress(12, 'Fetching audio from URL…');
       try {
@@ -397,40 +394,46 @@ async function transcribe() {
         if (!audioRes.ok) throw new Error('fetch failed');
         const blob = await audioRes.blob();
         setProgress(28, 'Uploading to AI service…');
-        if (currentMode === 'accurate') {
-          const { key } = await fetch('/api/assemblykey').then(r=>r.json());
-          const { upload_url } = await fetch('https://api.assemblyai.com/v2/upload',{method:'POST',headers:{'Authorization':key,'Content-Type':'application/octet-stream'},body:blob}).then(r=>r.json());
-          formData.append('audioUrl', upload_url); formData.append('mode','accurate');
-        } else {
-          formData.append('audio', blob, 'recording.wav'); formData.append('mode', currentMode);
-        }
+        formData.append('audio', blob, 'recording.wav');
         if (localFileUrl) URL.revokeObjectURL(localFileUrl);
         localFileUrl = URL.createObjectURL(blob);
         audioEl.src = localFileUrl; audioEl.load();
       } catch {
-        formData.append('audioUrl', audioUrl); formData.append('mode', currentMode);
+        // Fallback: send URL directly
+        formData.append('audioUrl', audioUrl);
         audioEl.src = audioUrl; audioEl.load();
-      }
-    } else if (currentTab === 'upload' && file) {
-      if (file.size > 4 * 1024 * 1024) {
-        setProgress(12, 'Large file — uploading directly to AI…');
-        const { key } = await fetch('/api/assemblykey').then(r=>r.json());
-        setProgress(22, 'Uploading to AssemblyAI…');
-        const { upload_url } = await fetch('https://api.assemblyai.com/v2/upload',{method:'POST',headers:{'Authorization':key,'Content-Type':'application/octet-stream'},body:await file.arrayBuffer()}).then(r=>r.json());
-        formData.append('audioUrl', upload_url); formData.append('mode','accurate');
-        setProgress(36, 'File uploaded — transcribing…');
-      } else {
-        formData.append('audio', file); formData.append('mode', currentMode);
       }
     }
 
-    let prog = parseInt(document.getElementById('progressFill').style.width)||36;
-    const iv = setInterval(() => { if (prog < 88) { prog += currentMode==='accurate'?1:4; setProgress(prog, getMsg(prog)); }}, currentMode==='accurate'?2000:600);
+    // Handle file upload tab
+    if (currentTab === 'upload' && file) {
+      formData.append('audio', file);
+      setProgress(20, 'Uploading file…');
+    }
 
-    const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+    // Start fake progress ticker while waiting for API
+    let prog = parseInt(document.getElementById('progressFill').style.width) || 28;
+    const iv = setInterval(() => {
+      if (prog < 88) { prog += currentMode === 'accurate' ? 1 : 3; setProgress(prog, getMsg(prog)); }
+    }, currentMode === 'accurate' ? 2500 : 700);
+
+    // Build headers with auth token if logged in
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    // Make the API call
+    const res = await fetch('/api/transcribe', { method: 'POST', headers, body: formData });
     const data = await res.json();
     clearInterval(iv);
-    if (data.error) throw new Error(data.error);
+
+    if (!res.ok || data.error) throw new Error(data.error || 'Transcription failed');
+
+    // If guest, record this use in localStorage
+    if (!token) {
+      incrementGuestUsage();
+      const remaining = GUEST_LIMIT - getGuestUsage();
+      document.getElementById('navUser').textContent = `Guest · ${remaining} free left`;
+    }
 
     setProgress(100, 'Done!');
     await new Promise(r => setTimeout(r, 350));
@@ -447,17 +450,16 @@ async function transcribe() {
     document.getElementById('progressWrap').style.display = 'none';
     showToast('Transcript ready!');
 
-    // Save to Supabase
+    // Save to Supabase only if logged in
     if (currentUser && sb) {
       try {
-        const audioUrlToSave = currentTab === 'url' ? document.getElementById('audioUrl').value.trim() : null;
-        await sb.from('transcriptions').insert({
+        await sb.from('transcripts').insert({
           user_id: currentUser.id,
-          filename: fileName || 'transcript',
+          title: fileName || 'transcript',
           transcript: transcriptContent,
-          mode: currentMode,
-          language: document.getElementById('language').value,
-          audio_url: audioUrlToSave
+          engine: data.engine || currentMode,
+          language: lang,
+          audio_url: currentTab === 'url' ? audioUrl : null
         });
         document.getElementById('saveBar').classList.add('show');
       } catch(e) { console.log('Save skipped:', e.message); }
@@ -468,6 +470,7 @@ async function transcribe() {
     showToast('Error: ' + err.message);
     console.error(err);
   }
+
   btn.disabled = false; btn.textContent = 'Transcribe now →';
 }
 
@@ -492,7 +495,7 @@ function renderTranscript() {
   container.innerHTML = '';
   if (utterances.length > 0) {
     utterances.forEach((u, i) => {
-      const start = typeof u.start==='number' ? u.start : (u.start_time||0)/1000;
+      const start = typeof u.start === 'number' ? u.start : (u.start_time||0)/1000;
       const speaker = u.speaker !== undefined ? `Speaker ${typeof u.speaker==='number'?u.speaker+1:u.speaker}` : '';
       const text = (u.text||u.transcript||'').trim();
       const div = document.createElement('div');
@@ -509,7 +512,9 @@ function renderTranscript() {
       return `<span class="ts-link" onclick="seekTo(${s})">[${min}:${sec}]</span>`;
     });
     container.appendChild(div);
-  } else { container.textContent = 'No transcript returned.'; }
+  } else {
+    container.textContent = 'No transcript returned.';
+  }
 }
 
 // ── Waveform ───────────────────────────────────────────────────────
@@ -529,7 +534,7 @@ function initWaveform() {
 function animLoop(ctx,W,H){const pct=audioEl.duration?audioEl.currentTime/audioEl.duration:0;drawWave(ctx,W,H,pct);animFrameId=requestAnimationFrame(()=>animLoop(ctx,W,H));}
 function drawWave(ctx,W,H,pct){ctx.clearRect(0,0,W,H);const bw=W/waveBarData.length,mid=H/2,px=pct*W;waveBarData.forEach((amp,i)=>{const x=i*bw,bh=amp*(H*0.85);ctx.fillStyle=x<px?'#7c6aff':'rgba(255,255,255,0.15)';ctx.beginPath();ctx.roundRect(x+1,mid-bh/2,bw-2,bh,2);ctx.fill();});}
 
-// ── Audio ──────────────────────────────────────────────────────────
+// ── Audio player ───────────────────────────────────────────────────
 audioEl.addEventListener('timeupdate', () => {
   const cur=audioEl.currentTime||0,dur=audioEl.duration||0,pct=dur>0?(cur/dur)*100:0;
   document.getElementById('playerFill').style.width=pct+'%';
@@ -564,42 +569,6 @@ function downloadSrt(){dl(srtContent,fileName+'.srt','text/plain');showToast('SR
 function downloadVtt(){dl(vttContent,fileName+'.vtt','text/vtt');showToast('VTT downloaded!');}
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-</script>
-<script>
-async function startTranscription() {
-  const btn = document.getElementById("transcribeBtn");
-  const progressWrap = document.getElementById("progressWrap");
-  const progressFill = document.getElementById("progressFill");
-  const statusMsg = document.getElementById("statusMsg");
-
-  btn.disabled = true;
-  progressWrap.style.display = "block";
-
-  try {
-    statusMsg.innerText = "Uploading file...";
-    progressFill.style.width = "25%";
-    await new Promise(r => setTimeout(r, 1000));
-
-    statusMsg.innerText = "Processing audio...";
-    progressFill.style.width = "60%";
-    await new Promise(r => setTimeout(r, 1500));
-
-    statusMsg.innerText = "Generating transcript...";
-    progressFill.style.width = "85%";
-    await new Promise(r => setTimeout(r, 1500));
-
-    statusMsg.innerText = "Finalizing...";
-    progressFill.style.width = "100%";
-
-    setTimeout(() => {
-      alert("✅ Transcription completed!");
-    }, 800);
-
-  } catch (err) {
-    statusMsg.innerText = "❌ Something failed. Try again.";
-    btn.disabled = false;
-  }
-}
 </script>
 </body>
 </html>

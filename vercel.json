@@ -1,8 +1,7 @@
 {
   "version": 2,
   "builds": [
-    { "src": "server.js", "use": "@vercel/node" },
-    { "src": "*.html", "use": "@vercel/static" }
+    { "src": "server.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/server.js" },
@@ -10,6 +9,8 @@
     { "src": "/dashboard.html", "dest": "/dashboard.html" },
     { "src": "/transcript.html", "dest": "/transcript.html" },
     { "src": "/app.html", "dest": "/app.html" },
+    { "src": "/index.html", "dest": "/index.html" },
+    { "src": "/(.*\\.html)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

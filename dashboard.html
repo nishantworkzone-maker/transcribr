@@ -66,7 +66,7 @@ th { text-align: left; padding: 0.7rem 1.5rem; font-size: 0.75rem; color: var(--
 td { padding: 0.9rem 1.5rem; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
-.file-name { font-weight: 500; color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-name { font-weight: 500; color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-mode { font-size: 0.78rem; }
 .status-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
@@ -131,6 +131,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .opt-group label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
 .opt-group select { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 0.55rem 0.8rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; appearance: none; }
 
+.toggle-list { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.4rem; }
+.toggle-item { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+.toggle-item:last-child { border-bottom: none; }
+.toggle-label span { font-size: 0.86rem; font-weight: 500; display: block; }
+.toggle-label small { font-size: 0.75rem; color: var(--muted); }
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--border2); border-radius: 100px; cursor: pointer; transition: background 0.2s; }
+.slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+.toggle input:checked + .slider { background: var(--accent); }
+.toggle input:checked + .slider::before { transform: translateX(16px); }
+
 .progress-wrap { margin-bottom: 1rem; display: none; }
 .progress-bar { height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0; transition: width 0.4s; }
@@ -153,7 +165,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <div class="nav-right">
     <div class="user-info">
-      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-avatar" id="userAvatar">N</div>
       <span class="user-email" id="userEmail">Loading...</span>
       <span class="plan-badge" id="planBadge">Free</span>
     </div>
@@ -164,58 +176,63 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-label">Menu</div>
-    <a class="sidebar-item active" href="/dashboard.html">📁 My Transcripts</a>
-    <a class="sidebar-item" href="/app.html">➕ New Transcription</a>
+    <a class="sidebar-item active" href="/dashboard.html">📁 Recent Files</a>
+    <a class="sidebar-item" href="/pricing.html">⭐ Upgrade Plan</a>
     <div class="sidebar-divider"></div>
     <div class="sidebar-label">Account</div>
     <a class="sidebar-item" href="#" onclick="signOut()">🚪 Sign Out</a>
   </aside>
 
   <main class="main">
+    <!-- Upgrade banner for free users -->
     <div class="upgrade-banner" id="upgradeBanner" style="display:none">
       <div class="upgrade-text">
         <h4>🚀 Upgrade to Pro</h4>
-        <p>Unlimited transcriptions, 5-hour files, speaker detection, and translation for $12/month.</p>
+        <p>Get unlimited transcriptions, larger files and AssemblyAI access for just ₹299/month</p>
       </div>
-      <button class="upgrade-cta" onclick="window.location.href='/#pricing'">Upgrade Now</button>
+      <button class="upgrade-cta" onclick="window.location.href='/pricing.html'">Upgrade Now</button>
     </div>
 
     <div class="page-header">
-      <h1 class="page-title">📁 My Transcripts</h1>
-      <button class="transcribe-btn" onclick="openModal()">+ New Transcription</button>
+      <h1 class="page-title">📁 Recent Files</h1>
+      <button class="transcribe-btn" onclick="openModal()">
+        ☁️ Transcribe Files
+      </button>
     </div>
 
+    <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-card-label">Total Transcripts</div>
-        <div class="stat-card-value" id="totalCount">—</div>
+        <div class="stat-card-value" id="totalCount">0</div>
         <div class="stat-card-sub">all time</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">This Month</div>
-        <div class="stat-card-value" id="monthCount">—</div>
-        <div class="stat-card-sub" id="monthLimit">of 10 on free plan</div>
+        <div class="stat-card-label">Today's Usage</div>
+        <div class="stat-card-value" id="todayCount">0</div>
+        <div class="stat-card-sub" id="todayLimit">of 5 free</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-label">Plan</div>
-        <div class="stat-card-value" id="planName" style="font-size:1.3rem;padding-top:0.2rem">Free</div>
+        <div class="stat-card-value" id="planName" style="font-size:1.2rem;padding-top:0.3rem">Free</div>
         <div class="stat-card-sub">current plan</div>
       </div>
     </div>
 
+    <!-- Files table -->
     <div class="files-section">
       <div class="files-header">
         <h3>Transcripts</h3>
         <input type="text" class="search-input" placeholder="Search..." oninput="filterFiles(this.value)"/>
       </div>
       <div class="table-wrap">
-        <table>
+        <table id="filesTable">
           <thead>
             <tr>
               <th>Name</th>
               <th>Date</th>
-              <th>Engine</th>
-              <th>Language</th>
+              <th>Duration</th>
+              <th>Mode</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -224,8 +241,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
             <tr><td colspan="6">
               <div class="empty-state">
                 <span class="empty-icon">🎙</span>
-                <p>No transcripts yet. Upload your first recording!</p>
-                <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">+ New Transcription</button>
+                <p>No transcripts yet</p>
+                <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">Transcribe your first file</button>
               </div>
             </td></tr>
           </tbody>
@@ -239,7 +256,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
     <div class="modal-header">
-      <h3>+ New Transcription</h3>
+      <h3>☁️ Transcribe Files</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -249,12 +266,13 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <button class="tab-btn" onclick="switchInputTab('url')">🔗 Paste URL</button>
       </div>
 
+      <!-- File upload -->
       <div id="fileTab">
         <div class="drop-zone" id="dropZone">
-          <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.mp4,.m4a,.wav,.ogg,.opus,.webm,.flac" multiple onchange="handleFiles(event)"/>
+          <input type="file" id="fileInput" accept="audio/*,video/*" multiple onchange="handleFiles(event)"/>
           <span class="drop-icon">🎙</span>
-          <h4>Drag & drop files here</h4>
-          <p>or click to browse</p>
+          <h4>Drag & Drop files here</h4>
+          <p>MP3, MP4, M4A, WAV, OGG, OPUS, WEBM, WMV</p>
           <div class="formats">
             <span class="fmt">MP3</span><span class="fmt">MP4</span><span class="fmt">WAV</span>
             <span class="fmt">M4A</span><span class="fmt">OGG</span><span class="fmt">WEBM</span>
@@ -263,12 +281,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <div class="file-list" id="fileList"></div>
       </div>
 
+      <!-- URL input -->
       <div id="urlTab" style="display:none">
-        <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3"/>
-        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1.2rem">Supports direct audio/video URLs.</p>
+        <input type="text" class="url-input" id="audioUrl" placeholder="https://example.com/recording.mp3 or call recording URL"/>
+        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1.2rem">💡 Supports direct audio/video URLs and private call recording links</p>
       </div>
 
-      <div class="mode-grid">
+      <!-- Mode selection -->
+      <div class="mode-grid" id="modeGrid">
         <div class="mode-card selected" onclick="selectMode('fast',this)" id="mode-fast">
           <span class="mode-emoji">⚡</span>
           <span class="mode-name">Fast</span>
@@ -283,10 +303,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <span class="mode-emoji">🐋</span>
           <span class="mode-name">Most Accurate</span>
           <span class="mode-sub">AssemblyAI</span>
-          <span class="lock-badge" id="accurateLock" style="display:none">Pro</span>
+          <span class="lock-badge" id="accurateLock" style="display:none">🔒 Pro</span>
         </div>
       </div>
 
+      <!-- Settings -->
       <div class="settings-grid">
         <div class="opt-group">
           <label>Language</label>
@@ -307,8 +328,32 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <select id="modeSelectDrop" onchange="syncModeFromSelect(this.value)">
             <option value="fast">⚡ Fast (Groq)</option>
             <option value="balanced">🐬 Balanced (Deepgram)</option>
-            <option value="accurate">🐋 Most Accurate (AssemblyAI)</option>
+            <option value="accurate">🐋 Most Accurate (AssemblyAI) — Pro</option>
           </select>
+        </div>
+      </div>
+
+      <div class="toggle-list">
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>👥 Recognize Speakers</span>
+            <small>Label each speaker in the transcript</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-speakers" checked/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>🔤 Transcribe to English</span>
+            <small>Auto-translate to English</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-english"/><span class="slider"></span></label>
+        </div>
+        <div class="toggle-item">
+          <div class="toggle-label">
+            <span>🎵 Restore Audio</span>
+            <small>Remove background noise</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="tog-restore"/><span class="slider"></span></label>
         </div>
       </div>
 
@@ -327,12 +372,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="toast" id="toast"></div>
 
 <script>
-let sb, currentUser, userPlan = 'free';
+let sb, currentUser, userProfile;
 let selectedFiles = [];
 let currentMode = 'fast';
 let currentInputTab = 'file';
 let allTranscripts = [];
-let authToken = null;
 
 async function init() {
   const res = await fetch('/api/config');
@@ -343,33 +387,27 @@ async function init() {
   if (!session) { window.location.href = '/login.html'; return; }
 
   currentUser = session.user;
-  authToken = session.access_token;
-
-  // Keep token fresh
-  sb.auth.onAuthStateChange((_e, s) => { authToken = s?.access_token || null; });
-
-  setupNav();
-  await loadPlan();
-  await loadTranscripts();
-  setupDropzone();
+  await loadProfile();
+  await loadTranscriptions();
+  setupUI();
 }
 
-function setupNav() {
+async function loadProfile() {
   const email = currentUser.email || '';
   document.getElementById('userEmail').textContent = email;
   document.getElementById('userAvatar').textContent = email[0]?.toUpperCase() || 'U';
-}
 
-async function loadPlan() {
-  // Check subscriptions table for plan
-  const { data } = await sb.from('subscriptions').select('plan').eq('user_id', currentUser.id).single();
-  userPlan = data?.plan || 'free';
-  const isPaid = userPlan === 'pro' || userPlan === 'premium';
-  const planLabel = isPaid ? (userPlan === 'premium' ? 'Premium' : 'Pro') : 'Free';
-  document.getElementById('planBadge').textContent = planLabel;
+  // Read plan from subscriptions table (not profiles)
+  const { data: sub } = await sb.from('subscriptions').select('plan').eq('user_id', currentUser.id).single();
+  const plan = sub?.plan || 'free';
+  const isPaid = plan === 'pro' || plan === 'premium';
+  const planText = isPaid ? (plan === 'premium' ? 'Premium' : 'Pro') : 'Free';
+
+  document.getElementById('planBadge').textContent = planText;
   document.getElementById('planBadge').classList.toggle('paid', isPaid);
-  document.getElementById('planName').textContent = planLabel;
+  document.getElementById('planName').textContent = planText;
   document.getElementById('monthLimit').textContent = isPaid ? 'unlimited' : 'of 10 on free plan';
+
   if (!isPaid) {
     document.getElementById('upgradeBanner').style.display = 'flex';
     document.getElementById('accurateLock').style.display = 'block';
@@ -377,50 +415,45 @@ async function loadPlan() {
   }
 }
 
-async function loadTranscripts() {
-  // Table is "transcripts" (not "transcriptions") per schema.sql
-  const { data, error } = await sb
-    .from('transcripts')
+async function loadTranscriptions() {
+  const { data, error: loadErr } = await sb.from('transcripts')
     .select('*')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
+  if (loadErr) console.error('Load transcripts error:', loadErr.message);
 
-  if (error) { console.error('Load error:', error.message); }
   allTranscripts = data || [];
   renderTable(allTranscripts);
 
-  const now = new Date();
-  const thisMonth = allTranscripts.filter(t => {
-    const d = new Date(t.created_at);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
   document.getElementById('totalCount').textContent = allTranscripts.length;
-  document.getElementById('monthCount').textContent = thisMonth.length;
+  const today = new Date().toDateString();
+  const todayCount = allTranscripts.filter(t => new Date(t.created_at).toDateString() === today).length;
+  document.getElementById('todayCount').textContent = todayCount;
 }
 
-function renderTable(list) {
+function renderTable(transcriptions) {
   const tbody = document.getElementById('filesBody');
-  if (!list.length) {
+  if (!transcriptions.length) {
     tbody.innerHTML = `<tr><td colspan="6">
       <div class="empty-state">
         <span class="empty-icon">🎙</span>
-        <p>No transcripts yet. Upload your first recording!</p>
-        <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">+ New Transcription</button>
+        <p>No transcripts yet</p>
+        <button class="transcribe-btn" onclick="openModal()" style="margin:0 auto">Transcribe your first file</button>
       </div>
     </td></tr>`;
     return;
   }
-  tbody.innerHTML = list.map(t => `
+  tbody.innerHTML = transcriptions.map(t => `
     <tr>
-      <td><div class="file-name">${escHtml(t.title || 'Untitled')}</div></td>
-      <td style="color:var(--muted);font-size:0.82rem;white-space:nowrap">${formatDate(t.created_at)}</td>
-      <td><span class="file-mode">${engineLabel(t.engine)}</span></td>
-      <td style="color:var(--muted);font-size:0.82rem">${(t.language||'en').toUpperCase()}</td>
+      <td><div class="file-name">${escHtml(t.title || t.filename || 'Untitled')}</div></td>
+      <td style="color:var(--muted);font-size:0.82rem">${formatDate(t.created_at)}</td>
+      <td style="color:var(--muted);font-size:0.82rem">${t.duration_seconds ? fmtDuration(t.duration_seconds) : '—'}</td>
+      <td><span class="file-mode">${getModeLabel(t.engine || t.mode)}</span></td>
       <td><span class="status-dot"><span class="dot"></span>Done</span></td>
       <td>
         <div class="actions-cell">
           <button class="action-btn" onclick="openTranscript('${t.id}')">Open</button>
-          <button class="action-btn" onclick="quickDownload('${t.id}')">TXT</button>
+          <button class="action-btn" onclick="downloadTxt('${t.id}')">TXT</button>
           <button class="action-btn danger" onclick="deleteTranscript('${t.id}')">Delete</button>
         </div>
       </td>
@@ -428,12 +461,14 @@ function renderTable(list) {
   `).join('');
 }
 
-function filterFiles(q) {
-  const filtered = allTranscripts.filter(t => (t.title||'').toLowerCase().includes(q.toLowerCase()));
+function filterFiles(query) {
+  const filtered = allTranscripts.filter(t =>
+    (t.filename||'').toLowerCase().includes(query.toLowerCase())
+  );
   renderTable(filtered);
 }
 
-function setupDropzone() {
+function setupUI() {
   const dz = document.getElementById('dropZone');
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
@@ -449,9 +484,16 @@ function switchInputTab(tab) {
     b.classList.toggle('active', (i===0&&tab==='file')||(i===1&&tab==='url')));
   document.getElementById('fileTab').style.display = tab==='file'?'block':'none';
   document.getElementById('urlTab').style.display = tab==='url'?'block':'none';
-  // Groq (fast) doesn't support URL input
-  if (tab === 'url' && currentMode === 'fast') {
-    selectMode('balanced', document.getElementById('mode-balanced'));
+
+  // Groq not available for URL
+  const fastCard = document.getElementById('mode-fast');
+  if (tab === 'url') {
+    fastCard.classList.add('locked');
+    fastCard.title = 'Groq does not support URLs — use Balanced or Accurate';
+    if (currentMode === 'fast') selectMode('balanced', document.getElementById('mode-balanced'));
+  } else {
+    fastCard.classList.remove('locked');
+    fastCard.title = '';
   }
 }
 
@@ -463,14 +505,18 @@ function handleFilesFromList(files) {
   renderFileList();
   if (selectedFiles.length) document.getElementById('dropZone').classList.add('has-files');
 }
+
 function renderFileList() {
-  document.getElementById('fileList').innerHTML = selectedFiles.map((f,i) => `
+  const list = document.getElementById('fileList');
+  list.innerHTML = selectedFiles.map((f,i) => `
     <div class="file-item">
       <span class="file-item-name">🎵 ${escHtml(f.name)}</span>
       <span class="file-item-size">${(f.size/1024/1024).toFixed(1)} MB</span>
       <button class="file-remove" onclick="removeFile(${i})">✕</button>
-    </div>`).join('');
+    </div>
+  `).join('');
 }
+
 function removeFile(idx) {
   selectedFiles.splice(idx, 1);
   renderFileList();
@@ -478,13 +524,14 @@ function removeFile(idx) {
 }
 
 function selectMode(mode, el) {
-  const isPaid = userPlan === 'pro' || userPlan === 'premium';
+  const isPaid = userProfile?.plan==='paid' || userProfile?.is_admin;
   if (mode === 'accurate' && !isPaid) {
-    showToast('🔒 AssemblyAI requires a Pro plan');
+    showToast('🔒 AssemblyAI is available for Pro users only');
+    window.location.href = '/pricing.html';
     return;
   }
   if (mode === 'fast' && currentInputTab === 'url') {
-    showToast('Groq does not support URLs — use Balanced or Accurate');
+    showToast('⚡ Groq does not support URLs — use Balanced or Accurate');
     return;
   }
   currentMode = mode;
@@ -492,6 +539,7 @@ function selectMode(mode, el) {
   el.classList.add('selected');
   document.getElementById('modeSelectDrop').value = mode;
 }
+
 function syncModeFromSelect(val) {
   const el = document.getElementById('mode-'+val);
   if (el) selectMode(val, el);
@@ -500,14 +548,14 @@ function syncModeFromSelect(val) {
 async function startTranscription() {
   const audioUrl = document.getElementById('audioUrl').value.trim();
   if (currentInputTab === 'file' && !selectedFiles.length) { showToast('Please select a file first'); return; }
-  if (currentInputTab === 'url' && !audioUrl) { showToast('Please paste a URL first'); return; }
+  if (currentInputTab === 'url' && !audioUrl) { showToast('Please paste an audio URL first'); return; }
 
   const btn = document.getElementById('transcribeSubmit');
   btn.disabled = true; btn.textContent = 'Processing…';
   document.getElementById('progressWrap').style.display = 'block';
   setProgress(10, 'Preparing…');
 
-  const lang = document.getElementById('langSelect').value;
+  const lang = document.getElementById('tog-english').checked ? 'en' : document.getElementById('langSelect').value;
   const filesToProcess = currentInputTab === 'file' ? selectedFiles : [null];
 
   for (const file of filesToProcess) {
@@ -515,86 +563,122 @@ async function startTranscription() {
       const formData = new FormData();
       formData.append('language', lang);
       formData.append('mode', currentMode);
-      formData.append('title', file?.name || (audioUrl.split('/').pop() || 'recording'));
+      formData.append('userId', currentUser.id);
 
       if (currentInputTab === 'url') {
-        formData.append('audioUrl', audioUrl);
-        setProgress(20, 'Submitting URL…');
+        setProgress(15, 'Fetching audio from URL…');
+        try {
+          const audioRes = await fetch(audioUrl);
+          const blob = await audioRes.blob();
+          setProgress(30, 'Uploading to AI…');
+          if (currentMode === 'accurate') {
+            const keyRes = await fetch('/api/assemblykey');
+            const { key } = await keyRes.json();
+            const upRes = await fetch('https://api.assemblyai.com/v2/upload', {
+              method: 'POST', headers: { 'Authorization': key, 'Content-Type': 'application/octet-stream' }, body: blob
+            });
+            const { upload_url } = await upRes.json();
+            formData.append('audioUrl', upload_url);
+          } else {
+            formData.append('audio', blob, 'recording.wav');
+          }
+        } catch {
+          formData.append('audioUrl', audioUrl);
+        }
       } else {
-        formData.append('audio', file, file.name); // pass original name so extension is preserved
-        setProgress(20, 'Uploading file…');
+        if (file.size > 4 * 1024 * 1024) {
+          setProgress(15, 'Large file — uploading directly…');
+          const keyRes = await fetch('/api/assemblykey');
+          const { key } = await keyRes.json();
+          const upRes = await fetch('https://api.assemblyai.com/v2/upload', {
+            method: 'POST', headers: { 'Authorization': key, 'Content-Type': 'application/octet-stream' }, body: await file.arrayBuffer()
+          });
+          const { upload_url } = await upRes.json();
+          formData.append('audioUrl', upload_url);
+          formData.append('mode', 'accurate');
+        } else {
+          formData.append('audio', file);
+        }
       }
 
-      let prog = 20;
+      let prog = 35;
       const iv = setInterval(() => {
-        if (prog < 88) { prog += currentMode === 'accurate' ? 1 : 4; setProgress(prog, getMsg(prog)); }
-      }, currentMode === 'accurate' ? 2000 : 600);
+        if (prog < 88) { prog += currentMode==='accurate'?1:4; setProgress(prog, getMsg(prog)); }
+      }, currentMode==='accurate'?2000:600);
 
-      // Include auth token so transcript gets saved to Supabase
-      const headers = {};
-      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-
+      // Send auth token so backend saves transcript to Supabase
+      const { data: { session } } = await sb.auth.getSession();
+      const headers = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
       const res = await fetch('/api/transcribe', { method: 'POST', headers, body: formData });
       const data = await res.json();
       clearInterval(iv);
+      if (data.error) throw new Error(data.error);
 
-      if (!res.ok || data.error) throw new Error(data.error || 'Transcription failed');
+      setProgress(95, 'Saving transcript…');
+
+      // Save to Supabase — correct table: transcripts, correct columns: title/engine
+      const { error: saveErr } = await sb.from('transcripts').insert({
+        user_id: currentUser.id,
+        title: file?.name || (audioUrl.split('/').pop() || 'Untitled'),
+        transcript: data.text,
+        engine: currentMode === 'fast' ? 'groq' : currentMode === 'balanced' ? 'deepgram' : 'assemblyai',
+        language: lang,
+        audio_url: currentInputTab === 'url' ? audioUrl : null,
+        speaker_count: (data.text || '').match(/Speaker \d+/g) ? new Set((data.text || '').match(/Speaker \d+/g)).size : 1
+      });
+      if (saveErr) console.error('Save error:', saveErr.message);
 
       setProgress(100, 'Done!');
-      showToast(`✅ "${file?.name || 'Recording'}" transcribed!`);
+      showToast(`✅ ${file?.name || 'Recording'} transcribed!`);
 
     } catch (err) {
-      showToast('❌ Error: ' + err.message);
-      console.error(err);
+      showToast('Error: ' + err.message);
     }
   }
 
   btn.disabled = false; btn.textContent = 'Transcribe now →';
   document.getElementById('progressWrap').style.display = 'none';
-  selectedFiles = [];
-  document.getElementById('fileList').innerHTML = '';
-  document.getElementById('dropZone').classList.remove('has-files');
   closeModal();
-  await loadTranscripts(); // refresh the table
+  selectedFiles = [];
+  await loadTranscriptions();
 }
 
 function setProgress(pct, msg) {
-  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressFill').style.width = pct+'%';
   document.getElementById('progressStatus').textContent = msg;
 }
 function getMsg(p) {
-  if (p < 30) return 'Uploading…';
-  if (p < 60) return 'Transcribing…';
-  if (p < 85) return 'Processing results…';
+  if (p<30) return 'Uploading…';
+  if (p<60) return 'Transcribing…';
+  if (p<85) return 'Processing…';
   return 'Almost done…';
 }
 
 function openModal() { document.getElementById('uploadModal').classList.add('show'); }
 function closeModal() { document.getElementById('uploadModal').classList.remove('show'); }
 
-function openTranscript(id) {
-  const t = allTranscripts.find(x => x.id === id);
+async function openTranscript(id) {
+  const t = allTranscriptions.find(x => x.id === id);
   if (!t) return;
   localStorage.setItem('currentTranscript', JSON.stringify(t));
   window.location.href = '/transcript.html';
 }
 
-function quickDownload(id) {
-  const t = allTranscripts.find(x => x.id === id);
+async function downloadTxt(id) {
+  const t = allTranscriptions.find(x => x.id === id);
   if (!t) return;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([t.transcript||''], {type:'text/plain'}));
-  a.download = (t.title||'transcript').replace(/\.[^.]+$/,'') + '.txt';
+  a.download = (t.filename||'transcript') + '.txt';
   a.click();
-  showToast('⬇ Downloaded');
+  showToast('Downloaded!');
 }
 
 async function deleteTranscript(id) {
-  if (!confirm('Delete this transcript permanently?')) return;
-  const { error } = await sb.from('transcripts').delete().eq('id', id).eq('user_id', currentUser.id);
-  if (error) { showToast('❌ Delete failed: ' + error.message); return; }
-  showToast('🗑 Deleted');
-  await loadTranscripts();
+  if (!confirm('Delete this transcript?')) return;
+  await sb.from('transcripts').delete().eq('id', id).eq('user_id', currentUser.id);
+  showToast('Deleted');
+  await loadTranscriptions();
 }
 
 async function signOut() {
@@ -605,14 +689,17 @@ async function signOut() {
 function formatDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
-function engineLabel(e) {
-  return e==='groq'?'⚡ Fast':e==='deepgram'?'🐬 Balanced':e==='assemblyai'?'🐋 Accurate':'—';
+function fmtDuration(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return m>0 ? `${m}m ${sec}s` : `${sec}s`;
+}
+function getModeLabel(mode) {
+  return mode==='fast'?'⚡ Fast':mode==='balanced'?'🐬 Balanced':'🐋 Accurate';
 }
 function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  const t = document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
 }
 
 init();

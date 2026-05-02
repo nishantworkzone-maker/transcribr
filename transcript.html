@@ -404,7 +404,8 @@ async function init() {
     const cfg = await fetch('/api/config').then(r=>r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data:{ session } } = await sb.auth.getSession();
-    if (!session) { location.href='/login.html'; return; }
+    // Guests are allowed — we just set sb for delete operations if logged in
+    if (!session) sb = null;
   } catch(e) {}
 
   const stored = localStorage.getItem('currentTranscript');
@@ -789,7 +790,15 @@ function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectUR
 
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  if (sb) await sb.from('transcripts').delete().eq('id', T.id);
+  if (sb && T.id && !T.isGuest) {
+    await sb.from('transcripts').delete().eq('id', T.id);
+  }
+  // Also remove from guest localStorage list if guest
+  if (T.isGuest || !sb) {
+    const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts') || '[]')
+      .filter(x => x.id !== T.id);
+    localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list));
+  }
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
   setTimeout(()=>location.href='/dashboard.html', 900);

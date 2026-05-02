@@ -232,11 +232,13 @@ input[type=range].vol { width: 64px; accent-color: var(--accent); cursor: pointe
       <button class="exp-btn" onclick="downloadTxt()">⬇ TXT</button>
       <button class="exp-btn" onclick="downloadSrt()">⬇ SRT</button>
       <button class="exp-btn" onclick="downloadVtt()">⬇ VTT</button>
+      <button class="exp-btn open-btn" onclick="openTranscriptPage()">↗ Open page</button>
       <button class="exp-btn" onclick="location.href='/dashboard.html'">📁 Dashboard</button>
     </div>
   </div>
   <div class="result-body">
     <div class="save-bar" id="saveBar">✅ Saved to your dashboard!</div>
+    <div class="save-bar" id="guestBar" style="background:rgba(245,185,66,0.1);border-color:rgba(245,185,66,0.3);color:#f5b942">⚠️ Guest mode — transcript saved locally. <a href="/login.html" style="color:#f5b942;text-decoration:underline">Sign in</a> to save permanently.</div>
     <div class="waveform-wrap"><canvas id="waveCanvas"></canvas></div>
     <div class="player-wrap">
       <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
@@ -428,11 +430,20 @@ async function transcribe() {
 
     if (!res.ok || data.error) throw new Error(data.error || 'Transcription failed');
 
-    // If guest, record this use in localStorage
+    // If guest, record this use and save transcript to localStorage
     if (!token) {
       incrementGuestUsage();
       const remaining = GUEST_LIMIT - getGuestUsage();
       document.getElementById('navUser').textContent = `Guest · ${remaining} free left`;
+      // Save to localStorage so guest dashboard can show it
+      saveGuestTranscript({
+        text: data.text || '',
+        segments: data.segments || [],
+        engine: data.engine || currentMode,
+        language: lang,
+        fileName: fileName || 'transcript',
+        audioUrl: currentTab === 'url' ? audioUrl : null
+      });
     }
 
     setProgress(100, 'Done!');
@@ -450,7 +461,7 @@ async function transcribe() {
     document.getElementById('progressWrap').style.display = 'none';
     showToast('Transcript ready!');
 
-    // Save to Supabase only if logged in
+    // Save to Supabase if logged in, show guest bar if not
     if (currentUser && sb) {
       try {
         await sb.from('transcripts').insert({
@@ -463,6 +474,8 @@ async function transcribe() {
         });
         document.getElementById('saveBar').classList.add('show');
       } catch(e) { console.log('Save skipped:', e.message); }
+    } else {
+      document.getElementById('guestBar').classList.add('show');
     }
 
   } catch (err) {
@@ -568,6 +581,50 @@ function downloadTxt(){dl(transcriptContent,fileName+'.txt','text/plain');showTo
 function downloadSrt(){dl(srtContent,fileName+'.srt','text/plain');showToast('SRT downloaded!');}
 function downloadVtt(){dl(vttContent,fileName+'.vtt','text/vtt');showToast('VTT downloaded!');}
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
+
+// ── Guest transcript storage ────────────────────────────────────────
+function saveGuestTranscript(data) {
+  const list = getGuestTranscripts();
+  const entry = {
+    id: 'guest_' + Date.now(),
+    title: data.fileName || 'transcript',
+    transcript: data.text,
+    segments: data.segments,
+    engine: data.engine,
+    language: data.language,
+    audio_url: data.audioUrl || null,
+    created_at: new Date().toISOString(),
+    isGuest: true
+  };
+  list.unshift(entry); // newest first
+  // Keep max 3 guest transcripts
+  localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list.slice(0, 3)));
+  // Also store current one for transcript page
+  localStorage.setItem('currentTranscript', JSON.stringify(entry));
+}
+
+function getGuestTranscripts() {
+  try { return JSON.parse(localStorage.getItem('transcribr_guest_transcripts') || '[]'); }
+  catch(e) { return []; }
+}
+
+// ── Open transcript as full page ────────────────────────────────────
+function openTranscriptPage() {
+  // Store current data in localStorage then open transcript.html in new tab
+  const entry = {
+    id: 'guest_' + Date.now(),
+    title: fileName || 'transcript',
+    transcript: transcriptContent,
+    segments: utterances,
+    engine: currentMode,
+    language: document.getElementById('language').value,
+    audio_url: currentTab === 'url' ? document.getElementById('audioUrl').value.trim() : null,
+    created_at: new Date().toISOString()
+  };
+  localStorage.setItem('currentTranscript', JSON.stringify(entry));
+  window.open('/transcript.html', '_blank');
+}
+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 </body>

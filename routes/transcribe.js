@@ -2,6 +2,7 @@
 import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import path from 'path';
 
 import { optionalAuth } from '../middleware/auth.js';
 import { checkUsageLimit, checkEngineAccess, recordUsage, saveTranscript } from '../middleware/usage.js';
@@ -11,7 +12,19 @@ import { transcribeAssemblyAI } from '../engines/assemblyai.js';
 import { detectAndMaskPII } from '../services/pii.js';
 
 const router = express.Router();
-const upload = multer({ dest: '/tmp/', limits: { fileSize: 25 * 1024 * 1024 } });
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } });
+
+// Groq requires a file extension on the filename.
+// Multer saves files without extension, so we rename before sending.
+function ensureExtension(filePath, originalName) {
+  if (!filePath) return filePath;
+  const ext = path.extname(originalName || '').toLowerCase() || '.mp3';
+  const newPath = filePath + ext;
+  if (!fs.existsSync(newPath)) {
+    fs.copyFileSync(filePath, newPath);
+  }
+  return newPath;
+}
 
 router.post('/',
   optionalAuth,        // never blocks — guests get req.user = null
@@ -20,7 +33,10 @@ router.post('/',
   upload.single('audio'),
   async (req, res) => {
     const { mode = 'fast', language = 'en', audioUrl, enablePII = 'false', title = '' } = req.body;
-    const filePath = req.file?.path;
+    const originalName = req.file?.originalname || 'audio.mp3';
+    const rawPath = req.file?.path;
+    // Give the file the correct extension so Groq / other engines accept it
+    const filePath = rawPath ? ensureExtension(rawPath, originalName) : null;
     const userId = req.user?.id || null;
 
     try {
@@ -39,7 +55,7 @@ router.post('/',
         return res.status(400).json({ error: `Unknown mode: ${mode}` });
       }
 
-      // PII masking
+      // PII masking (Groq only — Deepgram/AssemblyAI handle it natively)
       let maskedText = null;
       let piiDetected = false;
       if (enablePII === 'true' && result.engine === 'groq') {
@@ -51,15 +67,15 @@ router.post('/',
         piiDetected = true;
       }
 
-      // Record usage + save transcript only for logged-in users
+      // Save transcript + record usage — logged-in users only
       if (userId) {
         const duration = result.segments?.[result.segments.length - 1]?.end || 0;
-        await recordUsage(userId, result.engine, duration, title);
+        await recordUsage(userId, result.engine, duration, title || originalName);
         await saveTranscript(userId, {
-          title: title || req.file?.originalname || 'Untitled',
+          title: title || originalName || 'Untitled',
           text: result.text,
           maskedText,
-          audioUrl,
+          audioUrl: audioUrl || null,
           engine: result.engine,
           language,
           piiDetected,
@@ -67,7 +83,11 @@ router.post('/',
         });
       }
 
-      if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      // Clean up both the original and renamed temp files
+      [rawPath, filePath].forEach(p => {
+        if (p && p !== rawPath && fs.existsSync(p)) fs.unlinkSync(p);
+      });
+      if (rawPath && fs.existsSync(rawPath)) fs.unlinkSync(rawPath);
 
       res.json({
         success: true,
@@ -80,7 +100,10 @@ router.post('/',
       });
 
     } catch (err) {
-      if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      // Clean up on error
+      [rawPath, filePath].forEach(p => {
+        if (p && fs.existsSync(p)) try { fs.unlinkSync(p); } catch {}
+      });
       console.error('Transcription error:', err.message);
       res.status(500).json({ error: err.message || 'Transcription failed' });
     }

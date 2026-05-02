@@ -418,9 +418,11 @@ function render(t) {
   const text = t.transcript || '';
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
-  document.getElementById('fileName').textContent = t.filename || 'Untitled';
+  const displayName = t.title || t.filename || 'Untitled';
+  const engine = t.engine || t.mode || 'groq';
+  document.getElementById('fileName').textContent = displayName;
   document.getElementById('chipDate').textContent = fmtDate(t.created_at);
-  document.getElementById('chipMode').textContent = modeLabel(t.mode);
+  document.getElementById('chipMode').textContent = engineLabel(engine);
   document.getElementById('chipLang').textContent = '🌐 '+(t.language||'en').toUpperCase();
   document.getElementById('chipWords').textContent = wordCount+' words';
   document.getElementById('fileBar').style.display = 'flex';
@@ -429,10 +431,10 @@ function render(t) {
   document.getElementById('insChars').textContent = text.length.toLocaleString();
   document.getElementById('insDate').textContent = fmtDate(t.created_at);
   document.getElementById('insLang').textContent = (t.language||'en').toUpperCase();
-  const ei = t.mode==='fast'?'⚡':t.mode==='balanced'?'🐬':'🐋';
+  const ei = engine==='groq'?'⚡':engine==='deepgram'?'🐬':'🐋';
   document.getElementById('engineIcon').textContent = ei;
-  document.getElementById('engineName').textContent = t.mode==='fast'?'Groq':t.mode==='balanced'?'Deepgram':'AssemblyAI';
-  document.getElementById('engineSub').textContent = t.mode==='fast'?'Fastest — Whisper':t.mode==='balanced'?'Best for calls':'Highest accuracy';
+  document.getElementById('engineName').textContent = engine==='groq'?'Groq':engine==='deepgram'?'Deepgram':'AssemblyAI';
+  document.getElementById('engineSub').textContent = engine==='groq'?'Fastest — Whisper':engine==='deepgram'?'Best for calls':'Highest accuracy';
 
   lines = parseLines(text);
   renderLines(lines, null);
@@ -441,7 +443,7 @@ function render(t) {
   document.getElementById('insLines').textContent = lines.length.toLocaleString();
   const spks = new Set(lines.map(l=>l.speaker).filter(Boolean));
   document.getElementById('insSpeakers').textContent = spks.size||'—';
-  document.title = (t.filename||'Transcript')+' — Transcribr';
+  document.title = displayName + ' — Transcribr';
 
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('contentArea').style.display = 'flex';
@@ -782,12 +784,12 @@ function downloadSrt(){dl(makeSrt(),base()+'.srt','text/plain');showToast('⬇ S
 function downloadVtt(){dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'),base()+'.vtt','text/vtt');showToast('⬇ VTT saved');}
 function makeSrt(){const tl=lines.filter(l=>l.timeSec!==null);return tl.map((l,i)=>`${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec??l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`).join('\n');}
 function s2srt(s){s=s||0;const h=~~(s/3600),m=~~((s%3600)/60),sec=~~(s%60),ms=Math.round((s%1)*1000);return`${p2(h)}:${p2(m)}:${p2(sec)},${String(ms).padStart(3,'0')}`;}
-function base(){return(T?.filename||'transcript').replace(/\.[^.]+$/,'');}
+function base(){return(T?.title||T?.filename||'transcript').replace(/\.[^.]+$/,'');}
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  if (sb) await sb.from('transcriptions').delete().eq('id', T.id);
+  if (sb) await sb.from('transcripts').delete().eq('id', T.id);
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
   setTimeout(()=>location.href='/dashboard.html', 900);
@@ -796,6 +798,7 @@ async function deleteTranscript() {
 function fmtS(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${~~(s/60)}:${p2(s%60)}`;}
 function p2(n){return String(n).padStart(2,'0');}
 function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function engineLabel(e){return e==='groq'?'⚡ Fast':e==='deepgram'?'🐬 Balanced':e==='assemblyai'?'🐋 Accurate':e||'—';}
 function modeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}

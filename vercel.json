@@ -10,6 +10,8 @@
     { "src": "/dashboard.html", "dest": "/dashboard.html" },
     { "src": "/transcript.html", "dest": "/transcript.html" },
     { "src": "/app.html", "dest": "/app.html" },
+    { "src": "/contact.html", "dest": "/contact.html" },
+    { "src": "/business.html", "dest": "/business.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

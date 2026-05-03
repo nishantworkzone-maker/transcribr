@@ -3,6 +3,7 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import fetch from 'node-fetch';
 
 import { optionalAuth } from '../middleware/auth.js';
 import { checkUsageLimit, checkEngineAccess, recordUsage, saveTranscript } from '../middleware/usage.js';
@@ -14,36 +15,90 @@ import { detectAndMaskPII } from '../services/pii.js';
 const router = express.Router();
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } });
 
-// Groq requires a file extension on the filename.
-// Multer saves files without extension, so we rename before sending.
+// Give uploaded file the correct extension so Groq accepts it
 function ensureExtension(filePath, originalName) {
   if (!filePath) return filePath;
   const ext = path.extname(originalName || '').toLowerCase() || '.mp3';
   const newPath = filePath + ext;
-  if (!fs.existsSync(newPath)) {
-    fs.copyFileSync(filePath, newPath);
-  }
+  if (!fs.existsSync(newPath)) fs.copyFileSync(filePath, newPath);
   return newPath;
 }
 
+// Download a URL to a local temp file so ALL engines can process it
+async function downloadUrlToFile(audioUrl) {
+  const response = await fetch(audioUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Could not download audio (HTTP ${response.status}). Check the URL is a direct audio link.`);
+  }
+
+  // Pick file extension from Content-Type or URL path
+  const contentType = response.headers.get('content-type') || '';
+  let ext = '.mp3';
+  if (contentType.includes('wav')) ext = '.wav';
+  else if (contentType.includes('mp4') || contentType.includes('mpeg')) ext = '.mp4';
+  else if (contentType.includes('m4a')) ext = '.m4a';
+  else if (contentType.includes('ogg')) ext = '.ogg';
+  else if (contentType.includes('webm')) ext = '.webm';
+  else if (contentType.includes('flac')) ext = '.flac';
+  else {
+    try {
+      const urlExt = path.extname(new URL(audioUrl).pathname).toLowerCase();
+      if (['.mp3','.wav','.mp4','.m4a','.ogg','.webm','.flac','.opus'].includes(urlExt)) ext = urlExt;
+    } catch {}
+  }
+
+  const tmpPath = `/tmp/url_${Date.now()}${ext}`;
+  const buffer = await response.arrayBuffer();
+  fs.writeFileSync(tmpPath, Buffer.from(buffer));
+  return tmpPath;
+}
+
 router.post('/',
-  optionalAuth,        // never blocks — guests get req.user = null
-  checkUsageLimit,     // blocks only if logged-in user hit their plan limit
-  checkEngineAccess,   // blocks if plan doesn't allow the selected engine
+  optionalAuth,
+  checkUsageLimit,
+  checkEngineAccess,
   upload.single('audio'),
   async (req, res) => {
     const { mode = 'fast', language = 'en', audioUrl, enablePII = 'false', title = '' } = req.body;
     const originalName = req.file?.originalname || 'audio.mp3';
     const rawPath = req.file?.path;
-    // Give the file the correct extension so Groq / other engines accept it
-    const filePath = rawPath ? ensureExtension(rawPath, originalName) : null;
     const userId = req.user?.id || null;
 
+    const tempFiles = [];
+    if (rawPath) tempFiles.push(rawPath);
+    let filePath = null;
+
     try {
-      if (!filePath && !audioUrl) {
+      if (!rawPath && !audioUrl) {
         return res.status(400).json({ error: 'Please provide an audio file or a URL' });
       }
 
+      // Fix extension on uploaded file so Groq accepts it
+      if (rawPath) {
+        filePath = ensureExtension(rawPath, originalName);
+        if (filePath !== rawPath) tempFiles.push(filePath);
+      }
+
+      // Download URL to temp file — fixes the "path received null" crash
+      // Groq requires a real file; Deepgram/AssemblyAI also benefit from this
+      if (audioUrl && !filePath) {
+        try {
+          filePath = await downloadUrlToFile(audioUrl);
+          tempFiles.push(filePath);
+        } catch (dlErr) {
+          // Groq MUST have a file — throw immediately
+          if (mode === 'fast') {
+            throw new Error(`Cannot fetch audio from that URL. Try switching to Balanced mode, or download the file and upload it directly.\n\nDetails: ${dlErr.message}`);
+          }
+          // Deepgram/AssemblyAI can accept raw URLs as fallback
+          filePath = null;
+        }
+      }
+
+      // Run the correct engine
       let result;
       if (mode === 'fast') {
         result = await transcribeGroq(filePath, language);
@@ -55,7 +110,7 @@ router.post('/',
         return res.status(400).json({ error: `Unknown mode: ${mode}` });
       }
 
-      // PII masking (Groq only — Deepgram/AssemblyAI handle it natively)
+      // PII masking
       let maskedText = null;
       let piiDetected = false;
       if (enablePII === 'true' && result.engine === 'groq') {
@@ -67,7 +122,7 @@ router.post('/',
         piiDetected = true;
       }
 
-      // Save transcript + record usage — logged-in users only
+      // Save to Supabase for logged-in users
       if (userId) {
         const duration = result.segments?.[result.segments.length - 1]?.end || 0;
         await recordUsage(userId, result.engine, duration, title || originalName);
@@ -83,11 +138,8 @@ router.post('/',
         });
       }
 
-      // Clean up both the original and renamed temp files
-      [rawPath, filePath].forEach(p => {
-        if (p && p !== rawPath && fs.existsSync(p)) fs.unlinkSync(p);
-      });
-      if (rawPath && fs.existsSync(rawPath)) fs.unlinkSync(rawPath);
+      // Cleanup all temp files
+      tempFiles.forEach(p => { try { if (p && fs.existsSync(p)) fs.unlinkSync(p); } catch {} });
 
       res.json({
         success: true,
@@ -100,10 +152,7 @@ router.post('/',
       });
 
     } catch (err) {
-      // Clean up on error
-      [rawPath, filePath].forEach(p => {
-        if (p && fs.existsSync(p)) try { fs.unlinkSync(p); } catch {}
-      });
+      tempFiles.forEach(p => { try { if (p && fs.existsSync(p)) fs.unlinkSync(p); } catch {} });
       console.error('Transcription error:', err.message);
       res.status(500).json({ error: err.message || 'Transcription failed' });
     }

@@ -12,8 +12,48 @@ import { transcribeDeepgram } from '../engines/deepgram.js';
 import { transcribeAssemblyAI } from '../engines/assemblyai.js';
 import { detectAndMaskPII } from '../services/pii.js';
 
+import { createClient } from '@supabase/supabase-js';
+
 const router = express.Router();
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } });
+
+// Upload audio file to Supabase Storage and return public URL
+async function uploadAudioToStorage(filePath, fileName) {
+  try {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+
+    const supabase = createClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    const fileBuffer = fs.readFileSync(filePath);
+    const ext = path.extname(fileName || filePath).toLowerCase() || '.mp3';
+    const storageName = `audio-${Date.now()}${ext}`;
+    const contentType = ext === '.wav' ? 'audio/wav'
+      : ext === '.mp4' ? 'audio/mp4'
+      : ext === '.m4a' ? 'audio/m4a'
+      : ext === '.ogg' ? 'audio/ogg'
+      : ext === '.webm' ? 'audio/webm'
+      : 'audio/mpeg';
+
+    const { error } = await supabase.storage
+      .from('audio-files')
+      .upload(storageName, fileBuffer, { contentType, upsert: false });
+
+    if (error) {
+      console.error('Storage upload error:', error.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from('audio-files').getPublicUrl(storageName);
+    return data?.publicUrl || null;
+  } catch (err) {
+    console.error('Storage upload failed:', err.message);
+    return null;
+  }
+}
 
 // Give uploaded file the correct extension so Groq accepts it
 function ensureExtension(filePath, originalName) {
@@ -122,6 +162,14 @@ router.post('/',
         piiDetected = true;
       }
 
+      // Upload audio to Supabase Storage for playback (logged-in users only)
+      let storedAudioUrl = audioUrl || null;
+      if (userId && filePath && !audioUrl) {
+        // File upload — store in Supabase Storage so it can be played back
+        const uploaded = await uploadAudioToStorage(filePath, originalName);
+        if (uploaded) storedAudioUrl = uploaded;
+      }
+
       // Save to Supabase for logged-in users
       if (userId) {
         const duration = result.segments?.[result.segments.length - 1]?.end || 0;
@@ -130,7 +178,7 @@ router.post('/',
           title: title || originalName || 'Untitled',
           text: result.text,
           maskedText,
-          audioUrl: audioUrl || null,
+          audioUrl: storedAudioUrl,
           engine: result.engine,
           language,
           piiDetected,
@@ -148,6 +196,7 @@ router.post('/',
         piiDetected,
         engine: result.engine,
         segments: result.segments,
+        audioUrl: storedAudioUrl || null,
         usageCount: req.usageCount !== undefined ? req.usageCount + 1 : null
       });
 

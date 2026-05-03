@@ -687,7 +687,7 @@ async function startTranscription() {
         transcript: data.text,
         engine: data.engine || currentMode,
         language: lang,
-        audio_url: currentTab === 'url' ? audioUrl : null,
+        audio_url: data.audioUrl || (currentTab === 'url' ? audioUrl : null),
         created_at: new Date().toISOString(),
         isGuest: true,
         segments: data.segments || []

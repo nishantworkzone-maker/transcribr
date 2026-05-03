@@ -423,10 +423,14 @@ async function setupLoggedIn() {
     userPlan = data?.plan || 'free';
   } catch(e) { userPlan = 'free'; }
 
-  const isPro = userPlan === 'pro' || userPlan === 'premium';
-  document.getElementById('statPlan').textContent = isPro ? 'Pro' : 'Free';
+  const isAdmin = userPlan === 'admin';
+  const isPro = isAdmin || userPlan === 'pro' || userPlan === 'premium';
+  const planLabel = isAdmin ? 'Admin' : isPro ? 'Pro' : 'Free';
+
+  document.getElementById('statPlan').textContent = planLabel;
+  document.getElementById('planChip').textContent = planLabel;
+
   if (isPro) {
-    document.getElementById('planChip').textContent = 'Pro';
     document.getElementById('planChip').classList.add('pro');
     document.getElementById('statMonthSub').textContent = 'unlimited';
   } else {

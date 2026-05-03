@@ -90,7 +90,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 .pii-tag { display:inline-flex; align-items:center; gap:2px; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); color:#fca5a5; font-size:0.65rem; font-weight:700; padding:0 4px; border-radius:4px; margin:0 1px; vertical-align:middle; letter-spacing:0.3px; }
 
 /* RIGHT PANEL */
-.insights-panel { width:265px; flex-shrink:0; overflow-y:auto; background:var(--surface); padding:0.9rem; display:flex; flex-direction:column; gap:0.85rem; min-height:0; }
+.insights-panel { width:340px; flex-shrink:0; overflow-y:auto; background:var(--surface); padding:0.9rem; display:flex; flex-direction:column; gap:0.85rem; min-height:0; }
 .insights-panel::-webkit-scrollbar { width:3px; }
 .insights-panel::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 .ins-label { font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:0.45rem; }
@@ -404,8 +404,7 @@ async function init() {
     const cfg = await fetch('/api/config').then(r=>r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data:{ session } } = await sb.auth.getSession();
-    // Guests are allowed — we just set sb for delete operations if logged in
-    if (!session) sb = null;
+    if (!session) sb = null; // guest — allow through
   } catch(e) {}
 
   const stored = localStorage.getItem('currentTranscript');
@@ -785,20 +784,13 @@ function downloadSrt(){dl(makeSrt(),base()+'.srt','text/plain');showToast('⬇ S
 function downloadVtt(){dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'),base()+'.vtt','text/vtt');showToast('⬇ VTT saved');}
 function makeSrt(){const tl=lines.filter(l=>l.timeSec!==null);return tl.map((l,i)=>`${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec??l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`).join('\n');}
 function s2srt(s){s=s||0;const h=~~(s/3600),m=~~((s%3600)/60),sec=~~(s%60),ms=Math.round((s%1)*1000);return`${p2(h)}:${p2(m)}:${p2(sec)},${String(ms).padStart(3,'0')}`;}
-function base(){return(T?.title||T?.filename||'transcript').replace(/\.[^.]+$/,'');}
+function base(){return(T?.filename||'transcript').replace(/\.[^.]+$/,'');}
 function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
 
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  if (sb && T.id && !T.isGuest) {
-    await sb.from('transcripts').delete().eq('id', T.id);
-  }
-  // Also remove from guest localStorage list if guest
-  if (T.isGuest || !sb) {
-    const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts') || '[]')
-      .filter(x => x.id !== T.id);
-    localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list));
-  }
+  if (sb && T.id && !T.isGuest) await sb.from('transcripts').delete().eq('id', T.id);
+  if (T.isGuest || !sb) { const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts')||'[]').filter(x=>x.id!==T.id); localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list)); }
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
   setTimeout(()=>location.href='/dashboard.html', 900);

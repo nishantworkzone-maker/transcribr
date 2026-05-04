@@ -338,6 +338,33 @@ let sb=null, currentUser=null, authToken=null, userPlan='free';
 let allTranscripts=[], selectedFile=null, currentTab='file', selectedEngine='auto';
 const isGuest=()=>!currentUser;
 
+function showGuestLimitModal() {
+  // Show a non-redirecting prompt instead of auto-redirect
+  const existing = document.getElementById('guestLimitModal');
+  if (existing) { existing.style.display='flex'; return; }
+  const div = document.createElement('div');
+  div.id = 'guestLimitModal';
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:600;display:flex;align-items:center;justify-content:center;padding:1rem;';
+  div.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:420px;width:100%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:0.8rem">🎯</div>
+    <h3 style="font-family:Syne,sans-serif;font-size:1.1rem;margin-bottom:0.5rem">You've used all 3 free transcriptions</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;line-height:1.65">Sign in for free to get 10 transcriptions per month and keep your transcripts permanently.</p>
+    <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap">
+      <button onclick="location.href='/login.html'" style="background:var(--accent);color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:100px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Sign In Free →</button>
+      <button onclick="document.getElementById('guestLimitModal').style.display='none'" style="background:transparent;color:var(--muted);border:1px solid var(--border2);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">Maybe later</button>
+    </div>
+    <p style="color:var(--muted);font-size:0.72rem;margin-top:1rem"><a href="#" onclick="resetGuestCount();document.getElementById('guestLimitModal').style.display='none';return false;" style="color:var(--accent2)">Reset guest count (dev only)</a></p>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function resetGuestCount() {
+  localStorage.removeItem('transcribr_guest_count');
+  localStorage.removeItem('transcribr_guest_transcripts');
+  showToast('Guest count reset. Refresh to start fresh.');
+  setTimeout(() => location.reload(), 1200);
+}
+
 async function init() {
   try {
     const cfg=await fetch('/api/config').then(r=>r.json());
@@ -426,7 +453,7 @@ async function deleteTranscript(id){
 }
 
 function openModal(){
-  if(isGuest()&&getGuestCount()>=3){showToast('You\'ve used all 3 free transcriptions. Please sign in.');setTimeout(()=>location.href='/login.html',1800);return;}
+  if(isGuest()&&getGuestCount()>=3){showGuestLimitModal();return;}
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}

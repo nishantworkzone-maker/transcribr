@@ -261,42 +261,6 @@ input:checked + .pill-track::after { transform:translateX(12px); }
     <div class="transcript-scroll" id="transcriptScroll">
       <div id="transcriptLines"></div>
     </div>
-
-    <!-- AUDIO BAR — inside left panel so it doesn't span under right sidebar -->
-    <div class="audio-bar" id="audioBar">
-      <div class="spk-legend" id="spkLegend" style="display:none"></div>
-      <div class="waveform-row">
-        <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
-        <div class="waveform-wrap" id="waveformWrap">
-          <canvas class="waveform-canvas" id="waveCanvas"></canvas>
-          <div class="waveform-playhead" id="playhead"></div>
-          <div class="waveform-tooltip" id="waveTooltip"></div>
-        </div>
-      </div>
-      <div class="audio-controls-row">
-        <div class="time-display">
-          <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-          <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
-        </div>
-        <div class="audio-right">
-          <div style="display:flex;gap:2px">
-            <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
-            <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
-            <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
-            <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
-          </div>
-          <label class="follow-toggle">
-            <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
-            Follow
-          </label>
-          <div class="vol-grp">
-            <span class="vol-icon" onclick="toggleMute()">🔊</span>
-            <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- RIGHT: INSIGHTS -->
@@ -359,6 +323,49 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 
 </div>
 
+<!-- VERINT-STYLE AUDIO BAR -->
+<div class="audio-bar" id="audioBar">
+
+  <!-- Speaker legend (shown when audio loaded) -->
+  <div class="spk-legend" id="spkLegend" style="display:none"></div>
+
+  <!-- Waveform row -->
+  <div class="waveform-row">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+
+    <div class="waveform-wrap" id="waveformWrap">
+      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
+      <div class="waveform-playhead" id="playhead"></div>
+      <div class="waveform-tooltip" id="waveTooltip"></div>
+    </div>
+  </div>
+
+  <!-- Time + controls -->
+  <div class="audio-controls-row">
+    <div class="time-display">
+      <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
+      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
+    </div>
+    <div class="audio-right">
+      <div style="display:flex;gap:2px">
+        <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
+        <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
+        <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
+        <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
+      </div>
+      <label class="follow-toggle">
+        <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
+        Follow
+      </label>
+      <div class="vol-grp">
+        <span class="vol-icon" onclick="toggleMute()">🔊</span>
+        <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 <!-- TRANSLATE MODAL -->
 <div class="translate-overlay" id="translateOverlay">
   <div class="translate-modal">
@@ -393,12 +400,13 @@ const spkHexMap = {};
 
 // ─── Boot ────────────────────────────────────────────────────────
 async function init() {
+  // Guests are allowed — no redirect to login
   try {
     const cfg = await fetch('/api/config').then(r=>r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data:{ session } } = await sb.auth.getSession();
-    if (!session) { location.href='/login.html'; return; }
-  } catch(e) {}
+    if (!session) sb = null; // guest mode — continue without auth
+  } catch(e) { sb = null; }
 
   const stored = localStorage.getItem('currentTranscript');
   if (!stored) { location.href='/dashboard.html'; return; }
@@ -411,9 +419,9 @@ function render(t) {
   const text = t.transcript || '';
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
-  document.getElementById('fileName').textContent = t.filename || 'Untitled';
+  document.getElementById('fileName').textContent = t.title || t.filename || 'Untitled';
   document.getElementById('chipDate').textContent = fmtDate(t.created_at);
-  document.getElementById('chipMode').textContent = modeLabel(t.mode);
+  document.getElementById('chipMode').textContent = engineLabel(t.engine || t.mode);
   document.getElementById('chipLang').textContent = '🌐 '+(t.language||'en').toUpperCase();
   document.getElementById('chipWords').textContent = wordCount+' words';
   document.getElementById('fileBar').style.display = 'flex';
@@ -780,7 +788,8 @@ function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectUR
 
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  if (sb) await sb.from('transcriptions').delete().eq('id', T.id);
+  if (sb && T.id && !T.isGuest) await sb.from('transcripts').delete().eq('id', T.id);
+  if (T.isGuest || !sb) { const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts')||'[]').filter(x=>x.id!==T.id); localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list)); }
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
   setTimeout(()=>location.href='/dashboard.html', 900);
@@ -789,6 +798,7 @@ async function deleteTranscript() {
 function fmtS(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${~~(s/60)}:${p2(s%60)}`;}
 function p2(n){return String(n).padStart(2,'0');}
 function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function engineLabel(e){return e==="groq"||e==="fast"?"⚡ Fast":e==="deepgram"||e==="balanced"?"⚖️ Balanced":e==="assemblyai"||e==="accurate"?"🎯 Accurate":e||"—";}
 function modeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}

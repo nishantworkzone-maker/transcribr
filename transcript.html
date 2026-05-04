@@ -405,7 +405,8 @@ async function init() {
     const cfg = await fetch('/api/config').then(r=>r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data:{ session } } = await sb.auth.getSession();
-    if (!session) sb = null; // guest mode — continue without auth
+    if (!session) { sb = null; } // guest
+    else { await sb.auth.setSession(session); } // set JWT so RLS works
   } catch(e) { sb = null; }
 
   const stored = localStorage.getItem('currentTranscript');

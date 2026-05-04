@@ -370,7 +370,16 @@ async function init() {
     const cfg=await fetch('/api/config').then(r=>r.json());
     sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey);
     const {data:{session}}=await sb.auth.getSession();
-    if(session){currentUser=session.user;authToken=session.access_token;sb.auth.onAuthStateChange((_e,s)=>{authToken=s?.access_token||null;});}
+    if(session){
+      currentUser=session.user;
+      authToken=session.access_token;
+      // Set session on client so RLS policies receive the JWT
+      await sb.auth.setSession(session);
+      sb.auth.onAuthStateChange((_e,s)=>{
+        authToken=s?.access_token||null;
+        if(s) sb.auth.setSession(s);
+      });
+    }
   } catch(e){console.error(e);}
   if(currentUser) await setupLoggedIn(); else setupGuest();
   setupDropzone();

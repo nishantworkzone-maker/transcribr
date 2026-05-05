@@ -60,8 +60,12 @@ export async function checkUsageLimit(req, res, next) {
 // checkEngineAccess: guests and free users get Groq only
 export function checkEngineAccess(req, res, next) {
   const plan = req.userPlan || 'guest';
+  const rawMode = req.body.mode || 'fast';
+  // Normalise new UI mode keys → internal engine keys
+  const modeMap = { quick: 'fast', smart: 'balanced', precision: 'accurate', auto: 'fast' };
+  const resolvedMode = modeMap[rawMode] || rawMode;
   const modeToEngine = { fast: 'groq', balanced: 'deepgram', accurate: 'assemblyai' };
-  const engine = modeToEngine[req.body.mode] || 'groq';
+  const engine = modeToEngine[resolvedMode] || 'groq';
   const allowedEngines = (plan === 'guest' || plan === 'free')
     ? ['groq']
     : (PLAN_ENGINES[plan] || ['groq']);

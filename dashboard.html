@@ -269,24 +269,24 @@ tr:hover td { background:rgba(255,255,255,0.015); }
         <div class="eng-card smart selected" onclick="selectEngine('auto',this)" id="eng-auto">
           <span class="eng-badge default-badge">Default</span>
           <span class="eng-emoji">🧠</span>
-          <span class="eng-name">Smart Auto</span>
-          <span class="eng-sub">Best engine for your file</span>
+          <span class="eng-name">Auto Mode</span>
+          <span class="eng-sub">Intelligent routing for your file</span>
         </div>
-        <div class="eng-card" onclick="selectEngine('fast',this)" id="eng-fast">
+        <div class="eng-card" onclick="selectEngine('quick',this)" id="eng-quick">
           <span class="eng-emoji">⚡</span>
-          <span class="eng-name">Fast</span>
-          <span class="eng-sub">Groq · Instant results</span>
+          <span class="eng-name">Quick Mode</span>
+          <span class="eng-sub">Instant results · Files only</span>
         </div>
-        <div class="eng-card" onclick="selectEngine('balanced',this)" id="eng-balanced">
+        <div class="eng-card" onclick="selectEngine('smart',this)" id="eng-smart">
           <span class="eng-emoji">⚖️</span>
-          <span class="eng-name">Balanced</span>
-          <span class="eng-sub">Deepgram · Best for calls</span>
+          <span class="eng-name">Smart Mode</span>
+          <span class="eng-sub">Reliable · Files &amp; URLs</span>
         </div>
-        <div class="eng-card" onclick="selectEngine('accurate',this)" id="eng-accurate">
+        <div class="eng-card" onclick="selectEngine('precision',this)" id="eng-precision">
           <span class="eng-badge pro-badge" id="accurateLock" style="display:none">Pro</span>
           <span class="eng-emoji">🎯</span>
-          <span class="eng-name">Accurate</span>
-          <span class="eng-sub">AssemblyAI · Highest quality</span>
+          <span class="eng-name">Precision Mode</span>
+          <span class="eng-sub">Highest accuracy · Files &amp; URLs</span>
         </div>
       </div>
 
@@ -316,7 +316,7 @@ tr:hover td { background:rgba(255,255,255,0.015); }
             <option value="auto">🧠 Smart Auto</option>
             <option value="fast">⚡ Fast (Groq)</option>
             <option value="balanced">⚖️ Balanced (Deepgram)</option>
-            <option value="accurate">🎯 Accurate (AssemblyAI)</option>
+            <option value="precision">🎯 Precision (AssemblyAI)</option>
           </select>
         </div>
       </div>
@@ -396,13 +396,13 @@ async function setupLoggedIn() {
     <button class="btn-signout" onclick="signOut()">Sign out</button>`;
   document.getElementById('sbSignin').style.display='none';
   document.getElementById('sbSignout').style.display='flex';
-  try{const{data}=await sb.from('subscriptions').select('plan').eq('user_id',currentUser.id).single();userPlan=data?.plan||'free';}catch(e){userPlan='free';}
+  try{const r=await fetch('/api/user/me',{headers:{'Authorization':`Bearer ${authToken}`}});const d=await r.json();userPlan=d?.plan||'free';if(d?.usageCount!==undefined)document.getElementById('sMonth').textContent=d.usageCount;}catch(e){userPlan='free';}
   const isPriv=['admin','pro','premium'].includes(userPlan);
   const lbl=userPlan==='admin'?'Admin':userPlan==='pro'?'Pro':userPlan==='premium'?'Premium':'Free';
   document.getElementById('sPlan').textContent=lbl;
   const chip=document.getElementById('planChip');chip.textContent=lbl;
   if(isPriv){chip.className='plan-chip '+(userPlan==='admin'?'admin':'pro');document.getElementById('sMonthSub').textContent='unlimited';}
-  else{document.getElementById('upgradeBanner').style.display='flex';document.getElementById('sbUpgrade').style.display='flex';document.getElementById('accurateLock').style.display='block';document.getElementById('eng-accurate').classList.add('locked');}
+  else{document.getElementById('upgradeBanner').style.display='flex';document.getElementById('sbUpgrade').style.display='flex';document.getElementById('accurateLock').style.display='block';document.getElementById('eng-precision').classList.add('locked');}
   await loadTranscripts();
 }
 
@@ -422,9 +422,10 @@ function setupGuest() {
 
 async function loadTranscripts() {
   try{
-    const{data,error}=await sb.from('transcripts').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-    if(error)throw error;
-    allTranscripts=data||[];
+    const res=await fetch('/api/transcripts',{headers:{'Authorization':`Bearer ${authToken}`}});
+    const json=await res.json();
+    if(!res.ok)throw new Error(json.error||'Failed to load transcripts');
+    allTranscripts=json.data||[];
   }catch(e){console.error(e);allTranscripts=[];showToast('⚠️ '+e.message);}
   renderTable(allTranscripts);
   const now=new Date();
@@ -459,8 +460,9 @@ function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;
 async function deleteTranscript(id){
   if(!confirm('Delete this transcript permanently?'))return;
   if(!currentUser){const list=getGuestTranscripts().filter(x=>x.id!==id);localStorage.setItem('transcribr_guest_transcripts',JSON.stringify(list));allTranscripts=list;renderTable(list);document.getElementById('sTotal').textContent=list.length;showToast('🗑 Deleted');return;}
-  const{error}=await sb.from('transcripts').delete().eq('id',id).eq('user_id',currentUser.id);
-  if(error){showToast('❌ '+error.message);return;}
+  const res=await fetch(`/api/transcripts/${id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${authToken}`}});
+  const json=await res.json();
+  if(!res.ok){showToast('❌ '+(json.error||'Delete failed'));return;}
   showToast('🗑 Deleted');await loadTranscripts();
 }
 
@@ -481,7 +483,7 @@ function switchTab(tab,btn){
 
 function selectEngine(engine,el){
   const isPriv=['admin','pro','premium'].includes(userPlan);
-  if(engine==='accurate'&&!isPriv){showToast('🔒 Accurate mode requires Pro plan.');return;}
+  if(engine==='precision'&&!isPriv){showToast('🔒 Precision mode requires Pro plan.');return;}
   if(engine==='fast'&&currentTab==='url'){showToast('ℹ️ Fast mode doesn\'t support URLs. Switched to Smart Auto.');selectEngine('auto',document.getElementById('eng-auto'));return;}
   selectedEngine=engine;
   document.querySelectorAll('.eng-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');
@@ -498,22 +500,22 @@ function updateSmartNote(){
   const note=document.getElementById('smartNote');
   if(selectedEngine==='auto'){
     const isUrl=currentTab==='url';const sz=selectedFile?.size||0;
-    let msg='🧠 Smart mode: ';
-    if(isUrl)msg+='URL detected → will use <strong>Balanced (Deepgram)</strong>';
-    else if(sz>0&&sz<8*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>Fast (Groq)</strong>`;
-    else if(sz>=8*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>${(isGuest()||userPlan==='free')?'Smart (Deepgram)':'Accurate (AssemblyAI)'}</strong>`;
-    else msg+='Best engine selected automatically based on file size.';
+    let msg='🧠 Auto mode: ';
+    if(isUrl)msg+='URL detected → will use <strong>Smart Mode</strong>';
+    else if(sz>0&&sz<25*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>Quick Mode</strong>`;
+    else if(sz>=25*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>Smart Mode</strong>`;
+    else msg+='Best mode selected automatically based on your file.';
     note.innerHTML=msg;note.classList.add('show');
   } else {note.classList.remove('show');}
 }
 
 function resolveEngine(file,isUrl){
-  if(isUrl)return'balanced';
-  if(!file)return'balanced';
-  if(file.size<8*1024*1024)return'fast';
-  // Guests and free users can't use accurate (AssemblyAI) — fall back to balanced
-  if(isGuest()||userPlan==='free')return'balanced';
-  return'accurate';
+  if(isUrl)return'smart';
+  if(!file)return'smart';
+  if(file.size<25*1024*1024)return'quick';
+  // Guests and free users can't use precision — fall back to smart
+  if(isGuest()||userPlan==='free')return'smart';
+  return'smart'; // default safe; precision only if explicitly selected
 }
 
 function onFilePick(e){const f=e.target.files[0];if(!f)return;selectedFile=f;document.getElementById('dropzone').classList.add('has-file');document.getElementById('filePill').style.display='flex';document.getElementById('filePillName').textContent=`🎵 ${f.name} (${(f.size/1024/1024).toFixed(1)} MB)`;updateSmartNote();}
@@ -538,7 +540,7 @@ async function startTranscription(){
   else{formData.append('audio',selectedFile,selectedFile.name);formData.append('title',selectedFile.name);setProgress(18,'Uploading…');}
 
   let prog=18;
-  const iv=setInterval(()=>{if(prog<88){prog+=resolvedMode==='accurate'?1:4;setProgress(prog,getMsg(prog));}},resolvedMode==='accurate'?2000:600);
+  const iv=setInterval(()=>{if(prog<88){prog+=resolvedMode==='precision'?1:4;setProgress(prog,getMsg(prog));}},resolvedMode==='precision'?2000:600);
 
   try{
     const headers={};if(authToken)headers['Authorization']=`Bearer ${authToken}`;
@@ -546,6 +548,19 @@ async function startTranscription(){
     const data=await res.json();clearInterval(iv);
     if(!res.ok||data.error)throw new Error(data.error||'Transcription failed');
     setProgress(100,'Done!');
+
+    // If user uploaded a file and backend didn't return a playable audio_url,
+    // create a local blob URL and cache it in sessionStorage for the transcript page
+    let localAudioKey = null;
+    if (!isUrl && selectedFile && !data.audioUrl) {
+      try {
+        const blobUrl = URL.createObjectURL(selectedFile);
+        const key = 'audio_blob_' + Date.now();
+        sessionStorage.setItem(key, blobUrl);
+        data.audioUrl = '__blob__' + key; // marker so transcript page knows to use sessionStorage
+        localAudioKey = key;
+      } catch(e) { /* non-critical */ }
+    }
 
     if(isGuest()){
       incrementGuestCount();
@@ -584,7 +599,12 @@ function getGuestCount(){return parseInt(localStorage.getItem('transcribr_guest_
 function incrementGuestCount(){localStorage.setItem('transcribr_guest_count',getGuestCount()+1);}
 async function signOut(){if(sb)await sb.auth.signOut();location.href='/';}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function engineLabel(e){return e==='groq'||e==='fast'?'⚡ Fast':e==='deepgram'||e==='balanced'?'⚖️ Balanced':e==='assemblyai'||e==='accurate'?'🎯 Accurate':e||'—';}
+function engineLabel(e){
+  if(e==='groq'||e==='fast'||e==='quick')return'⚡ Quick';
+  if(e==='deepgram'||e==='balanced'||e==='smart')return'⚖️ Smart';
+  if(e==='assemblyai'||e==='accurate'||e==='precision')return'🎯 Precision';
+  return e||'—';
+}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 init();

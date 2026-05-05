@@ -102,7 +102,14 @@ router.post('/',
   checkEngineAccess,
   upload.single('audio'),
   async (req, res) => {
-    const { mode = 'fast', language = 'en', audioUrl, enablePII = 'false', title = '' } = req.body;
+    const rawMode = req.body.mode || 'auto';
+    // Normalise new UI mode keys → internal engine keys
+    const modeMap = { quick: 'fast', smart: 'balanced', precision: 'accurate', auto: 'auto' };
+    const mode = modeMap[rawMode] || rawMode;
+    const language = req.body.language || 'en';
+    const audioUrl = req.body.audioUrl;
+    const enablePII = req.body.enablePII || 'false';
+    const title = req.body.title || '';
     const originalName = req.file?.originalname || 'audio.mp3';
     const rawPath = req.file?.path;
     const userId = req.user?.id || null;

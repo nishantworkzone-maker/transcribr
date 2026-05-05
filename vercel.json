@@ -1,10 +1,14 @@
 {
   "version": 2,
   "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
     { "src": "server.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/config", "dest": "/api/config.js" },
+    { "src": "/api/transcribe", "dest": "/api/transcribe.js" },
+    { "src": "/api/audio", "dest": "/api/audio.js" },
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/login.html", "dest": "/login.html" },
     { "src": "/dashboard.html", "dest": "/dashboard.html" },
@@ -12,6 +16,10 @@
     { "src": "/app.html", "dest": "/app.html" },
     { "src": "/contact.html", "dest": "/contact.html" },
     { "src": "/business.html", "dest": "/business.html" },
+    { "src": "/feedback.html", "dest": "/feedback.html" },
+    { "src": "/bug.html", "dest": "/bug.html" },
+    { "src": "/terms.html", "dest": "/terms.html" },
+    { "src": "/privacy.html", "dest": "/privacy.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

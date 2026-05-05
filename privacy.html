@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Privacy Policy — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27; --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14); --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); }
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent2); }
+.page { max-width: 720px; margin: 4rem auto; padding: 0 2rem 4rem; }
+.page h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.page .sub { color: var(--muted); margin-bottom: 2.5rem; font-size: 0.9rem; }
+.page h2 { font-size: 1.1rem; margin: 2rem 0 0.6rem; color: var(--accent2); }
+.page p, .page li { color: var(--muted); line-height: 1.75; font-size: 0.93rem; margin-bottom: 0.5rem; }
+.page ul { padding-left: 1.4rem; }
+footer { border-top: 1px solid var(--border); padding: 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: 0.83rem; }
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <a href="/dashboard.html" style="color:var(--muted);font-size:0.88rem;text-decoration:none;">← Dashboard</a>
+</nav>
+<div class="page">
+  <h1>Privacy Policy</h1>
+  <p class="sub">Last updated: May 2025</p>
+
+  <h2>What We Collect</h2>
+  <p>When you use Transcribr, we may collect:</p>
+  <ul>
+    <li>Your email address when you create an account</li>
+    <li>Audio files you upload for transcription (processed, not stored permanently)</li>
+    <li>Transcript text (stored in your account if logged in)</li>
+    <li>Usage metadata (number of transcriptions, engines used)</li>
+    <li>Basic usage analytics (no personal tracking)</li>
+  </ul>
+
+  <h2>How We Use It</h2>
+  <p>We use collected data to:</p>
+  <ul>
+    <li>Provide and improve the transcription service</li>
+    <li>Manage your account and enforce usage limits</li>
+    <li>Send important service notifications (no marketing without consent)</li>
+  </ul>
+
+  <h2>Audio Processing</h2>
+  <p>Audio files are sent to third-party AI providers (Groq, Deepgram, or AssemblyAI) for transcription. These providers may have their own data retention policies. We do not permanently store your original audio files on our servers. Once transcription is complete, temporary files are deleted.</p>
+
+  <h2>Data Storage</h2>
+  <p>Transcript text and account data is stored securely in Supabase (hosted on AWS). Data is encrypted at rest and in transit.</p>
+
+  <h2>Guest Users</h2>
+  <p>Guest users' transcript data is stored only in their browser's localStorage. We do not collect or store any personally identifiable information from guest sessions.</p>
+
+  <h2>Data Deletion</h2>
+  <p>You can delete your transcripts at any time from your dashboard. To delete your account and all associated data, contact us at <a href="mailto:nishant.workzone@gmail.com" style="color:var(--accent2)">nishant.workzone@gmail.com</a>.</p>
+
+  <h2>Third-Party Services</h2>
+  <p>We use Supabase for authentication and database, and AI transcription APIs (Groq, Deepgram, AssemblyAI). Each has their own privacy policies which govern how they handle data.</p>
+
+  <h2>Contact</h2>
+  <p>Privacy questions? Email us at <a href="mailto:nishant.workzone@gmail.com" style="color:var(--accent2)">nishant.workzone@gmail.com</a></p>
+</div>
+<footer>
+  <span>© 2025 Transcribr</span>
+  <div style="display:flex;gap:1.5rem">
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</footer>
+</body>
+</html>

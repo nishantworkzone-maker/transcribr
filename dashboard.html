@@ -383,7 +383,10 @@ async function init() {
   } catch(e){console.error(e);}
   if(currentUser) await setupLoggedIn(); else setupGuest();
   setupDropzone();
-  if(new URLSearchParams(location.search).get('new')==='1'){openModal();history.replaceState({},'','/dashboard.html');}
+  // Auto-open modal: either on ?new=1 param or on first visit (no transcripts yet)
+  const params=new URLSearchParams(location.search);
+  if(params.get('new')==='1'){openModal();history.replaceState({},'','/dashboard.html');}
+  else if(!allTranscripts.length){openModal();}
 }
 
 async function setupLoggedIn() {
@@ -498,7 +501,7 @@ function updateSmartNote(){
     let msg='🧠 Smart mode: ';
     if(isUrl)msg+='URL detected → will use <strong>Balanced (Deepgram)</strong>';
     else if(sz>0&&sz<8*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>Fast (Groq)</strong>`;
-    else if(sz>=8*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>Accurate (AssemblyAI)</strong>`;
+    else if(sz>=8*1024*1024)msg+=`${(sz/1024/1024).toFixed(1)}MB file → will use <strong>${(isGuest()||userPlan==='free')?'Smart (Deepgram)':'Accurate (AssemblyAI)'}</strong>`;
     else msg+='Best engine selected automatically based on file size.';
     note.innerHTML=msg;note.classList.add('show');
   } else {note.classList.remove('show');}
@@ -508,6 +511,8 @@ function resolveEngine(file,isUrl){
   if(isUrl)return'balanced';
   if(!file)return'balanced';
   if(file.size<8*1024*1024)return'fast';
+  // Guests and free users can't use accurate (AssemblyAI) — fall back to balanced
+  if(isGuest()||userPlan==='free')return'balanced';
   return'accurate';
 }
 

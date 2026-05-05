@@ -97,6 +97,13 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   nav { padding: 1rem 1.2rem; }
   .nav-links { display: none; }
 }
+.faq-item { border-bottom: 1px solid var(--border); overflow: hidden; }
+.faq-q { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 0; cursor: pointer; font-weight: 500; font-size: 0.96rem; gap: 1rem; user-select: none; }
+.faq-q:hover { color: var(--accent2); }
+.faq-icon { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; transition: transform 0.25s; }
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; color: var(--muted); font-size: 0.9rem; line-height: 1.72; }
+.faq-item.open .faq-a { max-height: 300px; padding-bottom: 1rem; }
 </style>
 </head>
 <body>
@@ -224,10 +231,19 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
           <li>Dedicated support</li>
           <li>SLA guarantee</li>
         </ul>
-        <button class="btn-plan">Contact sales</button>
+        <button class="btn-plan" onclick="location.href='/business.html'">Contact sales</button>
       </div>
     </div>
   </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding:5rem 2rem;max-width:720px;margin:0 auto;">
+  <div style="text-align:center;margin-bottom:2.5rem;">
+    <div class="section-tag">FAQ</div>
+    <h2 class="section-title">Common questions</h2>
+  </div>
+  <div id="faq"></div>
 </section>
 
 <!-- BOTTOM CTA -->
@@ -241,9 +257,11 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 <footer>
   <div class="logo" style="font-size:1.05rem">Transcribr<span style="color:var(--accent2)">.</span></div>
   <div style="display:flex;gap:2rem;flex-wrap:wrap">
-    <a href="#" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Privacy</a>
-    <a href="#" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Terms</a>
-    <a href="#" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Contact</a>
+    <a href="/privacy.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Privacy</a>
+    <a href="/terms.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Terms</a>
+    <a href="/contact.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Contact</a>
+    <a href="/feedback.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Feedback</a>
+    <a href="/bug.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Report a Bug</a>
   </div>
   <div style="color:var(--muted);font-size:0.8rem">© 2025 Transcribr. All rights reserved.</div>
 </footer>
@@ -277,6 +295,38 @@ async function checkAuth() {
   }
 }
 checkAuth();
+
+// FAQ accordion
+const faqs = [
+  { q: 'Is Transcribr really free to use?', a: 'Yes! You can transcribe up to 3 files as a guest without signing up. Create a free account to get 10 transcriptions per month — no credit card needed.' },
+  { q: 'What audio formats are supported?', a: 'Transcribr supports MP3, MP4, WAV, M4A, OGG, WEBM, and FLAC files up to 100MB. You can also paste a direct URL to an audio or video file.' },
+  { q: 'How accurate is the transcription?', a: 'Accuracy varies by mode. Fast Mode (Groq Whisper) is excellent for clean audio. Smart Mode (Deepgram) handles meetings and multiple speakers well. Precision Mode (AssemblyAI) delivers the highest accuracy for professional use.' },
+  { q: 'What languages are supported?', a: 'We support 99+ languages in Smart and Precision modes. Fast Mode supports the most common 10 languages including English, Spanish, French, German, Japanese, and more.' },
+  { q: 'Is my audio stored permanently?', a: 'No. Uploaded audio files are processed and then deleted from our servers immediately. Only the transcript text is saved (for logged-in users). Guest transcripts are stored only in your browser.' },
+  { q: 'What is Auto Mode?', a: 'Auto Mode (🧠) automatically picks the best transcription engine based on your input: URLs go through Smart Mode, small files use Fast Mode, and larger files use the most appropriate engine for your plan.' },
+  { q: 'Can I export my transcripts?', a: 'Yes! You can export transcripts as TXT (plain text) or SRT (subtitles). Pro users also get additional export formats.' },
+  { q: 'How do I upgrade to Pro?', a: 'Click "Get started" on any paid plan. Pro unlocks unlimited transcriptions, 5-hour file support, speaker detection, and priority processing for $12/month.' }
+];
+
+const faqEl = document.getElementById('faq');
+if (faqEl) {
+  faqEl.innerHTML = faqs.map((f, i) => `
+    <div class="faq-item" id="faq${i}">
+      <div class="faq-q" onclick="toggleFaq(${i})">
+        <span>${f.q}</span>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-a">${f.a}</div>
+    </div>`).join('');
+}
+
+function toggleFaq(i) {
+  const el = document.getElementById('faq' + i);
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(x => x.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
 </script>
 </body>
 </html>

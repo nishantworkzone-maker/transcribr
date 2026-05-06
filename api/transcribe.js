@@ -182,7 +182,9 @@ async function transcribeAssemblyAI(fileBuffer, audioUrl, language) {
 // ── Mode resolver ─────────────────────────────────────────────────────────────
 
 function resolveMode(fileSize, isUrl, requestedMode) {
-  if (requestedMode && requestedMode !== 'auto') return requestedMode;
+  const modeMap = { quick: 'fast', smart: 'balanced', precision: 'accurate' };
+  const normalized = modeMap[requestedMode] || requestedMode;
+  if (normalized && normalized !== 'auto') return normalized;
   if (isUrl) return 'balanced';
   if (fileSize && fileSize < 8 * 1024 * 1024) return 'fast';
   return 'balanced';

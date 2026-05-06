@@ -14,23 +14,17 @@ app.use(cors());
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static('.'));
 
-// ── /api/config — MUST work even if other env vars are missing ────
-// This is the first thing every page calls. Never crash here.
+// ── /api/config ───────────────────────────────────────────────────
 app.get('/api/config', (req, res) => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables');
+    console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY');
     return res.status(500).json({
       error: 'Server config missing. Check Vercel environment variables.',
-      missing: [
-        !supabaseUrl && 'SUPABASE_URL',
-        !supabaseKey && 'SUPABASE_ANON_KEY'
-      ].filter(Boolean)
+      missing: [!supabaseUrl && 'SUPABASE_URL', !supabaseKey && 'SUPABASE_ANON_KEY'].filter(Boolean)
     });
   }
-
   res.json({ supabaseUrl, supabaseKey });
 });
 
@@ -45,7 +39,6 @@ app.get('/api/audio', async (req, res) => {
     const response = await fetch(url, { headers });
     if (!response.ok && response.status !== 206) return res.status(502).send(`Remote audio returned HTTP ${response.status}`);
 
-    // Detect correct content-type — never hardcode audio/wav
     let contentType = response.headers.get('content-type') || '';
     if (!contentType || contentType.includes('octet-stream') || contentType.includes('binary')) {
       const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
@@ -75,7 +68,7 @@ app.use('/api/translate', translateRouter);
 app.use('/api/import-link', importLinkRouter);
 app.use('/api/user', userRouter);
 
-// ── /api/transcripts — service-key reads, bypasses RLS ───────────
+// ── /api/transcripts — uses service key, bypasses RLS ────────────
 import { requireAuth } from './middleware/auth.js';
 import { createClient } from '@supabase/supabase-js';
 
@@ -87,11 +80,11 @@ function getAdminClient() {
   );
 }
 
-// GET /api/transcripts — list all transcripts for authenticated user
+// GET /api/transcripts — list all transcriptions for authenticated user
 app.get('/api/transcripts', requireAuth, async (req, res) => {
   try {
     const { data, error } = await getAdminClient()
-      .from('transcripts')
+      .from('transcriptions')
       .select('*')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
@@ -103,14 +96,14 @@ app.get('/api/transcripts', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/transcripts/:id — delete one transcript owned by the user
+// DELETE /api/transcripts/:id — delete one transcription owned by the user
 app.delete('/api/transcripts/:id', requireAuth, async (req, res) => {
   try {
     const { error } = await getAdminClient()
-      .from('transcripts')
+      .from('transcriptions')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', req.user.id); // user can only delete their own
+      .eq('user_id', req.user.id);
     if (error) throw error;
     res.json({ success: true });
   } catch (err) {

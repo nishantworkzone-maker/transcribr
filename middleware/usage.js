@@ -100,7 +100,7 @@ export async function saveTranscript(userId, data) {
   if (!userId) return null; // guest — don't save
   try {
     const { data: saved, error } = await getSupabaseAdmin()
-      .from('transcripts')
+      .from('transcriptions')
       .insert({
         user_id: userId,
         title: data.title || 'Untitled',

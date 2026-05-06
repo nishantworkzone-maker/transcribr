@@ -19,40 +19,36 @@ const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } }
 
 // Upload audio file to Supabase Storage and return public URL
 async function uploadAudioToStorage(filePath, fileName) {
-  try {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-    if (!url || !key) return null;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('Missing Supabase credentials for storage upload');
 
-    const supabase = createClient(url, key, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
+  const supabase = createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
 
-    const fileBuffer = fs.readFileSync(filePath);
-    const ext = path.extname(fileName || filePath).toLowerCase() || '.mp3';
-    const storageName = `audio-${Date.now()}${ext}`;
-    const contentType = ext === '.wav' ? 'audio/wav'
-      : ext === '.mp4' ? 'audio/mp4'
-      : ext === '.m4a' ? 'audio/m4a'
-      : ext === '.ogg' ? 'audio/ogg'
-      : ext === '.webm' ? 'audio/webm'
-      : 'audio/mpeg';
+  const fileBuffer = fs.readFileSync(filePath);
+  const ext = path.extname(fileName || filePath).toLowerCase() || '.mp3';
+  const storageName = `audio-${Date.now()}${ext}`;
+  const contentType = ext === '.wav' ? 'audio/wav'
+    : ext === '.mp4' ? 'audio/mp4'
+    : ext === '.m4a' ? 'audio/mp4'
+    : ext === '.ogg' ? 'audio/ogg'
+    : ext === '.webm' ? 'audio/webm'
+    : ext === '.flac' ? 'audio/flac'
+    : 'audio/mpeg';
 
-    const { error } = await supabase.storage
-      .from('audio-files')
-      .upload(storageName, fileBuffer, { contentType, upsert: false });
+  const { error } = await supabase.storage
+    .from('audio-files')
+    .upload(storageName, fileBuffer, { contentType, upsert: false });
 
-    if (error) {
-      console.error('Storage upload error:', error.message);
-      return null;
-    }
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
 
-    const { data } = supabase.storage.from('audio-files').getPublicUrl(storageName);
-    return data?.publicUrl || null;
-  } catch (err) {
-    console.error('Storage upload failed:', err.message);
-    return null;
-  }
+  const { data } = supabase.storage.from('audio-files').getPublicUrl(storageName);
+  const publicUrl = data?.publicUrl;
+  if (!publicUrl) throw new Error('Storage upload succeeded but no public URL was returned');
+
+  return publicUrl;
 }
 
 // Give uploaded file the correct extension so Groq accepts it
@@ -172,9 +168,12 @@ router.post('/',
       // Upload audio to Supabase Storage for playback (logged-in users only)
       let storedAudioUrl = audioUrl || null;
       if (userId && filePath && !audioUrl) {
-        // File upload — store in Supabase Storage so it can be played back
-        const uploaded = await uploadAudioToStorage(filePath, originalName);
-        if (uploaded) storedAudioUrl = uploaded;
+        try {
+          storedAudioUrl = await uploadAudioToStorage(filePath, originalName);
+        } catch (uploadErr) {
+          console.error('[audio-upload] Failed:', uploadErr.message);
+          // storedAudioUrl stays null — transcript still saves, audio won't play on revisit
+        }
       }
 
       // Save to Supabase for logged-in users

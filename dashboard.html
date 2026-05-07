@@ -422,7 +422,7 @@ function setupGuest() {
 
 async function loadTranscripts() {
   try{
-    const res=await fetch('/api/transcripts',{headers:{'Authorization':`Bearer ${authToken}`}});
+    const res=await fetch('/api/transcripts',{headers:{'Authorization':`Bearer ${authToken}`,'Cache-Control':'no-cache'},cache:'no-store'});
     const json=await res.json();
     if(!res.ok)throw new Error(json.error||'Failed to load transcripts');
     allTranscripts=json.data||[];

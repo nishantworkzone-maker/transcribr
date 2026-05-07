@@ -455,7 +455,7 @@ function renderTable(list) {
 function filterTable(q){renderTable(allTranscripts.filter(t=>(t.filename||'').toLowerCase().includes(q.toLowerCase())));}
 
 function openTranscript(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));location.href='/transcript.html';}
-function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));window.open('/transcript.html','_blank');}
+function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));setTimeout(()=>window.open('/transcript.html?id='+id,'_blank'),100);}
 function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.filename||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
 async function deleteTranscript(id){
   if(!confirm('Delete this transcript permanently?'))return;

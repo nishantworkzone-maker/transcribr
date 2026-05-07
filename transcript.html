@@ -129,13 +129,10 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 .audio-bar {
   flex-shrink: 0;
   background: #0d0d14; border-top: 1px solid var(--border2);
-  padding: 0 1.4rem; display: flex; flex-direction: column;
-  justify-content: center; gap: 4px; z-index: 300;
-  min-height: 88px;
-  overflow: hidden;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
+  padding: 0.6rem 1.4rem; display: flex; flex-direction: column;
+  justify-content: center; gap: 6px; z-index: 300;
+  min-height: 88px; overflow: hidden; min-width: 0;
+  width: 100%; box-sizing: border-box;
 }
 
 /* Speaker legend row */
@@ -180,6 +177,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 
 /* Time + controls row */
 .audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; }
+.audio-controls-row .time-display { flex:1; min-width:0; }
 .time-display { font-size:0.72rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:90px; }
 .audio-right { display:flex; align-items:center; gap:0.6rem; margin-left:auto; }
 .speed-btn { background:var(--surface2); border:1px solid var(--border2); color:var(--muted); padding:0.2rem 0.48rem; border-radius:5px; font-size:0.68rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; }
@@ -336,24 +334,25 @@ input:checked + .pill-track::after { transform:translateX(12px); }
   <!-- Speaker legend (shown when audio loaded) -->
   <div class="spk-legend" id="spkLegend" style="display:none"></div>
 
-  <!-- Waveform row -->
+  <!-- Waveform row: waveform takes full width, play button overlaid in center -->
   <div class="waveform-row">
-    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
-
-    <div class="waveform-wrap" id="waveformWrap">
+    <div class="waveform-wrap" id="waveformWrap" style="position:relative;flex:1;">
       <canvas class="waveform-canvas" id="waveCanvas"></canvas>
       <div class="waveform-playhead" id="playhead"></div>
       <div class="waveform-tooltip" id="waveTooltip"></div>
+      <!-- Play button centered over waveform -->
+      <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled
+        style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
     </div>
   </div>
 
-  <!-- Time + controls -->
+  <!-- Time on left, controls on right -->
   <div class="audio-controls-row">
     <div class="time-display">
       <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
       <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
     </div>
-    <div class="audio-right">
+    <div class="audio-right" style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
       <div style="display:flex;gap:2px">
         <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
         <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
@@ -417,9 +416,43 @@ async function init() {
   } catch(e) { sb = null; }
 
   const stored = localStorage.getItem('currentTranscript');
-  if (!stored) { location.href='/dashboard.html'; return; }
-  T = JSON.parse(stored);
-  render(T);
+  const urlId = new URLSearchParams(location.search).get('id');
+
+  if (stored) {
+    T = JSON.parse(stored);
+    // If URL id matches stored, we're good. If different id in URL, fetch fresh.
+    if (urlId && T.id !== urlId) {
+      await fetchAndRender(urlId);
+      return;
+    }
+    render(T);
+  } else if (urlId) {
+    await fetchAndRender(urlId);
+  } else {
+    location.href = '/dashboard.html';
+  }
+}
+
+// ─── Fetch from API by ID (for new-tab opens) ────────────────────
+async function fetchAndRender(id) {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) { location.href = '/dashboard.html'; return; }
+    const res = await fetch('/api/transcripts', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+      cache: 'no-store'
+    });
+    const json = await res.json();
+    const t = (json.data || []).find(x => x.id === id);
+    if (!t) { location.href = '/dashboard.html'; return; }
+    T = t;
+    localStorage.setItem('currentTranscript', JSON.stringify(t));
+    render(t);
+  } catch(e) {
+    location.href = '/dashboard.html';
+  }
 }
 
 // ─── Render ──────────────────────────────────────────────────────
@@ -461,14 +494,16 @@ function render(t) {
   // Setup waveform canvas
   setupWaveformInteraction();
 
-  // Auto-load URL audio
+  // Load audio — strict priority: Supabase URL → blob fallback → no audio
   if (t.audio_url) {
-    let resolvedSrc;
-    // Handle local blob URL stored in sessionStorage (file uploads without Storage backend)
+    let resolvedSrc = null;
+
     if (t.audio_url.startsWith('__blob__')) {
+      // Blob fallback (guest or Storage-failed session)
       const key = t.audio_url.slice('__blob__'.length);
       resolvedSrc = sessionStorage.getItem(key) || null;
     } else {
+      // Supabase public URL — proxy through /api/audio for CORS + correct content-type
       resolvedSrc = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
     }
 
@@ -480,13 +515,13 @@ function render(t) {
       audio.addEventListener('loadedmetadata', () => {
         document.getElementById('durTime').textContent = fmtS(audio.duration);
         buildWaveform();
-      }, { once:true });
+      }, { once: true });
       audio.addEventListener('error', () => {
         audioLoaded = false;
         document.getElementById('playBtn').disabled = true;
         document.getElementById('noAudioMsg').style.display = 'inline';
         buildWaveform();
-      }, { once:true });
+      }, { once: true });
     } else {
       document.getElementById('noAudioMsg').style.display = 'inline';
       buildWaveform();

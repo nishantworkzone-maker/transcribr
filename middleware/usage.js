@@ -1,12 +1,4 @@
-// middleware/usage.js
 import { createClient } from '@supabase/supabase-js';
-
-const PLAN_LIMITS = { free: 3, pro: 999999, premium: 999999 };
-const PLAN_ENGINES = {
-  free: ['groq'],
-  pro: ['groq', 'deepgram'],
-  premium: ['groq', 'deepgram', 'assemblyai']
-};
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
@@ -16,106 +8,68 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
-export async function getUserPlanAndUsage(userId) {
+export function getUserPlanAndUsage(userId) {
   const supabase = getSupabaseAdmin();
-  const { data: sub } = await supabase
-    .from('subscriptions').select('plan').eq('user_id', userId).single();
-  const plan = sub?.plan || 'free';
-  const { count } = await supabase
-    .from('usage').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-  return { plan, count: count || 0, limit: PLAN_LIMITS[plan] };
+  return supabase.from('subscriptions').select('plan').eq('user_id', userId).single()
+    .then(({ data }) => ({ plan: data?.plan || 'free', count: 0, limit: 10 }))
+    .catch(() => ({ plan: 'free', count: 0, limit: 10 }));
 }
 
-// checkUsageLimit:
-//   - Guest (no login): always allowed — frontend tracks 3-use limit via localStorage
-//   - Logged-in user: check Supabase usage count against plan limit
 export async function checkUsageLimit(req, res, next) {
-  if (!req.user) {
-    // Guest mode — backend does not block, frontend enforces localStorage limit
-    req.userPlan = 'guest';
-    req.usageCount = 0;
-    return next();
-  }
-
+  if (!req.user) return next(); // guest — handled frontend side
   try {
-    const { plan, count, limit } = await getUserPlanAndUsage(req.user.id);
-    req.userPlan = plan;
-    req.usageCount = count;
-
-    if (count >= limit) {
-      return res.status(403).json({
-        error: 'transcription_limit_reached',
-        message: `You've used all ${limit} transcriptions on the ${plan} plan.`,
-        plan, count, limit,
-        upgrade_url: '/pricing.html'
-      });
-    }
+    const { count, limit } = await getUserPlanAndUsage(req.user.id);
+    if (count >= limit) return res.status(429).json({ error: 'Monthly limit reached. Upgrade to Pro for unlimited transcriptions.' });
     next();
-  } catch (err) {
-    console.error('Usage check error:', err.message);
-    return res.status(500).json({ error: 'Could not verify usage limits' });
-  }
+  } catch { next(); }
 }
 
-// checkEngineAccess: guests and free users get Groq only
-export function checkEngineAccess(req, res, next) {
-  const plan = req.userPlan || 'guest';
-  const rawMode = req.body.mode || 'fast';
-  // Normalise new UI mode keys → internal engine keys
-  const modeMap = { quick: 'fast', smart: 'balanced', precision: 'accurate', auto: 'fast' };
-  const resolvedMode = modeMap[rawMode] || rawMode;
-  const modeToEngine = { fast: 'groq', balanced: 'deepgram', accurate: 'assemblyai' };
-  const engine = modeToEngine[resolvedMode] || 'groq';
-  const allowedEngines = (plan === 'guest' || plan === 'free')
-    ? ['groq']
-    : (PLAN_ENGINES[plan] || ['groq']);
-
-  if (!allowedEngines.includes(engine)) {
-    return res.status(403).json({
-      error: 'engine_not_allowed',
-      message: `The "${req.body.mode}" mode requires a higher plan. You are on the ${plan} plan.`,
-      plan, upgrade_url: '/pricing.html'
-    });
+export async function checkEngineAccess(req, res, next) {
+  const rawMode = req.body.mode || 'auto';
+  const modeMap = { quick: 'fast', smart: 'balanced', precision: 'accurate', auto: 'auto' };
+  const mode = modeMap[rawMode] || rawMode;
+  if (mode === 'accurate' && req.user) {
+    try {
+      const { plan } = await getUserPlanAndUsage(req.user.id);
+      if (!['pro', 'premium', 'admin'].includes(plan)) {
+        return res.status(403).json({ error: 'Precision mode requires a Pro plan.' });
+      }
+    } catch { /* allow */ }
   }
   next();
 }
 
-// recordUsage: only saves to DB for logged-in users
-export async function recordUsage(userId, engine, durationSeconds = 0, title = '') {
-  if (!userId) return; // guest — nothing to save
+export async function recordUsage(userId, engine, duration, filename) {
+  if (!userId) return;
   try {
     await getSupabaseAdmin().from('usage').insert({
       user_id: userId,
-      engine,
-      duration_seconds: Math.round(durationSeconds),
-      title: title || 'Untitled'
+      engine: engine || 'groq',
+      duration_seconds: Math.round(duration || 0),
+      filename: filename || 'audio'
     });
   } catch (err) {
-    console.error('Failed to record usage:', err.message);
+    console.error('recordUsage failed:', err.message);
   }
 }
 
 // saveTranscript: only saves to DB for logged-in users
+// Throws on error so the caller can surface it
 export async function saveTranscript(userId, data) {
   if (!userId) return null; // guest — don't save
-  try {
-    const { data: saved, error } = await getSupabaseAdmin()
-      .from('transcriptions')
-      .insert({
-        user_id: userId,
-        filename: data.title || 'Untitled',
-        transcript: data.text,
-        audio_url: data.audioUrl || null,
-        mode: data.engine || 'groq',
-        language: data.language || 'en',
-        duration_seconds: data.durationSeconds || 0,
-        file_size_mb: data.fileSizeMb || 0
-      })
-      .select().single();
-    if (error) throw error;
-    return saved;
-  } catch (err) {
-    console.error('Failed to save transcript:', err.message);
-    return null;
-  }
+  const { data: saved, error } = await getSupabaseAdmin()
+    .from('transcriptions')
+    .insert({
+      user_id: userId,
+      filename: data.title || 'Untitled',
+      transcript: data.text,
+      audio_url: data.audioUrl || null,
+      mode: data.engine || 'groq',
+      language: data.language || 'en',
+      duration_seconds: data.durationSeconds || 0,
+      file_size_mb: data.fileSizeMb || 0
+    })
+    .select().single();
+  if (error) throw new Error('saveTranscript failed: ' + error.message);
+  return saved;
 }

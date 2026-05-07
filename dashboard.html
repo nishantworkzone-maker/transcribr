@@ -438,9 +438,9 @@ function renderTable(list) {
   const tbody=document.getElementById('tbody');
   if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><span class="empty-icon">🎙️</span><p>No transcripts yet.</p><button class="btn-new" onclick="openModal()">+ New Transcription</button></div></td></tr>`;return;}
   tbody.innerHTML=list.map(t=>`<tr>
-    <td><div class="td-name" title="${esc(t.title||'Untitled')}">${esc(t.title||'Untitled')}</div></td>
+    <td><div class="td-name" title="${esc(t.filename||'Untitled')}">${esc(t.filename||'Untitled')}</div></td>
     <td><span class="td-muted">${fmtDate(t.created_at)}</span></td>
-    <td><span class="engine-tag">${engineLabel(t.engine)}</span></td>
+    <td><span class="engine-tag">${engineLabel(t.mode)}</span></td>
     <td><span class="td-muted">${(t.language||'en').toUpperCase()}</span></td>
     <td><span class="status-pill"><span class="sdot"></span>Done</span></td>
     <td><div class="act-row">
@@ -452,11 +452,11 @@ function renderTable(list) {
   </tr>`).join('');
 }
 
-function filterTable(q){renderTable(allTranscripts.filter(t=>(t.title||'').toLowerCase().includes(q.toLowerCase())));}
+function filterTable(q){renderTable(allTranscripts.filter(t=>(t.filename||'').toLowerCase().includes(q.toLowerCase())));}
 
 function openTranscript(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));location.href='/transcript.html';}
 function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));window.open('/transcript.html','_blank');}
-function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.title||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
+function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.filename||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
 async function deleteTranscript(id){
   if(!confirm('Delete this transcript permanently?'))return;
   if(!currentUser){const list=getGuestTranscripts().filter(x=>x.id!==id);localStorage.setItem('transcribr_guest_transcripts',JSON.stringify(list));allTranscripts=list;renderTable(list);document.getElementById('sTotal').textContent=list.length;showToast('🗑 Deleted');return;}

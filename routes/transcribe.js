@@ -179,16 +179,16 @@ router.post('/',
       // Save to Supabase for logged-in users
       if (userId) {
         const duration = result.segments?.[result.segments.length - 1]?.end || 0;
+        const fileSizeMb = req.file?.size ? req.file.size / (1024 * 1024) : 0;
         await recordUsage(userId, result.engine, duration, title || originalName);
         await saveTranscript(userId, {
           title: title || originalName || 'Untitled',
           text: result.text,
-          maskedText,
           audioUrl: storedAudioUrl,
           engine: result.engine,
           language,
-          piiDetected,
-          speakerCount: countSpeakers(result.text)
+          durationSeconds: Math.round(duration),
+          fileSizeMb: parseFloat(fileSizeMb.toFixed(2))
         });
       }
 

@@ -103,14 +103,13 @@ export async function saveTranscript(userId, data) {
       .from('transcriptions')
       .insert({
         user_id: userId,
-        title: data.title || 'Untitled',
+        filename: data.title || 'Untitled',
         transcript: data.text,
-        masked_transcript: data.maskedText || null,
         audio_url: data.audioUrl || null,
-        engine: data.engine,
+        mode: data.engine || 'groq',
         language: data.language || 'en',
-        pii_detected: data.piiDetected || false,
-        speaker_count: data.speakerCount || 1
+        duration_seconds: data.durationSeconds || 0,
+        file_size_mb: data.fileSizeMb || 0
       })
       .select().single();
     if (error) throw error;

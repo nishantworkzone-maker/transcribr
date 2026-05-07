@@ -18,18 +18,15 @@ const router = express.Router();
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 100 * 1024 * 1024 } });
 
 // Upload audio file to Supabase Storage and return public URL
-async function uploadAudioToStorage(filePath, fileName) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Missing Supabase credentials for storage upload');
+import { put } from '@vercel/blob';
 
-  const supabase = createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+async function uploadAudioToStorage(filePath, fileName) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error('BLOB_READ_WRITE_TOKEN not set in environment variables');
 
   const fileBuffer = fs.readFileSync(filePath);
   const ext = path.extname(fileName || filePath).toLowerCase() || '.mp3';
-  const storageName = `audio-${Date.now()}${ext}`;
+  const storageName = `audio-${Date.now()}-${Math.random().toString(36).slice(2,7)}${ext}`;
   const contentType = ext === '.wav' ? 'audio/wav'
     : ext === '.mp4' ? 'audio/mp4'
     : ext === '.m4a' ? 'audio/mp4'
@@ -38,17 +35,14 @@ async function uploadAudioToStorage(filePath, fileName) {
     : ext === '.flac' ? 'audio/flac'
     : 'audio/mpeg';
 
-  const { error } = await supabase.storage
-    .from('audio-files')
-    .upload(storageName, fileBuffer, { contentType, upsert: false });
+  const blob = await put(storageName, fileBuffer, {
+    access: 'public',
+    contentType,
+    token
+  });
 
-  if (error) throw new Error(`Storage upload failed: ${error.message}`);
-
-  const { data } = supabase.storage.from('audio-files').getPublicUrl(storageName);
-  const publicUrl = data?.publicUrl;
-  if (!publicUrl) throw new Error('Storage upload succeeded but no public URL was returned');
-
-  return publicUrl;
+  if (!blob?.url) throw new Error('Vercel Blob upload succeeded but no URL was returned');
+  return blob.url;
 }
 
 // Give uploaded file the correct extension so Groq accepts it
@@ -165,14 +159,17 @@ router.post('/',
         piiDetected = true;
       }
 
-      // Upload audio to Supabase Storage for playback (logged-in users only)
+      // Upload audio to Supabase Storage for playback (all users)
       let storedAudioUrl = audioUrl || null;
-      if (userId && filePath && !audioUrl) {
+
+      // For URL input — the URL itself is the audio source, no upload needed
+      // For file uploads — upload to storage so audio persists
+      if (filePath && !audioUrl) {
         try {
           storedAudioUrl = await uploadAudioToStorage(filePath, originalName);
         } catch (uploadErr) {
           console.error('[audio-upload] Failed:', uploadErr.message);
-          // storedAudioUrl stays null — transcript still saves, audio won't play on revisit
+          // Audio won't persist but transcript still saves
         }
       }
 

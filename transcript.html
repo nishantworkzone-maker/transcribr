@@ -176,7 +176,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 }
 
 /* Time + controls row */
-.audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; }
+.audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; position:relative; }
 .audio-controls-row .time-display { flex:1; min-width:0; }
 .time-display { font-size:0.72rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:90px; }
 .audio-right { display:flex; align-items:center; gap:0.6rem; margin-left:auto; }
@@ -266,6 +266,45 @@ input:checked + .pill-track::after { transform:translateX(12px); }
     <div class="transcript-scroll" id="transcriptScroll">
       <div id="transcriptLines"></div>
     </div>
+
+    <!-- AUDIO BAR — inside transcript panel so waveform matches transcript width -->
+    <div class="audio-bar" id="audioBar">
+      <div class="spk-legend" id="spkLegend" style="display:none"></div>
+      <!-- Waveform full width -->
+      <div class="waveform-row">
+        <div class="waveform-wrap" id="waveformWrap">
+          <canvas class="waveform-canvas" id="waveCanvas"></canvas>
+          <div class="waveform-playhead" id="playhead"></div>
+          <div class="waveform-tooltip" id="waveTooltip"></div>
+        </div>
+      </div>
+      <!-- Controls: play centered, time left, options right -->
+      <div class="audio-controls-row">
+        <div class="time-display">
+          <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
+          <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
+        </div>
+        <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled
+          style="position:absolute;left:50%;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">▶</button>
+        <div class="audio-right" style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+          <div style="display:flex;gap:2px">
+            <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
+            <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
+            <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
+            <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
+          </div>
+          <label class="follow-toggle">
+            <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
+            Follow
+          </label>
+          <div class="vol-grp">
+            <span class="vol-icon" onclick="toggleMute()">🔊</span>
+            <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- RIGHT: INSIGHTS -->
@@ -328,49 +367,6 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 
 </div>
 
-<!-- VERINT-STYLE AUDIO BAR -->
-<div class="audio-bar" id="audioBar">
-
-  <!-- Speaker legend (shown when audio loaded) -->
-  <div class="spk-legend" id="spkLegend" style="display:none"></div>
-
-  <!-- Waveform row: waveform takes full width, play button overlaid in center -->
-  <div class="waveform-row">
-    <div class="waveform-wrap" id="waveformWrap" style="position:relative;flex:1;">
-      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
-      <div class="waveform-playhead" id="playhead"></div>
-      <div class="waveform-tooltip" id="waveTooltip"></div>
-      <!-- Play button centered over waveform -->
-      <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled
-        style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
-    </div>
-  </div>
-
-  <!-- Time on left, controls on right -->
-  <div class="audio-controls-row">
-    <div class="time-display">
-      <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
-    </div>
-    <div class="audio-right" style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
-      <div style="display:flex;gap:2px">
-        <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
-        <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
-        <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
-        <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
-      </div>
-      <label class="follow-toggle">
-        <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
-        Follow
-      </label>
-      <div class="vol-grp">
-        <span class="vol-icon" onclick="toggleMute()">🔊</span>
-        <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
-      </div>
-    </div>
-  </div>
-
-</div>
 
 <!-- TRANSLATE MODAL -->
 <div class="translate-overlay" id="translateOverlay">

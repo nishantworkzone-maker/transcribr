@@ -526,19 +526,24 @@ function setupDropzone(){const dz=document.getElementById('dropzone');dz.addEven
 // It streams the file to /api/blob-upload which pipes it to Vercel Blob
 
 async function uploadToBlob(file) {
-  // Step 1: Request an upload token from our server (tiny JSON request — no file)
-  const tokenRes = await fetch('/api/blob-upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'blob.generate-client-token',
-      payload: { pathname: file.name, callbackUrl: window.location.origin + '/api/blob-upload', multipart: false }
-    })
-  });
+  // Dynamically load @vercel/blob client SDK
+  if (!window.__vbUpload) {
+    const mod = await import('https://esm.sh/@vercel/blob@0.27.0/client');
+    window.__vbUpload = mod.upload;
+  }
  
-  if (!tokenRes.ok) throw new Error('Token request failed: ' + await tokenRes.text());
-  const { clientToken } = await tokenRes.json();
-  if (!clientToken) throw new Error('No client token returned');
+  const blob = await window.__vbUpload(
+    `audio-${Date.now()}-${file.name}`,
+    file,
+    {
+      access: 'public',
+      handleUploadUrl: '/api/blob-upload'
+    }
+  );
+ 
+  if (!blob?.url) throw new Error('No URL returned from Vercel Blob');
+  return blob.url;
+}
  
   // Step 2: Upload file DIRECTLY from browser to Vercel Blob CDN
   // File never touches our server — bypasses 4.5MB limit entirely
@@ -590,7 +595,7 @@ async function startTranscription(){
       console.warn('Blob upload failed:', uploadErr.message);
       if(selectedFile.size > 4 * 1024 * 1024) {
         showToast('File too large. Please use a URL instead.');
-        resetProgress(); return;
+        document.getElementById('progWrap').style.display='none'; return;
       }
       formData.append('audio', selectedFile, selectedFile.name);
       setProgress(18,'Uploading…');

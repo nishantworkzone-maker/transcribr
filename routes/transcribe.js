@@ -159,20 +159,20 @@ router.post('/',
         piiDetected = true;
       }
 
-      // Upload audio to Supabase Storage for playback (all users)
+      // Audio URL handling:
+      // - URL input → audioUrl is the source directly
+      // - File uploaded to Blob client-side (blobUploaded=true) → audioUrl IS the blob URL
+      // - Small file direct upload → upload to Blob now
+      const alreadyUploaded = req.body.blobUploaded === 'true';
       let storedAudioUrl = audioUrl || null;
 
-      // For URL input — the URL itself is the audio source, no upload needed
-      // For file uploads — upload to storage so audio persists
-      if (filePath && !audioUrl) {
+      if (filePath && !audioUrl && !alreadyUploaded) {
         try {
           storedAudioUrl = await uploadAudioToStorage(filePath, originalName);
         } catch (uploadErr) {
           console.error('[audio-upload] Failed:', uploadErr.message);
-          // Audio won't persist but transcript still saves
         }
       }
-
       // Save to Supabase for logged-in users
       let saveError = null;
       if (userId) {

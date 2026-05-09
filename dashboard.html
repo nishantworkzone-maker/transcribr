@@ -536,8 +536,30 @@ async function startTranscription(){
   const lang=document.getElementById('langSel').value;
   const formData=new FormData();
   formData.append('mode',resolvedMode);formData.append('language',lang);
-  if(isUrl){formData.append('audioUrl',audioUrl);formData.append('title',audioUrl.split('/').pop().split('?')[0]||'recording');setProgress(18,'Sending URL…');}
-  else{formData.append('audio',selectedFile,selectedFile.name);formData.append('title',selectedFile.name);setProgress(18,'Uploading…');}
+  if(isUrl){
+    formData.append('audioUrl',audioUrl);
+    formData.append('title',audioUrl.split('/').pop().split('?')[0]||'recording');
+    setProgress(18,'Sending URL…');
+  } else {
+    formData.append('title',selectedFile.name);
+    setProgress(10,'Uploading audio…');
+    // Upload file directly to Vercel Blob (bypasses 4.5MB serverless limit)
+    try {
+      const { upload } = await import('https://cdn.jsdelivr.net/npm/@vercel/blob@0.27.0/+esm');
+      const blob = await upload(selectedFile.name, selectedFile, {
+        access: 'public',
+        handleUploadUrl: '/api/blob-upload'
+      });
+      formData.append('audioUrl', blob.url);
+      formData.append('blobUploaded', 'true');
+      setProgress(30,'Audio uploaded, transcribing…');
+    } catch(uploadErr) {
+      // Fallback: send file directly (works for files under 4.5MB)
+      console.warn('Blob upload failed, trying direct:', uploadErr.message);
+      formData.append('audio', selectedFile, selectedFile.name);
+      setProgress(18,'Uploading…');
+    }
+  }
 
   let prog=18;
   const iv=setInterval(()=>{if(prog<88){prog+=resolvedMode==='precision'?1:4;setProgress(prog,getMsg(prog));}},resolvedMode==='precision'?2000:600);

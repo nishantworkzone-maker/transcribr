@@ -5,9 +5,15 @@
     { "src": "server.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
+  "functions": {
+    "server.js": {
+      "maxDuration": 300
+    }
+  },
   "routes": [
     { "src": "/api/config", "dest": "/api/config.js" },
     { "src": "/api/audio", "dest": "/api/audio.js" },
+    { "src": "/api/blob-upload", "dest": "/api/blob-upload.js" },
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/login.html", "dest": "/login.html" },
     { "src": "/dashboard.html", "dest": "/dashboard.html" },

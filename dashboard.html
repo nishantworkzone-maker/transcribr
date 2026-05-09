@@ -526,21 +526,36 @@ function setupDropzone(){const dz=document.getElementById('dropzone');dz.addEven
 // It streams the file to /api/blob-upload which pipes it to Vercel Blob
 
 async function uploadToBlob(file) {
-  const res = await fetch('/api/blob-upload', {
+  // Step 1: Request an upload token from our server (tiny JSON request — no file)
+  const tokenRes = await fetch('/api/blob-upload', {
     method: 'POST',
-    headers: {
-      'Content-Type': file.type || 'audio/mpeg',
-      'X-Filename': file.name
-    },
-    body: file  // Stream the file directly — no base64, no FormData
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'blob.generate-client-token',
+      payload: { pathname: file.name, callbackUrl: window.location.origin + '/api/blob-upload', multipart: false }
+    })
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Blob upload failed: ' + err);
-  }
-  const data = await res.json();
-  if (!data.url) throw new Error('No URL returned from blob upload');
-  return data.url;
+ 
+  if (!tokenRes.ok) throw new Error('Token request failed: ' + await tokenRes.text());
+  const { clientToken } = await tokenRes.json();
+  if (!clientToken) throw new Error('No client token returned');
+ 
+  // Step 2: Upload file DIRECTLY from browser to Vercel Blob CDN
+  // File never touches our server — bypasses 4.5MB limit entirely
+  const uploadRes = await fetch(`https://blob.vercel-storage.com/${encodeURIComponent(file.name)}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${clientToken}`,
+      'x-content-type': file.type || 'audio/mpeg',
+      'x-cache-control-max-age': '31536000'
+    },
+    body: file
+  });
+ 
+  if (!uploadRes.ok) throw new Error('Direct upload failed: ' + uploadRes.status);
+  const result = await uploadRes.json();
+  if (!result.url) throw new Error('No URL in upload response');
+  return result.url;
 }
 
 async function startTranscription(){
@@ -564,7 +579,7 @@ async function startTranscription(){
   } else {
     formData.append('title',selectedFile.name);
     setProgress(10,'Uploading audio…');
-    
+
     // Upload directly to Vercel Blob (bypasses 4.5MB serverless limit)
     try {
       const blobUrl = await uploadToBlob(selectedFile);

@@ -564,19 +564,19 @@ async function startTranscription(){
   } else {
     formData.append('title',selectedFile.name);
     setProgress(10,'Uploading audio…');
-    // Upload file directly to Vercel Blob (bypasses 4.5MB serverless limit)
+    
+    // Upload directly to Vercel Blob (bypasses 4.5MB serverless limit)
     try {
-      const { upload } = await import('https://cdn.jsdelivr.net/npm/@vercel/blob@0.27.0/+esm');
-      const blob = await upload(selectedFile.name, selectedFile, {
-        access: 'public',
-        handleUploadUrl: '/api/blob-upload'
-      });
-      formData.append('audioUrl', blob.url);
+      const blobUrl = await uploadToBlob(selectedFile);
+      formData.append('audioUrl', blobUrl);
       formData.append('blobUploaded', 'true');
-      setProgress(30,'Audio uploaded, transcribing…');
+      setProgress(35,'Audio uploaded, transcribing…');
     } catch(uploadErr) {
-      // Fallback: send file directly (works for files under 4.5MB)
-      console.warn('Blob upload failed, trying direct:', uploadErr.message);
+      console.warn('Blob upload failed:', uploadErr.message);
+      if(selectedFile.size > 4 * 1024 * 1024) {
+        showToast('File too large. Please use a URL instead.');
+        resetProgress(); return;
+      }
       formData.append('audio', selectedFile, selectedFile.name);
       setProgress(18,'Uploading…');
     }

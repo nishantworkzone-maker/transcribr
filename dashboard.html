@@ -522,6 +522,27 @@ function onFilePick(e){const f=e.target.files[0];if(!f)return;selectedFile=f;doc
 function clearFile(){selectedFile=null;document.getElementById('fileInput').value='';document.getElementById('dropzone').classList.remove('has-file');document.getElementById('filePill').style.display='none';updateSmartNote();}
 function setupDropzone(){const dz=document.getElementById('dropzone');dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});dz.addEventListener('dragleave',()=>dz.classList.remove('over'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(!f)return;const dt=new DataTransfer();dt.items.add(f);document.getElementById('fileInput').files=dt.files;onFilePick({target:{files:dt.files}});});}
 
+// Add this function BEFORE async function startTranscription(){
+// It streams the file to /api/blob-upload which pipes it to Vercel Blob
+
+async function uploadToBlob(file) {
+  const res = await fetch('/api/blob-upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type || 'audio/mpeg',
+      'X-Filename': file.name
+    },
+    body: file  // Stream the file directly — no base64, no FormData
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Blob upload failed: ' + err);
+  }
+  const data = await res.json();
+  if (!data.url) throw new Error('No URL returned from blob upload');
+  return data.url;
+}
+
 async function startTranscription(){
   const audioUrl=document.getElementById('urlInput').value.trim();
   if(currentTab==='file'&&!selectedFile){showToast('Please select an audio file.');return;}

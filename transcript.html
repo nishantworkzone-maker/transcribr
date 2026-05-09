@@ -152,8 +152,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
   flex-shrink:0; transition:transform 0.15s;
 }
 .play-btn:hover:not(:disabled) { transform:scale(1.1); }
-.play-btn:disabled { opacity:0.35; cursor:default; box-shadow:none; }
-.play-btn.playing { background: #5a4adf; }
+.play-btn:disabled { opacity:0.35; cursor:default; }
 
 .waveform-wrap {
   flex:1; position:relative; height:52px; cursor:pointer;
@@ -269,6 +268,25 @@ input:checked + .pill-track::after { transform:translateX(12px); }
     <div class="transcript-scroll" id="transcriptScroll">
       <div id="transcriptLines"></div>
     </div>
+  
+
+<div class="audio-bar" id="audioBar">
+
+  <!-- Speaker legend (shown when audio loaded) -->
+  <div class="spk-legend" id="spkLegend" style="display:none"></div>
+
+  <!-- Waveform row -->
+  <div class="waveform-row">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+
+    <div class="waveform-wrap" id="waveformWrap">
+      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
+      <div class="waveform-playhead" id="playhead"></div>
+      <div class="waveform-tooltip" id="waveTooltip"></div>
+    </div>
+  </div>
+
+
   </div>
 
   <!-- RIGHT: INSIGHTS -->
@@ -332,27 +350,12 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 </div>
 
 <!-- VERINT-STYLE AUDIO BAR -->
-<div class="audio-bar" id="audioBar">
-
-  <!-- Speaker legend (shown when audio loaded) -->
-  <div class="spk-legend" id="spkLegend" style="display:none"></div>
-
-  <!-- Waveform row -->
-  <div class="waveform-row">
-    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
-
-    <div class="waveform-wrap" id="waveformWrap">
-      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
-      <div class="waveform-playhead" id="playhead"></div>
-      <div class="waveform-tooltip" id="waveTooltip"></div>
-    </div>
-  </div>
 
   <!-- Time + controls -->
   <div class="audio-controls-row">
     <div class="time-display">
       <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
+      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No audio available</span>
     </div>
     <div class="audio-right">
       <div style="display:flex;gap:2px">
@@ -419,7 +422,6 @@ async function init() {
 
   const stored = localStorage.getItem('currentTranscript');
   const urlId = new URLSearchParams(location.search).get('id');
-
   if (stored) {
     T = JSON.parse(stored);
     if (urlId && T.id !== urlId) { await fetchAndRender(urlId); return; }
@@ -431,7 +433,7 @@ async function init() {
   }
 }
 
-// ─── Fetch transcript by ID (for direct URL / new tab opens) ────────────────
+// ─── Fetch by ID (direct URL / new tab) ─────────────────────────────────────
 async function fetchAndRender(id) {
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
@@ -449,7 +451,7 @@ async function fetchAndRender(id) {
     localStorage.setItem('currentTranscript', JSON.stringify(t));
     render(t);
   } catch(e) {
-    console.error('fetchAndRender failed:', e);
+    console.error('fetchAndRender:', e);
     location.href = '/dashboard.html';
   }
 }
@@ -498,9 +500,14 @@ function render(t) {
     let resolvedSrc;
     // Handle local blob URL stored in sessionStorage (file uploads without Storage backend)
     if (t.audio_url.startsWith('__blob__')) {
+      // Blob fallback from sessionStorage (immediate post-transcription)
       const key = t.audio_url.slice('__blob__'.length);
       resolvedSrc = sessionStorage.getItem(key) || null;
+    } else if (t.audio_url.startsWith('https://public.blob.vercel-storage.com') || t.audio_url.startsWith('https://') && t.audio_url.includes('blob.vercel-storage')) {
+      // Vercel Blob public URL — direct, no proxy needed
+      resolvedSrc = t.audio_url;
     } else {
+      // Proxy through /api/audio for CORS + correct content-type
       resolvedSrc = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
     }
 
@@ -724,9 +731,9 @@ function togglePlay() {
   if (!audioLoaded) return;
   audio.paused ? audio.play() : audio.pause();
 }
-audio.addEventListener('play', ()=>{const b=document.getElementById('playBtn');b.textContent='⏸';b.classList.add('playing');});
-audio.addEventListener('pause', ()=>{const b=document.getElementById('playBtn');b.textContent='▶';b.classList.remove('playing');});
-audio.addEventListener('ended', ()=>{const b=document.getElementById('playBtn');b.textContent='▶';b.classList.remove('playing');});
+audio.addEventListener('play', ()=>{const b=document.getElementById('playBtn');b.innerHTML='⏸';b.style.background='#5a4adf';});
+audio.addEventListener('pause', ()=>{const b=document.getElementById('playBtn');b.innerHTML='▶';b.style.background='';});
+audio.addEventListener('ended', ()=>{const b=document.getElementById('playBtn');b.innerHTML='▶';b.style.background='';});
 
 audio.addEventListener('timeupdate', () => {
   const t = audio.currentTime, d = audio.duration||0;

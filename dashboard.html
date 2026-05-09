@@ -91,7 +91,7 @@ tr:hover td { background:rgba(255,255,255,0.015); }
 .sdot { width:5px; height:5px; border-radius:50%; background:var(--green); }
 .act-row { display:flex; gap:0.3rem; flex-wrap:wrap; }
 .tr-row { cursor:pointer; transition:background 0.15s; }
-.tr-row:hover { background:rgba(255,255,255,0.03); }
+.tr-row:hover { background:rgba(255,255,255,0.034); }
 .act-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:0.22rem 0.55rem; border-radius:5px; font-size:0.7rem; white-space:nowrap; transition:all 0.18s; }
 .act-btn:hover { border-color:var(--accent); color:var(--text); }
 .act-btn.del:hover { border-color:var(--red); color:var(--red); }
@@ -440,9 +440,9 @@ function renderTable(list) {
   const tbody=document.getElementById('tbody');
   if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><span class="empty-icon">🎙️</span><p>No transcripts yet.</p><button class="btn-new" onclick="openModal()">+ New Transcription</button></div></td></tr>`;return;}
   tbody.innerHTML=list.map(t=>`<tr class="tr-row" onclick="handleRowClick(event,'${t.id}')">
-    <td><div class="td-name" title="${esc(t.filename||t.title||'Untitled')}">${esc(t.filename||t.title||'Untitled')}</div></td>
+    <td><div class="td-name" title="${esc(t.title||'Untitled')}">${esc(t.title||'Untitled')}</div></td>
     <td><span class="td-muted">${fmtDate(t.created_at)}</span></td>
-    <td><span class="engine-tag">${engineLabel(t.mode||t.engine)}</span></td>
+    <td><span class="engine-tag">${engineLabel(t.engine)}</span></td>
     <td><span class="td-muted">${(t.language||'en').toUpperCase()}</span></td>
     <td><span class="status-pill"><span class="sdot"></span>Done</span></td>
     <td><div class="act-row" onclick="event.stopPropagation()">
@@ -456,7 +456,7 @@ function renderTable(list) {
 
 function filterTable(q){renderTable(allTranscripts.filter(t=>(t.title||'').toLowerCase().includes(q.toLowerCase())));}
 
-function handleRowClick(e,id){if(e.target.closest(".act-row"))return;openTranscript(id);}
+function handleRowClick(e,id){if(e.target.closest('.act-row'))return;openTranscript(id);}
 function openTranscript(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));location.href='/transcript.html';}
 function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));setTimeout(()=>window.open('/transcript.html?id='+id,'_blank'),80);}
 function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.title||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
@@ -601,7 +601,7 @@ function getGuestTranscripts(){try{return JSON.parse(localStorage.getItem('trans
 function getGuestCount(){return parseInt(localStorage.getItem('transcribr_guest_count')||'0');}
 function incrementGuestCount(){localStorage.setItem('transcribr_guest_count',getGuestCount()+1);}
 async function signOut(){if(sb)await sb.auth.signOut();location.href='/';}
-function fmtDate(d){if(!d)return '—';try{const dt=new Date(d);return dt.toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return d;}}
+function fmtDate(d){if(!d)return '—';try{return new Date(d).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return d;}}
 function engineLabel(e){
   if(e==='groq'||e==='fast'||e==='quick')return'⚡ Quick';
   if(e==='deepgram'||e==='balanced'||e==='smart')return'⚖️ Smart';

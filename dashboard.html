@@ -545,25 +545,7 @@ async function uploadToBlob(file) {
   return blob.url;
 }
  
-  // Step 2: Upload file DIRECTLY from browser to Vercel Blob CDN
-  // File never touches our server — bypasses 4.5MB limit entirely
-  const uploadRes = await fetch(`https://blob.vercel-storage.com/${encodeURIComponent(file.name)}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${clientToken}`,
-      'x-content-type': file.type || 'audio/mpeg',
-      'x-cache-control-max-age': '31536000'
-    },
-    body: file
-  });
- 
-  if (!uploadRes.ok) throw new Error('Direct upload failed: ' + uploadRes.status);
-  const result = await uploadRes.json();
-  if (!result.url) throw new Error('No URL in upload response');
-  return result.url;
-}
-
-async function startTranscription(){
+  async function startTranscription(){
   const audioUrl=document.getElementById('urlInput').value.trim();
   if(currentTab==='file'&&!selectedFile){showToast('Please select an audio file.');return;}
   if(currentTab==='url'&&!audioUrl){showToast('Please paste a URL.');return;}

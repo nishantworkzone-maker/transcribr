@@ -90,6 +90,8 @@ tr:hover td { background:rgba(255,255,255,0.015); }
 .status-pill { display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; color:var(--green); }
 .sdot { width:5px; height:5px; border-radius:50%; background:var(--green); }
 .act-row { display:flex; gap:0.3rem; flex-wrap:wrap; }
+.tr-row { cursor:pointer; transition:background 0.15s; }
+.tr-row:hover { background:rgba(255,255,255,0.03); }
 .act-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:0.22rem 0.55rem; border-radius:5px; font-size:0.7rem; white-space:nowrap; transition:all 0.18s; }
 .act-btn:hover { border-color:var(--accent); color:var(--text); }
 .act-btn.del:hover { border-color:var(--red); color:var(--red); }
@@ -353,7 +355,7 @@ function showGuestLimitModal() {
       <button onclick="location.href='/login.html'" style="background:var(--accent);color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:100px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Sign In Free →</button>
       <button onclick="document.getElementById('guestLimitModal').style.display='none'" style="background:transparent;color:var(--muted);border:1px solid var(--border2);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">Maybe later</button>
     </div>
-    <p style="color:var(--muted);font-size:0.72rem;margin-top:1rem"><a href="#" onclick="resetGuestCount();document.getElementById('guestLimitModal').style.display='none';return false;" style="color:var(--accent2)">Reset guest count (dev only)</a></p>
+    
   </div>`;
   document.body.appendChild(div);
 }
@@ -422,7 +424,7 @@ function setupGuest() {
 
 async function loadTranscripts() {
   try{
-    const res=await fetch('/api/transcripts',{headers:{'Authorization':`Bearer ${authToken}`,'Cache-Control':'no-cache'},cache:'no-store'});
+    const res=await fetch('/api/transcripts',{headers:{'Authorization':`Bearer ${authToken}`}});
     const json=await res.json();
     if(!res.ok)throw new Error(json.error||'Failed to load transcripts');
     allTranscripts=json.data||[];
@@ -437,13 +439,13 @@ async function loadTranscripts() {
 function renderTable(list) {
   const tbody=document.getElementById('tbody');
   if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><span class="empty-icon">🎙️</span><p>No transcripts yet.</p><button class="btn-new" onclick="openModal()">+ New Transcription</button></div></td></tr>`;return;}
-  tbody.innerHTML=list.map(t=>`<tr>
-    <td><div class="td-name" title="${esc(t.filename||'Untitled')}">${esc(t.filename||'Untitled')}</div></td>
+  tbody.innerHTML=list.map(t=>`<tr class="tr-row" onclick="handleRowClick(event,'${t.id}')">
+    <td><div class="td-name" title="${esc(t.filename||t.title||'Untitled')}">${esc(t.filename||t.title||'Untitled')}</div></td>
     <td><span class="td-muted">${fmtDate(t.created_at)}</span></td>
-    <td><span class="engine-tag">${engineLabel(t.mode)}</span></td>
+    <td><span class="engine-tag">${engineLabel(t.mode||t.engine)}</span></td>
     <td><span class="td-muted">${(t.language||'en').toUpperCase()}</span></td>
     <td><span class="status-pill"><span class="sdot"></span>Done</span></td>
-    <td><div class="act-row">
+    <td><div class="act-row" onclick="event.stopPropagation()">
       <button class="act-btn" onclick="openTranscript('${t.id}')">Open</button>
       <button class="act-btn" onclick="openTranscriptNewTab('${t.id}')">↗ Tab</button>
       <button class="act-btn" onclick="downloadTxt('${t.id}')">TXT</button>
@@ -452,11 +454,12 @@ function renderTable(list) {
   </tr>`).join('');
 }
 
-function filterTable(q){renderTable(allTranscripts.filter(t=>(t.filename||'').toLowerCase().includes(q.toLowerCase())));}
+function filterTable(q){renderTable(allTranscripts.filter(t=>(t.title||'').toLowerCase().includes(q.toLowerCase())));}
 
+function handleRowClick(e,id){if(e.target.closest(".act-row"))return;openTranscript(id);}
 function openTranscript(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));location.href='/transcript.html';}
-function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));setTimeout(()=>window.open('/transcript.html?id='+id,'_blank'),100);}
-function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.filename||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
+function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));setTimeout(()=>window.open('/transcript.html?id='+id,'_blank'),80);}
+function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.title||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
 async function deleteTranscript(id){
   if(!confirm('Delete this transcript permanently?'))return;
   if(!currentUser){const list=getGuestTranscripts().filter(x=>x.id!==id);localStorage.setItem('transcribr_guest_transcripts',JSON.stringify(list));allTranscripts=list;renderTable(list);document.getElementById('sTotal').textContent=list.length;showToast('🗑 Deleted');return;}
@@ -522,30 +525,7 @@ function onFilePick(e){const f=e.target.files[0];if(!f)return;selectedFile=f;doc
 function clearFile(){selectedFile=null;document.getElementById('fileInput').value='';document.getElementById('dropzone').classList.remove('has-file');document.getElementById('filePill').style.display='none';updateSmartNote();}
 function setupDropzone(){const dz=document.getElementById('dropzone');dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});dz.addEventListener('dragleave',()=>dz.classList.remove('over'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(!f)return;const dt=new DataTransfer();dt.items.add(f);document.getElementById('fileInput').files=dt.files;onFilePick({target:{files:dt.files}});});}
 
-// Add this function BEFORE async function startTranscription(){
-// It streams the file to /api/blob-upload which pipes it to Vercel Blob
-
-async function uploadToBlob(file) {
-  // Dynamically load @vercel/blob client SDK
-  if (!window.__vbUpload) {
-    const mod = await import('https://esm.sh/@vercel/blob@0.27.0/client');
-    window.__vbUpload = mod.upload;
-  }
- 
-  const blob = await window.__vbUpload(
-    `audio-${Date.now()}-${file.name}`,
-    file,
-    {
-      access: 'public',
-      handleUploadUrl: '/api/blob-upload'
-    }
-  );
- 
-  if (!blob?.url) throw new Error('No URL returned from Vercel Blob');
-  return blob.url;
-}
- 
-  async function startTranscription(){
+async function startTranscription(){
   const audioUrl=document.getElementById('urlInput').value.trim();
   if(currentTab==='file'&&!selectedFile){showToast('Please select an audio file.');return;}
   if(currentTab==='url'&&!audioUrl){showToast('Please paste a URL.');return;}
@@ -559,30 +539,8 @@ async function uploadToBlob(file) {
   const lang=document.getElementById('langSel').value;
   const formData=new FormData();
   formData.append('mode',resolvedMode);formData.append('language',lang);
-  if(isUrl){
-    formData.append('audioUrl',audioUrl);
-    formData.append('title',audioUrl.split('/').pop().split('?')[0]||'recording');
-    setProgress(18,'Sending URL…');
-  } else {
-    formData.append('title',selectedFile.name);
-    setProgress(10,'Uploading audio…');
-
-    // Upload directly to Vercel Blob (bypasses 4.5MB serverless limit)
-    try {
-      const blobUrl = await uploadToBlob(selectedFile);
-      formData.append('audioUrl', blobUrl);
-      formData.append('blobUploaded', 'true');
-      setProgress(35,'Audio uploaded, transcribing…');
-    } catch(uploadErr) {
-      console.warn('Blob upload failed:', uploadErr.message);
-      if(selectedFile.size > 4 * 1024 * 1024) {
-        showToast('File too large. Please use a URL instead.');
-        document.getElementById('progWrap').style.display='none'; return;
-      }
-      formData.append('audio', selectedFile, selectedFile.name);
-      setProgress(18,'Uploading…');
-    }
-  }
+  if(isUrl){formData.append('audioUrl',audioUrl);formData.append('title',audioUrl.split('/').pop().split('?')[0]||'recording');setProgress(18,'Sending URL…');}
+  else{formData.append('audio',selectedFile,selectedFile.name);formData.append('title',selectedFile.name);setProgress(18,'Uploading…');}
 
   let prog=18;
   const iv=setInterval(()=>{if(prog<88){prog+=resolvedMode==='precision'?1:4;setProgress(prog,getMsg(prog));}},resolvedMode==='precision'?2000:600);
@@ -643,7 +601,7 @@ function getGuestTranscripts(){try{return JSON.parse(localStorage.getItem('trans
 function getGuestCount(){return parseInt(localStorage.getItem('transcribr_guest_count')||'0');}
 function incrementGuestCount(){localStorage.setItem('transcribr_guest_count',getGuestCount()+1);}
 async function signOut(){if(sb)await sb.auth.signOut();location.href='/';}
-function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtDate(d){if(!d)return '—';try{const dt=new Date(d);return dt.toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return d;}}
 function engineLabel(e){
   if(e==='groq'||e==='fast'||e==='quick')return'⚡ Quick';
   if(e==='deepgram'||e==='balanced'||e==='smart')return'⚖️ Smart';

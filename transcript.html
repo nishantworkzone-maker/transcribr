@@ -129,10 +129,13 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 .audio-bar {
   flex-shrink: 0;
   background: #0d0d14; border-top: 1px solid var(--border2);
-  padding: 0.6rem 1.4rem; display: flex; flex-direction: column;
-  justify-content: center; gap: 6px; z-index: 300;
-  min-height: 88px; overflow: hidden; min-width: 0;
-  width: 100%; box-sizing: border-box;
+  padding: 0 1.4rem; display: flex; flex-direction: column;
+  justify-content: center; gap: 4px; z-index: 300;
+  min-height: 88px;
+  overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Speaker legend row */
@@ -149,7 +152,8 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
   flex-shrink:0; transition:transform 0.15s;
 }
 .play-btn:hover:not(:disabled) { transform:scale(1.1); }
-.play-btn:disabled { opacity:0.35; cursor:default; }
+.play-btn:disabled { opacity:0.35; cursor:default; box-shadow:none; }
+.play-btn.playing { background: #5a4adf; }
 
 .waveform-wrap {
   flex:1; position:relative; height:52px; cursor:pointer;
@@ -176,8 +180,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
 }
 
 /* Time + controls row */
-.audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; position:relative; }
-.audio-controls-row .time-display { flex:1; min-width:0; }
+.audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; }
 .time-display { font-size:0.72rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:90px; }
 .audio-right { display:flex; align-items:center; gap:0.6rem; margin-left:auto; }
 .speed-btn { background:var(--surface2); border:1px solid var(--border2); color:var(--muted); padding:0.2rem 0.48rem; border-radius:5px; font-size:0.68rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; }
@@ -266,45 +269,6 @@ input:checked + .pill-track::after { transform:translateX(12px); }
     <div class="transcript-scroll" id="transcriptScroll">
       <div id="transcriptLines"></div>
     </div>
-
-    <!-- AUDIO BAR — inside transcript panel so waveform matches transcript width -->
-    <div class="audio-bar" id="audioBar">
-      <div class="spk-legend" id="spkLegend" style="display:none"></div>
-      <!-- Waveform full width -->
-      <div class="waveform-row">
-        <div class="waveform-wrap" id="waveformWrap">
-          <canvas class="waveform-canvas" id="waveCanvas"></canvas>
-          <div class="waveform-playhead" id="playhead"></div>
-          <div class="waveform-tooltip" id="waveTooltip"></div>
-        </div>
-      </div>
-      <!-- Controls: play centered, time left, options right -->
-      <div class="audio-controls-row">
-        <div class="time-display">
-          <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-          <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
-        </div>
-        <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled
-          style="position:absolute;left:50%;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">▶</button>
-        <div class="audio-right" style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
-          <div style="display:flex;gap:2px">
-            <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
-            <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
-            <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
-            <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
-          </div>
-          <label class="follow-toggle">
-            <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
-            Follow
-          </label>
-          <div class="vol-grp">
-            <span class="vol-icon" onclick="toggleMute()">🔊</span>
-            <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- RIGHT: INSIGHTS -->
@@ -367,6 +331,48 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 
 </div>
 
+<!-- VERINT-STYLE AUDIO BAR -->
+<div class="audio-bar" id="audioBar">
+
+  <!-- Speaker legend (shown when audio loaded) -->
+  <div class="spk-legend" id="spkLegend" style="display:none"></div>
+
+  <!-- Waveform row -->
+  <div class="waveform-row">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+
+    <div class="waveform-wrap" id="waveformWrap">
+      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
+      <div class="waveform-playhead" id="playhead"></div>
+      <div class="waveform-tooltip" id="waveTooltip"></div>
+    </div>
+  </div>
+
+  <!-- Time + controls -->
+  <div class="audio-controls-row">
+    <div class="time-display">
+      <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
+      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
+    </div>
+    <div class="audio-right">
+      <div style="display:flex;gap:2px">
+        <button class="speed-btn" onclick="setSpeed(0.75,this)">0.75×</button>
+        <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
+        <button class="speed-btn" onclick="setSpeed(1.25,this)">1.25×</button>
+        <button class="speed-btn" onclick="setSpeed(1.5,this)">1.5×</button>
+      </div>
+      <label class="follow-toggle">
+        <span class="toggle-pill"><input type="checkbox" id="followTgl" checked/><span class="pill-track"></span></span>
+        Follow
+      </label>
+      <div class="vol-grp">
+        <span class="vol-icon" onclick="toggleMute()">🔊</span>
+        <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <!-- TRANSLATE MODAL -->
 <div class="translate-overlay" id="translateOverlay">
@@ -416,11 +422,7 @@ async function init() {
 
   if (stored) {
     T = JSON.parse(stored);
-    // If URL id matches stored, we're good. If different id in URL, fetch fresh.
-    if (urlId && T.id !== urlId) {
-      await fetchAndRender(urlId);
-      return;
-    }
+    if (urlId && T.id !== urlId) { await fetchAndRender(urlId); return; }
     render(T);
   } else if (urlId) {
     await fetchAndRender(urlId);
@@ -429,12 +431,12 @@ async function init() {
   }
 }
 
-// ─── Fetch from API by ID (for new-tab opens) ────────────────────
+// ─── Fetch transcript by ID (for direct URL / new tab opens) ────────────────
 async function fetchAndRender(id) {
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
-    const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-    const { data: { session } } = await client.auth.getSession();
+    const sb2 = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await sb2.auth.getSession();
     if (!session) { location.href = '/dashboard.html'; return; }
     const res = await fetch('/api/transcripts', {
       headers: { 'Authorization': `Bearer ${session.access_token}` },
@@ -447,6 +449,7 @@ async function fetchAndRender(id) {
     localStorage.setItem('currentTranscript', JSON.stringify(t));
     render(t);
   } catch(e) {
+    console.error('fetchAndRender failed:', e);
     location.href = '/dashboard.html';
   }
 }
@@ -490,16 +493,14 @@ function render(t) {
   // Setup waveform canvas
   setupWaveformInteraction();
 
-  // Load audio — strict priority: Supabase URL → blob fallback → no audio
+  // Auto-load URL audio
   if (t.audio_url) {
-    let resolvedSrc = null;
-
+    let resolvedSrc;
+    // Handle local blob URL stored in sessionStorage (file uploads without Storage backend)
     if (t.audio_url.startsWith('__blob__')) {
-      // Blob fallback (guest or Storage-failed session)
       const key = t.audio_url.slice('__blob__'.length);
       resolvedSrc = sessionStorage.getItem(key) || null;
     } else {
-      // Supabase public URL — proxy through /api/audio for CORS + correct content-type
       resolvedSrc = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
     }
 
@@ -511,13 +512,13 @@ function render(t) {
       audio.addEventListener('loadedmetadata', () => {
         document.getElementById('durTime').textContent = fmtS(audio.duration);
         buildWaveform();
-      }, { once: true });
+      }, { once:true });
       audio.addEventListener('error', () => {
         audioLoaded = false;
         document.getElementById('playBtn').disabled = true;
         document.getElementById('noAudioMsg').style.display = 'inline';
         buildWaveform();
-      }, { once: true });
+      }, { once:true });
     } else {
       document.getElementById('noAudioMsg').style.display = 'inline';
       buildWaveform();
@@ -723,9 +724,9 @@ function togglePlay() {
   if (!audioLoaded) return;
   audio.paused ? audio.play() : audio.pause();
 }
-audio.addEventListener('play', ()=>document.getElementById('playBtn').textContent='⏸');
-audio.addEventListener('pause', ()=>document.getElementById('playBtn').textContent='▶');
-audio.addEventListener('ended', ()=>document.getElementById('playBtn').textContent='▶');
+audio.addEventListener('play', ()=>{const b=document.getElementById('playBtn');b.textContent='⏸';b.classList.add('playing');});
+audio.addEventListener('pause', ()=>{const b=document.getElementById('playBtn');b.textContent='▶';b.classList.remove('playing');});
+audio.addEventListener('ended', ()=>{const b=document.getElementById('playBtn');b.textContent='▶';b.classList.remove('playing');});
 
 audio.addEventListener('timeupdate', () => {
   const t = audio.currentTime, d = audio.duration||0;

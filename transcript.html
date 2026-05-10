@@ -134,7 +134,7 @@ mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2p
   min-height: 88px;
   overflow: hidden;
   min-width: 0;
-  width: 100%;
+  width: calc(100% - 265px);
   box-sizing: border-box;
 }
 
@@ -221,7 +221,7 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(8px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:0.48rem 1.1rem; border-radius:100px; font-size:0.78rem; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-@media (max-width:720px) { .insights-panel { display:none; } .audio-right { display:none; } }
+@media (max-width:720px) { .insights-panel { display:none; } .audio-right { display:none; } .audio-bar { width: 100%; } }
 </style>
 </head>
 <body>
@@ -268,25 +268,6 @@ input:checked + .pill-track::after { transform:translateX(12px); }
     <div class="transcript-scroll" id="transcriptScroll">
       <div id="transcriptLines"></div>
     </div>
-  
-
-<div class="audio-bar" id="audioBar">
-
-  <!-- Speaker legend (shown when audio loaded) -->
-  <div class="spk-legend" id="spkLegend" style="display:none"></div>
-
-  <!-- Waveform row -->
-  <div class="waveform-row">
-    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
-
-    <div class="waveform-wrap" id="waveformWrap">
-      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
-      <div class="waveform-playhead" id="playhead"></div>
-      <div class="waveform-tooltip" id="waveTooltip"></div>
-    </div>
-  </div>
-
-
   </div>
 
   <!-- RIGHT: INSIGHTS -->
@@ -350,12 +331,27 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 </div>
 
 <!-- VERINT-STYLE AUDIO BAR -->
+<div class="audio-bar" id="audioBar">
+
+  <!-- Speaker legend (shown when audio loaded) -->
+  <div class="spk-legend" id="spkLegend" style="display:none"></div>
+
+  <!-- Waveform row -->
+  <div class="waveform-row">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
+
+    <div class="waveform-wrap" id="waveformWrap">
+      <canvas class="waveform-canvas" id="waveCanvas"></canvas>
+      <div class="waveform-playhead" id="playhead"></div>
+      <div class="waveform-tooltip" id="waveTooltip"></div>
+    </div>
+  </div>
 
   <!-- Time + controls -->
   <div class="audio-controls-row">
     <div class="time-display">
       <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No audio available</span>
+      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
     </div>
     <div class="audio-right">
       <div style="display:flex;gap:2px">
@@ -421,39 +417,9 @@ async function init() {
   } catch(e) { sb = null; }
 
   const stored = localStorage.getItem('currentTranscript');
-  const urlId = new URLSearchParams(location.search).get('id');
-  if (stored) {
-    T = JSON.parse(stored);
-    if (urlId && T.id !== urlId) { await fetchAndRender(urlId); return; }
-    render(T);
-  } else if (urlId) {
-    await fetchAndRender(urlId);
-  } else {
-    location.href = '/dashboard.html';
-  }
-}
-
-// ─── Fetch by ID (direct URL / new tab) ─────────────────────────────────────
-async function fetchAndRender(id) {
-  try {
-    const cfg = await fetch('/api/config').then(r => r.json());
-    const sb2 = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-    const { data: { session } } = await sb2.auth.getSession();
-    if (!session) { location.href = '/dashboard.html'; return; }
-    const res = await fetch('/api/transcripts', {
-      headers: { 'Authorization': `Bearer ${session.access_token}` },
-      cache: 'no-store'
-    });
-    const json = await res.json();
-    const t = (json.data || []).find(x => x.id === id);
-    if (!t) { location.href = '/dashboard.html'; return; }
-    T = t;
-    localStorage.setItem('currentTranscript', JSON.stringify(t));
-    render(t);
-  } catch(e) {
-    console.error('fetchAndRender:', e);
-    location.href = '/dashboard.html';
-  }
+  if (!stored) { location.href='/dashboard.html'; return; }
+  T = JSON.parse(stored);
+  render(T);
 }
 
 // ─── Render ──────────────────────────────────────────────────────
@@ -500,14 +466,9 @@ function render(t) {
     let resolvedSrc;
     // Handle local blob URL stored in sessionStorage (file uploads without Storage backend)
     if (t.audio_url.startsWith('__blob__')) {
-      // Blob fallback from sessionStorage (immediate post-transcription)
       const key = t.audio_url.slice('__blob__'.length);
       resolvedSrc = sessionStorage.getItem(key) || null;
-    } else if (t.audio_url.startsWith('https://public.blob.vercel-storage.com') || t.audio_url.startsWith('https://') && t.audio_url.includes('blob.vercel-storage')) {
-      // Vercel Blob public URL — direct, no proxy needed
-      resolvedSrc = t.audio_url;
     } else {
-      // Proxy through /api/audio for CORS + correct content-type
       resolvedSrc = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
     }
 
@@ -731,9 +692,9 @@ function togglePlay() {
   if (!audioLoaded) return;
   audio.paused ? audio.play() : audio.pause();
 }
-audio.addEventListener('play', ()=>{const b=document.getElementById('playBtn');b.innerHTML='⏸';b.style.background='#5a4adf';});
-audio.addEventListener('pause', ()=>{const b=document.getElementById('playBtn');b.innerHTML='▶';b.style.background='';});
-audio.addEventListener('ended', ()=>{const b=document.getElementById('playBtn');b.innerHTML='▶';b.style.background='';});
+audio.addEventListener('play', ()=>document.getElementById('playBtn').textContent='⏸');
+audio.addEventListener('pause', ()=>document.getElementById('playBtn').textContent='▶');
+audio.addEventListener('ended', ()=>document.getElementById('playBtn').textContent='▶');
 
 audio.addEventListener('timeupdate', () => {
   const t = audio.currentTime, d = audio.duration||0;

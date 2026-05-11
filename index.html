@@ -69,7 +69,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 /* PRICING */
 .pricing { background: var(--surface); padding: 5.5rem 2rem; }
 .pricing-inner { max-width: 980px; margin: 0 auto; text-align: center; }
-.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.3rem; margin-top: 3rem; text-align: left; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; margin-top: 3rem; text-align: left; }
 .price-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 1.9rem; position: relative; }
 .price-card.popular { border-color: var(--accent); }
 .popular-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 600; padding: 3px 11px; border-radius: 100px; white-space: nowrap; }
@@ -113,7 +113,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
-    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="/pricing.html">Pricing</a></li>
   </ul>
   <div class="nav-right" id="navRight">
     <!-- Filled by JS based on auth state -->
@@ -190,50 +190,65 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   <div class="pricing-inner">
     <div class="section-tag" style="text-align:center">Plans</div>
     <h2 class="section-title">Simple, transparent pricing</h2>
-    <p class="section-sub" style="margin:0 auto">Start free. Scale as you grow.</p>
+    <p class="section-sub" style="margin:0 auto">Start free. Scale as you grow. Cancel anytime.</p>
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">Free</div>
-        <div class="price-amount"><sup>$</sup>0</div>
+        <div class="price-amount"><sup>₹</sup>0</div>
         <div class="price-period">forever</div>
         <ul class="price-features">
-          <li>10 transcriptions / month</li>
-          <li>Up to 30 min per file</li>
-          <li>10 languages</li>
-          <li>TXT & SRT export</li>
+          <li>3 transcriptions total</li>
+          <li>Max 10 min per file</li>
+          <li>25MB upload limit</li>
+          <li>⚡ Turbo AI engine</li>
         </ul>
-        <button class="btn-plan" onclick="location.href='/login.html'">Get started</button>
+        <button class="btn-plan" onclick="location.href='/dashboard.html'">Get started free</button>
+      </div>
+      <div class="price-card">
+        <div class="price-name">Starter</div>
+        <div class="price-amount"><sup>₹</sup>249</div>
+        <div class="price-period">per month</div>
+        <ul class="price-features">
+          <li>300 min/month</li>
+          <li>100MB upload limit</li>
+          <li>TXT + SRT exports</li>
+          <li>⚡🎯 2 AI engines</li>
+        </ul>
+        <button class="btn-plan" onclick="location.href='/pricing.html'">Get Starter</button>
       </div>
       <div class="price-card popular">
         <div class="popular-badge">MOST POPULAR</div>
         <div class="price-name">Pro</div>
-        <div class="price-amount"><sup>$</sup>12</div>
+        <div class="price-amount"><sup>₹</sup>699</div>
         <div class="price-period">per month</div>
         <ul class="price-features">
-          <li>Unlimited transcriptions</li>
-          <li>Up to 5 hours per file</li>
-          <li>99+ languages</li>
-          <li>All export formats</li>
+          <li>1500 min/month</li>
+          <li>500MB upload limit</li>
           <li>Speaker detection</li>
+          <li>⚡🎯🌍 3 AI engines</li>
+          <li>Premium exports</li>
           <li>Priority processing</li>
         </ul>
-        <button class="btn-plan filled" onclick="location.href='/login.html'">Start Pro trial</button>
+        <button class="btn-plan filled" onclick="location.href='/pricing.html'">Get Pro</button>
       </div>
       <div class="price-card">
         <div class="price-name">Business</div>
-        <div class="price-amount"><sup>$</sup>39</div>
+        <div class="price-amount"><sup>₹</sup>1799</div>
         <div class="price-period">per month</div>
         <ul class="price-features">
-          <li>Everything in Pro</li>
-          <li>5 team seats</li>
-          <li>API access</li>
-          <li>Custom vocabulary</li>
-          <li>Dedicated support</li>
-          <li>SLA guarantee</li>
+          <li>5000 min/month</li>
+          <li>2GB upload limit</li>
+          <li>All 4 AI engines</li>
+          <li>AI summaries (soon)</li>
+          <li>Highest priority</li>
         </ul>
-        <button class="btn-plan" onclick="location.href='/business.html'">Contact sales</button>
+        <button class="btn-plan" onclick="location.href='/pricing.html'">Get Business</button>
       </div>
     </div>
+    <p style="text-align:center;margin-top:2rem;font-size:0.83rem;color:var(--muted)">
+      💳 UPI, Cards, Net Banking · 🔒 Secured by Razorpay · ↩️ Cancel anytime
+      <a href="/pricing.html" style="color:var(--accent2);margin-left:1rem">See full comparison →</a>
+    </p>
   </div>
 </section>
 
@@ -260,6 +275,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <a href="/privacy.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Privacy</a>
     <a href="/terms.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Terms</a>
     <a href="/contact.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Contact</a>
+    <a href="/refund.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Refund Policy</a>
     <a href="/feedback.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Feedback</a>
     <a href="/bug.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Report a Bug</a>
   </div>
@@ -277,6 +293,7 @@ async function checkAuth() {
     if (session) {
       // Logged in — show Dashboard button
       navRight.innerHTML = `
+        ${['free',''].includes(userPlan||'') ? '<a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.4rem 1rem;border-radius:100px;font-size:0.82rem;text-decoration:none;font-weight:500;margin-right:0.2rem;">⭐ Upgrade</a>' : ''}
         <a href="/dashboard.html" class="nav-login">Dashboard</a>
         <a href="/dashboard.html?new=1" class="nav-cta">Transcribe →</a>`;
       // Update hero CTA to go straight to app

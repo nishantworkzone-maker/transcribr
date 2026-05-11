@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pricing — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
+  --glow: rgba(124,106,255,0.18); --green: #34d399; --red: #f87171; --gold: #f5b942;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+/* NAV */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); }
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); letter-spacing: -0.3px; text-decoration: none; }
+.logo span { color: var(--accent2); }
+.nav-right { display: flex; align-items: center; gap: 0.7rem; }
+.nav-btn { background: transparent; color: var(--text); border: 1px solid var(--border2); padding: 0.45rem 1.1rem; border-radius: 100px; font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; text-decoration: none; }
+.nav-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.nav-cta { background: var(--accent); color: #fff; border: none; padding: 0.48rem 1.3rem; border-radius: 100px; font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s; text-decoration: none; }
+.nav-cta:hover { opacity: 0.85; }
+
+/* HERO */
+.pricing-hero { text-align: center; padding: 4.5rem 2rem 3rem; position: relative; overflow: hidden; }
+.pricing-hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 680px; height: 400px; background: radial-gradient(ellipse, rgba(124,106,255,0.12) 0%, transparent 68%); pointer-events: none; }
+.badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(124,106,255,0.1); border: 1px solid rgba(124,106,255,0.28); color: var(--accent2); font-size: 0.76rem; font-weight: 500; padding: 0.28rem 0.85rem; border-radius: 100px; margin-bottom: 1.2rem; }
+.pricing-hero h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 1rem; }
+.pricing-hero h1 .hi { color: var(--accent2); }
+.pricing-hero p { color: var(--muted); font-size: 1rem; max-width: 480px; margin: 0 auto 2rem; line-height: 1.7; }
+
+/* TOGGLE */
+.billing-toggle { display: flex; align-items: center; gap: 0.9rem; justify-content: center; margin-bottom: 3rem; font-size: 0.88rem; }
+.toggle-track { width: 46px; height: 25px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 100px; cursor: pointer; position: relative; transition: background 0.2s; }
+.toggle-track.annual { background: var(--accent); }
+.toggle-knob { position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+.toggle-track.annual .toggle-knob { transform: translateX(21px); }
+.toggle-lbl { color: var(--muted); }
+.toggle-lbl.active { color: var(--text); font-weight: 500; }
+.save-pill { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); font-size: 0.72rem; padding: 2px 8px; border-radius: 100px; }
+
+/* GRID */
+.plans-wrap { max-width: 1100px; margin: 0 auto; padding: 0 2rem 5rem; }
+.plans-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; }
+
+/* CARD */
+.plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.6rem 1.4rem; display: flex; flex-direction: column; position: relative; transition: border-color 0.2s, transform 0.2s; }
+.plan-card:hover { border-color: rgba(124,106,255,0.3); transform: translateY(-2px); }
+.plan-card.popular { border-color: var(--accent); background: linear-gradient(160deg, rgba(124,106,255,0.08) 0%, var(--surface) 50%); }
+.popular-label { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 0.68rem; font-weight: 700; padding: 3px 12px; border-radius: 100px; letter-spacing: 0.6px; white-space: nowrap; font-family: 'Syne', sans-serif; }
+.plan-icon { font-size: 1.5rem; margin-bottom: 0.8rem; }
+.plan-name { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; }
+.plan-tagline { font-size: 0.77rem; color: var(--muted); margin-bottom: 1.2rem; }
+.plan-price { margin-bottom: 0.25rem; }
+.plan-price .amount { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+.plan-price .currency { font-size: 1rem; color: var(--muted); vertical-align: super; }
+.plan-price .period { font-size: 0.78rem; color: var(--muted); }
+.plan-price-inr { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.2rem; }
+.plan-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+.plan-features { list-style: none; margin-bottom: 1.5rem; flex: 1; }
+.plan-features li { font-size: 0.83rem; color: var(--muted); padding: 0.32rem 0; display: flex; align-items: flex-start; gap: 0.5rem; line-height: 1.4; }
+.plan-features li .check { color: var(--green); font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
+.plan-features li .lock { color: var(--muted); opacity: 0.4; font-size: 0.75rem; flex-shrink: 0; margin-top: 2px; }
+.plan-features li.dim { opacity: 0.45; }
+.plan-btn { width: 100%; padding: 0.75rem; border-radius: 100px; font-size: 0.87rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.2s; border: 1px solid var(--border2); background: transparent; color: var(--text); }
+.plan-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.plan-btn.filled { background: var(--accent); color: #fff; border-color: var(--accent); }
+.plan-btn.filled:hover { opacity: 0.88; }
+.plan-btn.current { background: rgba(52,211,153,0.1); color: var(--green); border-color: rgba(52,211,153,0.3); cursor: default; }
+.plan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.engines-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+.eng-pill { font-size: 0.65rem; background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 100px; color: var(--muted); }
+
+/* COMPARISON */
+.comparison-wrap { max-width: 900px; margin: 0 auto; padding: 0 2rem 5rem; }
+.comparison-wrap h2 { font-size: 1.5rem; text-align: center; margin-bottom: 0.5rem; }
+.comparison-wrap .sub { color: var(--muted); text-align: center; font-size: 0.88rem; margin-bottom: 2.5rem; }
+.comp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.comp-table th { font-family: 'Syne', sans-serif; font-size: 0.78rem; padding: 0.8rem 1rem; text-align: center; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+.comp-table th:first-child { text-align: left; color: var(--text); }
+.comp-table th.popular-col { color: var(--accent2); }
+.comp-table td { padding: 0.7rem 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--muted); }
+.comp-table td:first-child { text-align: left; color: var(--text); font-size: 0.82rem; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table .yes { color: var(--green); }
+.comp-table .no { color: var(--border2); }
+.comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* FAQ */
+.faq-wrap { max-width: 680px; margin: 0 auto; padding: 0 2rem 5rem; }
+.faq-wrap h2 { font-size: 1.5rem; text-align: center; margin-bottom: 2rem; }
+.faq-item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.7rem; overflow: hidden; }
+.faq-q { padding: 1rem 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; font-weight: 500; transition: background 0.15s; }
+.faq-q:hover { background: var(--surface); }
+.faq-q .icon { color: var(--accent2); font-size: 1rem; transition: transform 0.2s; flex-shrink: 0; }
+.faq-q.open .icon { transform: rotate(45deg); }
+.faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 0.84rem; color: var(--muted); line-height: 1.7; }
+.faq-a.open { display: block; }
+
+/* TRUST */
+.trust-row { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; padding: 3rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); margin-bottom: 4rem; }
+.trust-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.83rem; color: var(--muted); }
+.trust-item .icon { font-size: 1.1rem; }
+
+/* PAYMENT MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 800; display: none; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.open { display: flex; }
+.pay-modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; width: 100%; max-width: 440px; overflow: hidden; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.pay-modal-head { padding: 1.3rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.pay-modal-head h3 { font-size: 1rem; }
+.pay-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; border-radius: 7px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.pay-body { padding: 1.5rem; }
+.pay-plan-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; }
+.pay-plan-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; }
+.pay-plan-price { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); }
+.pay-plan-sub { font-size: 0.75rem; color: var(--muted); }
+.pay-note { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.2rem; line-height: 1.6; background: rgba(124,106,255,0.06); border: 1px solid rgba(124,106,255,0.15); border-radius: 8px; padding: 0.75rem; }
+.pay-methods { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.method-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 0.35rem 0.75rem; font-size: 0.72rem; color: var(--muted); }
+.pay-proceed-btn { width: 100%; padding: 0.9rem; background: var(--accent); color: #fff; border: none; border-radius: 100px; font-size: 0.92rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.pay-proceed-btn:hover { opacity: 0.88; }
+.pay-proceed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pay-login-prompt { text-align: center; padding: 1.5rem; }
+.pay-login-prompt p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1rem; }
+.pay-login-btn { background: var(--accent); color: #fff; border: none; padding: 0.7rem 1.8rem; border-radius: 100px; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'Syne', sans-serif; }
+.pay-security { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.72rem; color: var(--muted); margin-top: 0.9rem; }
+
+/* SUCCESS MODAL */
+.success-modal { background: var(--surface); border: 1px solid rgba(52,211,153,0.3); border-radius: 20px; width: 100%; max-width: 400px; padding: 2.5rem; text-align: center; animation: slideUp 0.3s ease; }
+.success-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.success-modal h3 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--green); }
+.success-modal p { color: var(--muted); font-size: 0.88rem; line-height: 1.65; margin-bottom: 1.5rem; }
+.success-btn { background: var(--green); color: #0a0a0f; border: none; padding: 0.8rem 2rem; border-radius: 100px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 1.4rem; right: 1.4rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 0.65rem 1.1rem; font-size: 0.83rem; transform: translateY(70px); opacity: 0; transition: all 0.3s; z-index: 999; max-width: 300px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* FOOTER */
+footer { border-top: 1px solid var(--border); padding: 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: 0.83rem; }
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 900px) {
+  .plans-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 580px) {
+  nav { padding: 1rem 1.2rem; }
+  .plans-grid { grid-template-columns: 1fr; }
+  .plans-wrap, .comparison-wrap, .faq-wrap { padding-left: 1rem; padding-right: 1rem; }
+  footer { flex-direction: column; align-items: flex-start; }
+  .trust-row { gap: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <div class="nav-right" id="navRight">
+    <a href="/login.html" class="nav-btn">Sign In</a>
+    <a href="/dashboard.html" class="nav-cta">Dashboard</a>
+  </div>
+</nav>
+
+<div class="pricing-hero">
+  <div class="badge">✦ Pricing</div>
+  <h1>Transcription for every<br><span class="hi">workflow and budget</span></h1>
+  <p>Start free. Upgrade when you need more power. Cancel any time.</p>
+
+  <div class="billing-toggle">
+    <span class="toggle-lbl active" id="monthlyLbl">Monthly</span>
+    <div class="toggle-track" id="billingToggle" onclick="toggleBilling()">
+      <div class="toggle-knob"></div>
+    </div>
+    <span class="toggle-lbl" id="annualLbl">Annual <span class="save-pill">Save 20%</span></span>
+  </div>
+</div>
+
+<!-- PLAN CARDS -->
+<div class="plans-wrap">
+  <div class="plans-grid">
+
+    <!-- FREE -->
+    <div class="plan-card" id="card-free">
+      <div class="plan-icon">🪄</div>
+      <div class="plan-name">Free</div>
+      <div class="plan-tagline">Try Transcribr, no card needed</div>
+      <div class="plan-price"><span class="currency">₹</span><span class="amount">0</span> <span class="period">/ mo</span></div>
+      <div class="plan-price-inr">$0 forever</div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 3 transcriptions total</li>
+        <li><span class="check">✓</span> Max 10 min per file</li>
+        <li><span class="check">✓</span> 25MB upload limit</li>
+        <li><span class="check">✓</span> Copy transcript</li>
+        <li class="dim"><span class="lock">—</span> No cloud history</li>
+        <li class="dim"><span class="lock">—</span> Basic export only</li>
+        <li class="dim"><span class="lock">—</span> Groq Whisper only</li>
+      </ul>
+      <div class="engines-row"><span class="eng-pill">⚡ Turbo AI</span></div>
+      <button class="plan-btn" id="btn-free" onclick="handlePlanClick('free')">Get started free</button>
+    </div>
+
+    <!-- STARTER -->
+    <div class="plan-card" id="card-starter">
+      <div class="plan-icon">🚀</div>
+      <div class="plan-name">Starter</div>
+      <div class="plan-tagline">For students and casual use</div>
+      <div class="plan-price"><span class="currency">₹</span><span class="amount monthly-price" data-monthly="249" data-annual="199">249</span> <span class="period">/ mo</span></div>
+      <div class="plan-price-inr monthly-usd" data-monthly="$3.99/mo" data-annual="$3.19/mo">$3.99/mo</div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 300 minutes/month</li>
+        <li><span class="check">✓</span> Max 100MB upload</li>
+        <li><span class="check">✓</span> TXT + SRT exports</li>
+        <li><span class="check">✓</span> Transcript history</li>
+        <li><span class="check">✓</span> Better engine routing</li>
+        <li class="dim"><span class="lock">—</span> Speaker detection</li>
+        <li class="dim"><span class="lock">—</span> Premium exports</li>
+      </ul>
+      <div class="engines-row">
+        <span class="eng-pill">⚡ Turbo AI</span>
+        <span class="eng-pill">🎯 Precision AI</span>
+      </div>
+      <button class="plan-btn" id="btn-starter" onclick="handlePlanClick('starter')">Get Starter</button>
+    </div>
+
+    <!-- PRO (popular) -->
+    <div class="plan-card popular" id="card-pro">
+      <div class="popular-label">✦ MOST POPULAR</div>
+      <div class="plan-icon">⭐</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-tagline">For professionals & creators</div>
+      <div class="plan-price"><span class="currency">₹</span><span class="amount monthly-price" data-monthly="699" data-annual="559">699</span> <span class="period">/ mo</span></div>
+      <div class="plan-price-inr monthly-usd" data-monthly="$8.99/mo" data-annual="$7.19/mo">$8.99/mo</div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 1500 minutes/month</li>
+        <li><span class="check">✓</span> Max 500MB upload</li>
+        <li><span class="check">✓</span> Speaker detection</li>
+        <li><span class="check">✓</span> Premium exports (PDF, DOCX)</li>
+        <li><span class="check">✓</span> Cloud history</li>
+        <li><span class="check">✓</span> Priority processing</li>
+        <li><span class="check">✓</span> All 3 premium engines</li>
+      </ul>
+      <div class="engines-row">
+        <span class="eng-pill">⚡ Turbo AI</span>
+        <span class="eng-pill">🎯 Precision AI</span>
+        <span class="eng-pill">🌍 Global AI</span>
+      </div>
+      <button class="plan-btn filled" id="btn-pro" onclick="handlePlanClick('pro')">Get Pro</button>
+    </div>
+
+    <!-- BUSINESS -->
+    <div class="plan-card" id="card-business">
+      <div class="plan-icon">🏢</div>
+      <div class="plan-name">Business</div>
+      <div class="plan-tagline">For teams & power users</div>
+      <div class="plan-price"><span class="currency">₹</span><span class="amount monthly-price" data-monthly="1799" data-annual="1439">1799</span> <span class="period">/ mo</span></div>
+      <div class="plan-price-inr monthly-usd" data-monthly="$19/mo" data-annual="$15.20/mo">$19/mo</div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 5000 minutes/month</li>
+        <li><span class="check">✓</span> Max 2GB upload</li>
+        <li><span class="check">✓</span> All engines + Smart AI</li>
+        <li><span class="check">✓</span> Advanced exports</li>
+        <li><span class="check">✓</span> Highest priority queue</li>
+        <li><span class="check">✓</span> Future AI summaries</li>
+        <li><span class="check">✓</span> Best routing/performance</li>
+      </ul>
+      <div class="engines-row">
+        <span class="eng-pill">⚡ Turbo</span>
+        <span class="eng-pill">🎯 Precision</span>
+        <span class="eng-pill">🌍 Global</span>
+        <span class="eng-pill">🧠 Smart AI</span>
+      </div>
+      <button class="plan-btn" id="btn-business" onclick="handlePlanClick('business')">Get Business</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST STRIP -->
+<div class="trust-row">
+  <div class="trust-item"><span class="icon">🔒</span> Secured by Razorpay</div>
+  <div class="trust-item"><span class="icon">↩️</span> Cancel anytime</div>
+  <div class="trust-item"><span class="icon">⚡</span> Instant activation</div>
+  <div class="trust-item"><span class="icon">🇮🇳</span> UPI, Cards, Net Banking</div>
+  <div class="trust-item"><span class="icon">🛡️</span> Fair usage protected</div>
+</div>
+
+<!-- COMPARISON TABLE -->
+<div class="comparison-wrap">
+  <h2>Feature comparison</h2>
+  <p class="sub">Everything you need to know before choosing a plan.</p>
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Free</th>
+        <th>Starter</th>
+        <th class="popular-col">Pro ⭐</th>
+        <th>Business</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Monthly minutes</td><td>~30 min total</td><td>300 min</td><td>1500 min</td><td>5000 min</td></tr>
+      <tr><td>Max file size</td><td>25 MB</td><td>100 MB</td><td>500 MB</td><td>2 GB</td></tr>
+      <tr><td>⚡ Turbo AI (Groq)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>🎯 Precision AI (Whisper v3)</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>🌍 Global AI (Deepgram)</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>🧠 Smart AI (AssemblyAI)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+      <tr><td>TXT / SRT export</td><td>Copy only</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>PDF / DOCX export</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Speaker detection</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Cloud history</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Priority processing</td><td class="no">—</td><td>Normal</td><td>High</td><td>Highest</td></tr>
+      <tr><td>Future AI summaries</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FAQ -->
+<div class="faq-wrap">
+  <h2>Common questions</h2>
+  <div class="faq-list" id="faqList"></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2025 Transcribr</span>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/refund.html">Refund Policy</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</footer>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payModal">
+  <div class="pay-modal" id="payModalContent">
+    <div class="pay-modal-head">
+      <h3>Complete your upgrade</h3>
+      <button class="pay-close" onclick="closePayModal()">✕</button>
+    </div>
+    <div class="pay-body" id="payBody">
+      <!-- dynamically filled -->
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="success-modal">
+    <span class="success-icon">🎉</span>
+    <h3>You're now on <span id="successPlanName">Pro</span>!</h3>
+    <p>Your plan has been activated. All premium features are now unlocked. Enjoy the full power of Transcribr.</p>
+    <button class="success-btn" onclick="location.href='/dashboard.html'">Go to Dashboard →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────
+const PLANS = {
+  starter: { name: 'Starter', inr_monthly: 24900, inr_annual: 19900, usd: '$3.99', label: 'Starter Plan' },
+  pro:     { name: 'Pro',     inr_monthly: 69900, inr_annual: 55900, usd: '$8.99', label: 'Pro Plan' },
+  business:{ name: 'Business',inr_monthly:179900, inr_annual:143900, usd: '$19',   label: 'Business Plan' },
+};
+
+let sb = null, currentUser = null, authToken = null, userPlan = 'free';
+let isAnnual = false, selectedPlan = null;
+
+// ── Init ─────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      authToken = session.access_token;
+    }
+  } catch(e) { console.error(e); }
+  updateNav();
+  await fetchUserPlan();
+  updateCardStates();
+  buildFaq();
+}
+
+async function fetchUserPlan() {
+  if (!authToken) return;
+  try {
+    const r = await fetch('/api/user/me', { headers: { Authorization: `Bearer ${authToken}` } });
+    const d = await r.json();
+    userPlan = d?.plan || 'free';
+  } catch(e) { userPlan = 'free'; }
+}
+
+function updateNav() {
+  const nav = document.getElementById('navRight');
+  if (currentUser) {
+    nav.innerHTML = `<a href="/dashboard.html" class="nav-btn">Dashboard</a>`;
+  }
+}
+
+// ── Billing toggle ───────────────────────────────────────────────
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  const track = document.getElementById('billingToggle');
+  track.classList.toggle('annual', isAnnual);
+  document.getElementById('monthlyLbl').classList.toggle('active', !isAnnual);
+  document.getElementById('annualLbl').classList.toggle('active', isAnnual);
+
+  document.querySelectorAll('.monthly-price').forEach(el => {
+    el.textContent = isAnnual ? el.dataset.annual : el.dataset.monthly;
+  });
+  document.querySelectorAll('.monthly-usd').forEach(el => {
+    el.textContent = isAnnual ? el.dataset.annual : el.dataset.monthly;
+  });
+}
+
+// ── Card states ──────────────────────────────────────────────────
+function updateCardStates() {
+  const plans = ['free','starter','pro','business'];
+  plans.forEach(p => {
+    const btn = document.getElementById('btn-' + p);
+    if (!btn) return;
+    if (p === userPlan) {
+      btn.className = 'plan-btn current';
+      btn.textContent = '✓ Current plan';
+    } else if (p === 'free') {
+      btn.textContent = currentUser ? 'Current plan (Free)' : 'Get started free';
+      if (currentUser) btn.className = 'plan-btn current';
+    }
+  });
+}
+
+// ── Plan click ───────────────────────────────────────────────────
+function handlePlanClick(plan) {
+  if (plan === 'free') {
+    location.href = currentUser ? '/dashboard.html' : '/login.html';
+    return;
+  }
+  selectedPlan = plan;
+  openPayModal(plan);
+}
+
+function openPayModal(plan) {
+  const modal = document.getElementById('payModal');
+  const body = document.getElementById('payBody');
+  const p = PLANS[plan];
+  const amount = isAnnual ? p.inr_annual : p.inr_monthly;
+  const displayAmount = (amount / 100).toLocaleString('en-IN');
+  const period = isAnnual ? '/year' : '/month';
+
+  if (!currentUser) {
+    body.innerHTML = `
+      <div class="pay-login-prompt">
+        <div style="font-size:2rem;margin-bottom:0.8rem">🔐</div>
+        <p>You need to be signed in to upgrade your plan.</p>
+        <button class="pay-login-btn" onclick="location.href='/login.html?redirect=/pricing.html'">Sign in to continue →</button>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div class="pay-plan-preview">
+        <div>
+          <div class="pay-plan-name">${p.name} Plan</div>
+          <div class="pay-plan-sub">${isAnnual ? 'Annual billing' : 'Monthly billing'} · Cancel anytime</div>
+        </div>
+        <div class="pay-plan-price">₹${displayAmount}${period}</div>
+      </div>
+      <div class="pay-note">⚡ Your plan activates instantly after payment. You can cancel anytime from your dashboard.</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.6rem;font-weight:500">Pay with</div>
+      <div class="pay-methods">
+        <span class="method-pill">💳 Cards</span>
+        <span class="method-pill">📱 UPI</span>
+        <span class="method-pill">🏦 Net Banking</span>
+        <span class="method-pill">👛 Wallets</span>
+      </div>
+      <button class="pay-proceed-btn" id="proceedBtn" onclick="initiatePayment('${plan}', ${amount})">
+        🔒 Pay ₹${displayAmount} securely
+      </button>
+      <div class="pay-security">🔒 256-bit SSL · Secured by Razorpay · PCI-DSS compliant</div>`;
+  }
+
+  modal.classList.add('open');
+}
+
+function closePayModal() {
+  document.getElementById('payModal').classList.remove('open');
+}
+
+// ── Razorpay payment ─────────────────────────────────────────────
+async function initiatePayment(plan, amountPaise) {
+  const btn = document.getElementById('proceedBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Opening payment…';
+
+  try {
+    // Create order on backend
+    const orderRes = await fetch('/api/payment/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ plan, amount: amountPaise, billing: isAnnual ? 'annual' : 'monthly' })
+    });
+
+    if (!orderRes.ok) {
+      const err = await orderRes.json();
+      throw new Error(err.error || 'Failed to create order');
+    }
+
+    const order = await orderRes.json();
+
+    const options = {
+      key: order.razorpay_key,
+      amount: order.amount,
+      currency: 'INR',
+      name: 'Transcribr',
+      description: PLANS[plan].label,
+      order_id: order.id,
+      prefill: {
+        email: currentUser?.email || '',
+        name: currentUser?.user_metadata?.full_name || '',
+      },
+      theme: { color: '#7c6aff' },
+      modal: { backdropclose: false },
+      handler: async function(response) {
+        await verifyPayment(plan, response);
+      }
+    };
+
+    closePayModal();
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function(resp) {
+      showToast('❌ Payment failed: ' + (resp.error?.description || 'Unknown error'));
+    });
+    rzp.open();
+
+  } catch (err) {
+    showToast('❌ ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '🔒 Pay securely';
+  }
+}
+
+async function verifyPayment(plan, razorpayResponse) {
+  try {
+    showToast('⏳ Verifying payment…');
+    const res = await fetch('/api/payment/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        plan,
+        billing: isAnnual ? 'annual' : 'monthly',
+        razorpay_order_id: razorpayResponse.razorpay_order_id,
+        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+        razorpay_signature: razorpayResponse.razorpay_signature,
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Payment verification failed');
+    }
+
+    // Success!
+    document.getElementById('successPlanName').textContent = PLANS[plan].name;
+    document.getElementById('successModal').classList.add('open');
+
+  } catch (err) {
+    showToast('❌ ' + err.message + ' — please contact support');
+  }
+}
+
+// ── FAQ ──────────────────────────────────────────────────────────
+const FAQS = [
+  { q: 'How are transcription minutes counted?', a: 'Minutes are counted based on the actual audio duration of your uploaded files. A 5-minute file uses 5 minutes of your monthly quota. Unused minutes do not roll over to the next month.' },
+  { q: 'Can I cancel my subscription anytime?', a: 'Yes, absolutely. You can cancel your subscription at any time from your dashboard. Your plan stays active until the end of the billing period, and you will not be charged again.' },
+  { q: 'What payment methods are supported?', a: 'We support all major payment methods via Razorpay: UPI (GPay, PhonePe, Paytm), credit/debit cards (Visa, Mastercard, RuPay), net banking, and popular digital wallets.' },
+  { q: 'Is my payment information secure?', a: 'Yes. All payments are processed by Razorpay, which is PCI-DSS Level 1 certified. We never store your card or payment details on our servers.' },
+  { q: 'What happens if I exceed my monthly minutes?', a: 'If you reach your monthly limit, new transcriptions will be paused until the next billing cycle. You can upgrade to a higher plan at any time to get more minutes immediately.' },
+  { q: 'Are refunds available?', a: 'Refunds are available for failed payments and confirmed technical issues. Credits already used are non-refundable. See our full Refund Policy for details.' },
+  { q: 'What is the difference between Turbo, Precision, Global, and Smart AI?', a: 'Turbo AI (Groq Whisper) is the fastest engine. Precision AI (Whisper Large v3) offers the highest accuracy for clear audio. Global AI (Deepgram) is optimised for conversations and calls. Smart AI (AssemblyAI) adds advanced features like sentiment analysis. Business plan gets all four.' },
+];
+
+function buildFaq() {
+  const list = document.getElementById('faqList');
+  list.innerHTML = FAQS.map((f, i) => `
+    <div class="faq-item">
+      <div class="faq-q" id="fq${i}" onclick="toggleFaq(${i})">
+        <span>${f.q}</span>
+        <span class="icon">+</span>
+      </div>
+      <div class="faq-a" id="fa${i}">${f.a}</div>
+    </div>
+  `).join('');
+}
+
+function toggleFaq(i) {
+  const q = document.getElementById('fq' + i);
+  const a = document.getElementById('fa' + i);
+  const isOpen = q.classList.toggle('open');
+  a.classList.toggle('open', isOpen);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Close modal on overlay click
+document.getElementById('payModal').addEventListener('click', function(e) {
+  if (e.target === this) closePayModal();
+});
+
+init();
+</script>
+</body>
+</html>

@@ -190,7 +190,9 @@ async function signInWithGoogle() {
   if (!sb) return;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + '/dashboard.html' }
+    options: { 
+      redirectTo: window.location.origin + (new URLSearchParams(window.location.search).get('redirect') || '/dashboard.html')
+    }
   });
   if (error) showError(error.message);
 }
@@ -204,7 +206,15 @@ async function signIn() {
   btn.disabled = true; btn.textContent = 'Signing in…';
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) { showError(error.message); btn.disabled=false; btn.textContent='Sign In'; }
-  else window.location.href = '/dashboard.html';
+  else {
+    // Check for redirect param or upgrade intent
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    const upgradeIntent = localStorage.getItem('upgrade_intent');
+    if (redirect) window.location.href = redirect;
+    else if (upgradeIntent) { localStorage.removeItem('upgrade_intent'); window.location.href = '/pricing.html'; }
+    else window.location.href = '/dashboard.html';
+  }
 }
 
 async function signUp() {

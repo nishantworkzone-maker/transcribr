@@ -2,6 +2,7 @@
   "version": 2,
   "builds": [
     { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "api/payment/*.js", "use": "@vercel/node" },
     { "src": "server.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
@@ -9,6 +10,8 @@
     { "src": "/api/config", "dest": "/api/config.js" },
     { "src": "/api/audio", "dest": "/api/audio.js" },
     { "src": "/api/blob-upload", "dest": "/api/blob-upload.js" },
+    { "src": "/api/payment/create-order", "dest": "/api/payment/create-order.js" },
+    { "src": "/api/payment/verify", "dest": "/api/payment/verify.js" },
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/login.html", "dest": "/login.html" },
     { "src": "/dashboard.html", "dest": "/dashboard.html" },
@@ -20,6 +23,8 @@
     { "src": "/bug.html", "dest": "/bug.html" },
     { "src": "/terms.html", "dest": "/terms.html" },
     { "src": "/privacy.html", "dest": "/privacy.html" },
+    { "src": "/pricing.html", "dest": "/pricing.html" },
+    { "src": "/refund.html", "dest": "/refund.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

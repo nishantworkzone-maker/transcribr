@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Refund Policy — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c27;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f8;
+  --muted: #888899;
+  --accent: #7c6aff;
+  --accent2: #a78bfa;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+h1, h2, h3, h4 { font-family: 'Syne', sans-serif; }
+
+/* Nav */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,10,15,0.92);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent2); }
+
+/* Page layout */
+.page { max-width: 720px; margin: 4rem auto; padding: 0 2rem 4rem; }
+
+.page-header { margin-bottom: 3rem; }
+.page-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.page-header .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+
+/* Summary banner */
+.summary-banner {
+  background: linear-gradient(135deg, rgba(124,106,255,0.1) 0%, rgba(167,139,250,0.06) 100%);
+  border: 1px solid rgba(124,106,255,0.25);
+  border-radius: 10px;
+  padding: 1.1rem 1.4rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 1rem;
+}
+.summary-banner strong { color: var(--accent2); }
+
+/* Sections */
+.page h2 {
+  font-size: 1.05rem;
+  margin: 2.2rem 0 0.65rem;
+  color: var(--accent2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.page h2 .icon {
+  width: 20px;
+  height: 20px;
+  background: rgba(167,139,250,0.12);
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.page p, .page li { color: var(--muted); line-height: 1.75; font-size: 0.93rem; margin-bottom: 0.5rem; }
+.page ul { padding-left: 1.4rem; }
+.page ul li { margin-bottom: 0.35rem; }
+
+/* Highlight box */
+.highlight-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+}
+.highlight-box p { margin-bottom: 0; }
+
+/* Warning box */
+.warning-box {
+  background: rgba(251,191,36,0.06);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+}
+.warning-box p { color: rgba(251,191,36,0.85); margin-bottom: 0; font-size: 0.88rem; }
+
+/* Table */
+.refund-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.88rem;
+}
+.refund-table th {
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+.refund-table td {
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.6;
+}
+.refund-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.badge-green { background: rgba(52,211,153,0.12); color: #34d399; }
+.badge-red { background: rgba(248,113,113,0.12); color: #f87171; }
+.badge-yellow { background: rgba(251,191,36,0.12); color: #fbbf24; }
+
+/* Contact card */
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.contact-card .label { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.25rem; }
+.contact-card a { color: var(--accent2); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
+.contact-card a:hover { text-decoration: underline; }
+
+/* Divider */
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 640px) {
+  nav { padding: 1rem 1.25rem; }
+  .page { margin: 2rem auto; }
+  .page-header h1 { font-size: 1.6rem; }
+  footer { flex-direction: column; align-items: flex-start; padding: 1.5rem 1.25rem; }
+  .refund-table { font-size: 0.82rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <a href="/dashboard.html" style="color:var(--muted);font-size:0.88rem;text-decoration:none;">← Dashboard</a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Refund Policy</h1>
+    <p class="sub">Last updated: May 2025</p>
+    <div class="summary-banner">
+      <strong>Summary:</strong> We offer refunds for failed payments and confirmed technical issues. Refunds are not available after transcription credits have been successfully consumed. All requests are reviewed within <strong>5–7 business days</strong>.
+    </div>
+  </div>
+
+  <h2><span class="icon">①</span> Overview</h2>
+  <p>Transcribr is an AI-powered audio transcription platform. Our refund policy is designed to be fair to both users and the platform, in compliance with applicable payment regulations and Razorpay's merchant guidelines.</p>
+  <p>By completing a purchase on Transcribr, you agree to the terms described in this policy. Please read it carefully before subscribing to any paid plan.</p>
+
+  <h2><span class="icon">✓</span> When Refunds Are Eligible</h2>
+  <p>You may be eligible for a full or partial refund in the following situations:</p>
+  <ul>
+    <li><strong>Failed or duplicate payments</strong> — If your payment was charged more than once for the same order, or if the payment failed but was still debited from your account.</li>
+    <li><strong>Technical failure preventing access</strong> — If a confirmed server-side error on our end prevented you from accessing any premium features after a successful payment, and the issue could not be resolved within a reasonable time.</li>
+    <li><strong>Subscription charged after documented cancellation</strong> — If you were billed for a renewal cycle after properly cancelling your subscription, and no services were used in that cycle.</li>
+    <li><strong>Unauthorised transactions</strong> — If there is evidence of a fraudulent or unauthorised charge on your account, subject to investigation.</li>
+  </ul>
+
+  <h2><span class="icon">✕</span> When Refunds Are Not Applicable</h2>
+  <p>Refunds will <strong>not</strong> be issued in the following circumstances:</p>
+  <ul>
+    <li>Transcription credits or minutes have been partially or fully used after payment.</li>
+    <li>You are dissatisfied with transcription accuracy due to audio quality, heavy accents, background noise, overlapping speakers, or low-bitrate recordings. AI transcription accuracy varies by input quality and is not guaranteed to be 100% perfect.</li>
+    <li>You changed your mind after purchase but did not use the service.</li>
+    <li>You forgot to cancel before a renewal date.</li>
+    <li>You purchased the wrong plan by mistake and have already used features from it.</li>
+    <li>Requests made after 30 days from the original transaction date.</li>
+  </ul>
+
+  <div class="highlight-box">
+    <p><strong>Note on AI Transcription Accuracy:</strong> Transcribr uses multiple AI engines (Groq Whisper, Deepgram Nova-2, AssemblyAI) to transcribe audio. Output quality depends on factors including audio clarity, speaker accents, background noise, recording bitrate, and language complexity. Transcription inaccuracies due to these factors do not constitute grounds for a refund.</p>
+  </div>
+
+  <h2><span class="icon">↻</span> Subscription Cancellations</h2>
+  <p>You may cancel your subscription at any time from your account settings. Upon cancellation:</p>
+  <ul>
+    <li>Your plan remains active until the end of the current billing period.</li>
+    <li>You will not be billed for the next renewal cycle.</li>
+    <li>Cancellation does not automatically trigger a refund for the current or past billing periods.</li>
+    <li>Unused transcription minutes in the current billing period are forfeited upon cancellation and are not refundable.</li>
+  </ul>
+
+  <h2><span class="icon">⇄</span> Duplicate Transactions</h2>
+  <p>If your account was charged more than once for a single transaction due to a payment gateway error or network issue, please contact us immediately. Duplicate charge refunds are processed on a priority basis and are typically resolved within 3–5 business days once verified by our payment processor (Razorpay).</p>
+
+  <hr class="divider"/>
+
+  <!-- Refund eligibility quick-reference table -->
+  <h2><span class="icon">≡</span> Quick Reference</h2>
+  <table class="refund-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Refund Eligible?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Payment failed but amount was debited</td>
+        <td><span class="badge badge-green">Yes</span></td>
+      </tr>
+      <tr>
+        <td>Duplicate / double charge</td>
+        <td><span class="badge badge-green">Yes — after review</span></td>
+      </tr>
+      <tr>
+        <td>Technical issue blocking all premium access</td>
+        <td><span class="badge badge-yellow">Case-by-case</span></td>
+      </tr>
+      <tr>
+        <td>Charged after confirmed cancellation</td>
+        <td><span class="badge badge-green">Yes — after review</span></td>
+      </tr>
+      <tr>
+        <td>Unhappy with transcription accuracy</td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+      <tr>
+        <td>Changed mind after purchase (credits used)</td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+      <tr>
+        <td>Forgot to cancel before renewal</td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+      <tr>
+        <td>Request made after 30 days of transaction</td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr class="divider"/>
+
+  <h2><span class="icon">⏱</span> Refund Processing Timeline</h2>
+  <p>Once a refund request is submitted and approved:</p>
+  <ul>
+    <li><strong>Review period:</strong> 5–7 business days from the date of your request.</li>
+    <li><strong>Processing time:</strong> Approved refunds are initiated within 2 business days of approval.</li>
+    <li><strong>Credit to account:</strong> Depending on your bank or payment method, the refunded amount may take an additional 5–10 business days to reflect in your account.</li>
+    <li>Refunds are returned to the original payment method used at the time of purchase.</li>
+  </ul>
+
+  <h2><span class="icon">⚠</span> Abuse & Fraud Prevention</h2>
+  <div class="warning-box">
+    <p>Refund requests that appear to be fraudulent, abusive, or in bad faith may be rejected outright. Repeated refund requests from the same account will be flagged for manual review. Transcribr reserves the right to suspend or terminate accounts engaged in payment abuse.</p>
+  </div>
+
+  <h2><span class="icon">✉</span> How to Request a Refund</h2>
+  <p>To submit a refund request, email us with the following information:</p>
+  <ul>
+    <li>Your registered email address</li>
+    <li>Payment transaction ID or Razorpay Order ID</li>
+    <li>Date of the transaction</li>
+    <li>Reason for the refund request</li>
+    <li>Any relevant screenshots or supporting details</li>
+  </ul>
+
+  <div class="contact-card">
+    <div>
+      <div class="label">Refund & Billing Support</div>
+      <a href="mailto:support@transcribr.app">support@transcribr.app</a>
+    </div>
+    <div style="color:var(--border2);font-size:1.5rem;line-height:1">|</div>
+    <div>
+      <div class="label">Response Time</div>
+      <span style="color:var(--muted);font-size:0.9rem;">Within 5–7 business days</span>
+    </div>
+  </div>
+
+  <h2><span class="icon">§</span> Governing Policy</h2>
+  <p>This refund policy is subject to change at any time. Material changes will be communicated via email or a notice on the platform. Continued use of Transcribr after policy updates constitutes your acceptance of the revised terms.</p>
+  <p>For all other legal terms, please refer to our <a href="/terms.html" style="color:var(--accent2)">Terms & Conditions</a>. For privacy-related matters, see our <a href="/privacy.html" style="color:var(--accent2)">Privacy Policy</a>.</p>
+</div>
+
+<footer>
+  <span>© 2025 Transcribr</span>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/refund.html">Refund Policy</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</footer>
+
+</body>
+</html>

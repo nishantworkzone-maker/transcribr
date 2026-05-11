@@ -68,6 +68,14 @@ app.use('/api/translate', translateRouter);
 app.use('/api/import-link', importLinkRouter);
 app.use('/api/user', userRouter);
 
+// ── Payment routes (Razorpay) ─────────────────────────────────────
+import paymentCreateOrder from './api/payment/create-order.js';
+import paymentVerify from './api/payment/verify.js';
+app.post('/api/payment/create-order', paymentCreateOrder);
+app.post('/api/payment/verify', paymentVerify);
+app.options('/api/payment/create-order', (req, res) => res.status(200).end());
+app.options('/api/payment/verify', (req, res) => res.status(200).end());
+
 // ── /api/transcripts — uses service key, bypasses RLS ────────────
 import { requireAuth } from './middleware/auth.js';
 import { createClient } from '@supabase/supabase-js';

@@ -6,6 +6,7 @@
 <title>Transcribe — Transcribr</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/lib/upgrade.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -22,6 +23,8 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .nav-right { display: flex; align-items: center; gap: 0.8rem; }
 .nav-user { font-size: 0.82rem; color: var(--muted); }
 .nav-dash { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.2s; }
+.nav-upgrade { background: linear-gradient(135deg, rgba(124,106,255,0.2), rgba(167,139,250,0.15)); color: var(--accent2); border: 1px solid rgba(124,106,255,0.4); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.82rem; text-decoration: none; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.2s; }
+.nav-upgrade:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .nav-dash:hover { color: var(--text); border-color: var(--accent); }
 .nav-signout { background: transparent; border: none; color: var(--muted); font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0.4rem; transition: color 0.2s; }
 .nav-signout:hover { color: var(--red); }
@@ -150,8 +153,9 @@ input[type=range].vol { width: 56px; accent-color: var(--accent); cursor: pointe
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <div class="nav-right">
     <span class="nav-user" id="navUser"></span>
+    <a href="/pricing.html" class="nav-upgrade" id="navUpgradeBtn" style="display:none">⭐ Upgrade</a>
     <a href="/dashboard.html" class="nav-dash">📁 Dashboard</a>
-    <button class="nav-signout" onclick="signOut()">Sign out</button>
+    <button class="nav-signout" id="navSignout" onclick="signOut()" style="display:none">Sign out</button>
   </div>
 </nav>
 
@@ -172,7 +176,7 @@ input[type=range].vol { width: 56px; accent-color: var(--accent); cursor: pointe
         <input type="file" id="fileInput" accept="audio/*,video/*" onchange="handleFile(event)"/>
         <span class="upload-icon">🎙</span>
         <h3 id="uploadTitle">Drop your file here</h3>
-        <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A and more (up to 25MB)</p>
+        <p id="uploadSub">or click to browse — MP3, MP4, WAV, M4A and more · <span id="uploadLimitNote" style="color:var(--accent2);font-size:0.72rem">25MB limit</span></p>
         <div class="upload-formats">
           <span class="fmt-badge">MP3</span><span class="fmt-badge">MP4</span>
           <span class="fmt-badge">WAV</span><span class="fmt-badge">M4A</span>
@@ -249,28 +253,55 @@ input[type=range].vol { width: 56px; accent-color: var(--accent); cursor: pointe
     </div>
     <div class="export-btns">
       <button class="exp-btn" onclick="copyTranscript()">📋 Copy</button>
-      <button class="exp-btn" onclick="downloadTxt()">⬇ TXT</button>
-      <button class="exp-btn" onclick="downloadSrt()">⬇ SRT</button>
-      <button class="exp-btn" onclick="downloadVtt()">⬇ VTT</button>
+      <button class="exp-btn" id="btnTxt" onclick="handleExport('txt')">⬇ TXT</button>
+      <button class="exp-btn" id="btnSrt" onclick="handleExport('srt')">⬇ SRT</button>
+      <button class="exp-btn" id="btnVtt" onclick="handleExport('vtt')">⬇ VTT</button>
+      <button class="exp-btn" id="btnPdf" style="opacity:0.5" onclick="handleExport('pdf')">⬇ PDF <span style="font-size:0.6rem;background:var(--accent);color:#fff;padding:1px 4px;border-radius:3px">Pro</span></button>
       <button class="exp-btn" onclick="location.href='/dashboard.html'">📁 Dashboard</button>
     </div>
   </div>
+  <div class="save-bar" id="saveBar" style="margin:0.5rem 1rem 0;">✅ Saved to your dashboard!</div>
   <div class="result-body">
-    <div class="save-bar" id="saveBar">✅ Saved to your dashboard!</div>
-    <div class="waveform-wrap"><canvas id="waveCanvas"></canvas></div>
-    <div class="player-wrap">
-      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
-      <div class="player-track" id="playerTrack">
-        <div class="player-fill" id="playerFill"></div>
+    <div class="result-left">
+      <div class="waveform-wrap">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+        <canvas id="waveCanvas"></canvas>
+        <span class="player-time" id="playerTime">0:00 / 0:00</span>
+        <div class="vol-wrap">
+          <span class="vol-icon">🔊</span>
+          <input type="range" class="vol" min="0" max="1" step="0.05" value="1" oninput="audioEl.volume=this.value"/>
+        </div>
       </div>
-      <span class="player-time" id="playerTime">0:00 / 0:00</span>
-      <div class="vol-wrap">
-        <span class="vol-icon">🔊</span>
-        <input type="range" class="vol" min="0" max="1" step="0.05" value="1" oninput="audioEl.volume=this.value"/>
+      <div class="player-track" id="playerTrack" style="height:3px;background:var(--border);margin:0 1.2rem 0.5rem;">
+        <div class="player-fill" id="playerFill" style="height:100%;background:var(--accent);width:0%;border-radius:2px;"></div>
+      </div>
+      <div class="transcript-wrap">
+        <div class="transcript-scroll" id="transcriptScroll"></div>
       </div>
     </div>
-    <div class="transcript-wrap">
-      <div class="transcript-scroll" id="transcriptScroll"></div>
+    <div class="result-right">
+      <div>
+        <div class="sidebar-label">Stats</div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-box-v" id="sideWords">—</div><div class="stat-box-l">words</div></div>
+          <div class="stat-box"><div class="stat-box-v" id="sideDuration">—</div><div class="stat-box-l">duration</div></div>
+          <div class="stat-box"><div class="stat-box-v" id="sideLang">—</div><div class="stat-box-l">language</div></div>
+          <div class="stat-box"><div class="stat-box-v" id="sideSpeakers">—</div><div class="stat-box-l">speakers</div></div>
+        </div>
+      </div>
+      <div id="sideSpkSection" style="display:none">
+        <div class="sidebar-label">Speakers</div>
+        <div id="sideSpkList"></div>
+      </div>
+      <div>
+        <div class="sidebar-label">Export</div>
+        <div class="sidebar-export">
+          <button class="sexp-btn primary" onclick="handleExport('txt')">⬇ TXT</button>
+          <button class="sexp-btn" onclick="handleExport('srt')">⬇ SRT</button>
+          <button class="sexp-btn" onclick="handleExport('vtt')">⬇ VTT</button>
+          <button class="sexp-btn" onclick="handleExport('pdf')" id="sexpPdf">⬇ PDF <span style="font-size:0.6rem;background:var(--accent);color:#fff;padding:1px 4px;border-radius:3px;margin-left:2px">Pro</span></button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -299,6 +330,18 @@ async function getAuthToken() {
   return session?.access_token || null;
 }
 
+// ── Plan config ────────────────────────────────────────────────────
+const PLAN_UPLOAD_LIMITS = { free: 25, starter: 100, pro: 500, business: 2048 };
+const PLAN_ENGINE_ACCESS = {
+  free:     ['fast'],
+  starter:  ['fast'],          // only Turbo AI
+  pro:      ['fast', 'balanced', 'accurate'], // Turbo + Global + Precision
+  business: ['fast', 'balanced', 'accurate'], // all
+  admin:    ['fast', 'balanced', 'accurate'],
+  premium:  ['fast', 'balanced', 'accurate'],
+};
+let userPlan = 'free', uploadLimitMb = 25, usedMinutes = 0, limitMinutes = 30;
+
 // ── Boot: init Supabase, get session, allow guests ─────────────────
 async function boot() {
   try {
@@ -309,16 +352,70 @@ async function boot() {
       currentUser = session.user;
       const name = currentUser.user_metadata?.full_name || currentUser.email;
       document.getElementById('navUser').textContent = '👤 ' + name.split(' ')[0];
+      document.getElementById('navSignout').style.display = 'inline-block';
+      // Fetch plan
+      try {
+        const r = await fetch('/api/user/me', { headers: { Authorization: `Bearer ${await getAuthToken()}` } });
+        const d = await r.json();
+        userPlan = d.plan || 'free';
+        uploadLimitMb = d.uploadLimitMb || 25;
+        usedMinutes = d.usageMinutes || 0;
+        limitMinutes = d.usageLimitMinutes || 30;
+        // Show upgrade button for non-business users
+        if (userPlan !== 'business' && userPlan !== 'admin') {
+          document.getElementById('navUpgradeBtn').style.display = 'inline-flex';
+        }
+        // Provide auth to upgrade modal
+        if (window.UpgradeModal) {
+          UpgradeModal.setAuth(await getAuthToken(), currentUser.email, name);
+        }
+      } catch(e) { /* plan fetch failed, use defaults */ }
+      // Update mode cards based on plan
+      applyPlanRestrictions();
     } else {
-      // Guest — show remaining free uses
+      // Guest
       const remaining = GUEST_LIMIT - getGuestUsage();
       document.getElementById('navUser').textContent = `Guest · ${remaining} free left`;
+      document.getElementById('navUpgradeBtn').style.display = 'inline-flex';
+      document.getElementById('navUpgradeBtn').href = '/login.html';
+      document.getElementById('navUpgradeBtn').textContent = '🔐 Sign In';
+      applyPlanRestrictions();
     }
   } catch(e) {
     console.error('Boot error:', e);
   }
+  // Update upload limit display
+  document.getElementById('uploadLimitNote').textContent = `${uploadLimitMb < 1024 ? uploadLimitMb + 'MB' : (uploadLimitMb/1024).toFixed(0)+'GB'} limit`;
 }
 boot();
+
+// ── Apply plan UI restrictions to mode cards ───────────────────────
+function applyPlanRestrictions() {
+  // Select cards directly from .mode-row children
+  const modeRow = document.querySelector('.mode-row');
+  if (!modeRow) return;
+  const cards = modeRow.querySelectorAll('.mode-card');
+  const balancedCard = cards[1]; // Deepgram — Pro+
+  const accurateCard = cards[2]; // AssemblyAI — Pro+
+  const allowed = PLAN_ENGINE_ACCESS[userPlan] || PLAN_ENGINE_ACCESS.free;
+
+  if (balancedCard && !allowed.includes('balanced') && !balancedCard.getAttribute('data-locked')) {
+    balancedCard.setAttribute('data-locked', 'true');
+    balancedCard.style.opacity = '0.55';
+    const nameEl = balancedCard.querySelector('.mode-name');
+    if (nameEl && !nameEl.nextElementSibling) {
+      nameEl.insertAdjacentHTML('afterend', '<span style="font-size:0.58rem;background:var(--accent);color:#fff;padding:1px 5px;border-radius:100px;margin-left:4px;vertical-align:middle;font-family:DM Sans,sans-serif;">Pro</span>');
+    }
+  }
+  if (accurateCard && !allowed.includes('accurate') && !accurateCard.getAttribute('data-locked')) {
+    accurateCard.setAttribute('data-locked', 'true');
+    accurateCard.style.opacity = '0.55';
+    const nameEl = accurateCard.querySelector('.mode-name');
+    if (nameEl && !nameEl.nextElementSibling) {
+      nameEl.insertAdjacentHTML('afterend', '<span style="font-size:0.58rem;background:var(--accent);color:#fff;padding:1px 5px;border-radius:100px;margin-left:4px;vertical-align:middle;font-family:DM Sans,sans-serif;">Pro</span>');
+    }
+  }
+}
 
 async function signOut() {
   if (sb) await sb.auth.signOut();
@@ -334,6 +431,14 @@ function switchTab(tab) {
   document.getElementById('urlPanel').classList.toggle('active', tab==='url');
 }
 function selectMode(mode, el) {
+  // Check if locked
+  if (el.getAttribute('data-locked') === 'true') {
+    const reason = mode === 'balanced' ? 'engine_locked' : 'engine_locked';
+    const suggested = mode === 'accurate' ? 'pro' : 'pro';
+    if (window.UpgradeModal) UpgradeModal.show(reason, suggested);
+    else location.href = '/pricing.html';
+    return;
+  }
   currentMode = mode;
   document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -348,9 +453,24 @@ function syncModeSelect(val) {
 // ── File handling ──────────────────────────────────────────────────
 function handleFile(e) {
   const file = e.target.files[0]; if (!file) return;
+  const fileMb = file.size / 1024 / 1024;
+
+  // Enforce upload size limit
+  if (fileMb > uploadLimitMb) {
+    // Reset input
+    e.target.value = '';
+    const needed = fileMb > 500 ? 'business' : fileMb > 100 ? 'pro' : 'starter';
+    if (window.UpgradeModal) UpgradeModal.show('file_too_large', needed);
+    else {
+      alert(`File too large (${fileMb.toFixed(1)}MB). Your plan allows up to ${uploadLimitMb}MB. Upgrade at /pricing.html`);
+      location.href = '/pricing.html';
+    }
+    return;
+  }
+
   document.getElementById('uploadArea').classList.add('has-file');
   document.getElementById('uploadTitle').textContent = file.name;
-  document.getElementById('uploadSub').textContent = (file.size/1024/1024).toFixed(2) + ' MB — ready to transcribe';
+  document.getElementById('uploadSub').textContent = `${fileMb.toFixed(2)} MB — ready to transcribe`;
   fileName = file.name.replace(/\.[^.]+$/, '');
   if (localFileUrl) URL.revokeObjectURL(localFileUrl);
   localFileUrl = URL.createObjectURL(file);
@@ -391,8 +511,15 @@ async function transcribe() {
   // Check guest limit BEFORE starting
   const token = await getAuthToken();
   if (!token && isGuestLimitReached()) {
-    showToast('Free limit reached — please sign in to continue');
-    setTimeout(() => location.href = '/login.html', 1500);
+    if (window.UpgradeModal) UpgradeModal.show('guest_limit', 'starter');
+    else { showToast('Free limit reached — please sign in to continue'); setTimeout(() => location.href = '/login.html', 1500); }
+    return;
+  }
+
+  // Check logged-in usage limit
+  if (token && usedMinutes >= limitMinutes) {
+    if (window.UpgradeModal) UpgradeModal.show('usage_limit', userPlan === 'starter' ? 'pro' : 'business');
+    else showToast('Monthly limit reached. Please upgrade your plan.');
     return;
   }
 
@@ -576,6 +703,39 @@ function toSRTTime(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=M
 function pad(n){return String(n).padStart(2,'0');}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function copyTranscript(){navigator.clipboard.writeText(transcriptContent).then(()=>showToast('Copied!'));}
+
+// Gated export handler
+function handleExport(format) {
+  const freeFormats = ['txt', 'srt', 'vtt'];
+  const paidFormats = ['pdf', 'docx'];
+  const allowed = PLAN_ENGINE_ACCESS[userPlan] || PLAN_ENGINE_ACCESS.free;
+
+  if (paidFormats.includes(format)) {
+    if (userPlan === 'free' || userPlan === 'guest' || !userPlan) {
+      if (window.UpgradeModal) UpgradeModal.show('export_locked', 'pro');
+      else location.href = '/pricing.html';
+      return;
+    }
+  }
+  // Free formats require at least a login for SRT/VTT
+  if ((format === 'srt' || format === 'vtt') && !currentUser && userPlan !== 'starter') {
+    // Still allow for guests — just no cloud save
+  }
+  if (format === 'txt') { dl(transcriptContent, fileName+'.txt','text/plain'); showToast('TXT downloaded!'); }
+  else if (format === 'srt') { dl(srtContent, fileName+'.srt','text/plain'); showToast('SRT downloaded!'); }
+  else if (format === 'vtt') { dl(vttContent, fileName+'.vtt','text/vtt'); showToast('VTT downloaded!'); }
+  else if (format === 'pdf') { exportAsPdf(); }
+}
+
+function exportAsPdf() {
+  // Simple print-to-PDF via browser
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>${fileName}</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;line-height:1.7;white-space:pre-wrap;}h1{font-size:1.2rem;margin-bottom:1rem;}</style></head><body><h1>${fileName}</h1>${escHtml(transcriptContent)}</body></html>`);
+  w.document.close();
+  w.print();
+  showToast('Print dialog opened for PDF');
+}
+
 function downloadTxt(){dl(transcriptContent,fileName+'.txt','text/plain');showToast('TXT downloaded!');}
 function downloadSrt(){dl(srtContent,fileName+'.srt','text/plain');showToast('SRT downloaded!');}
 function downloadVtt(){dl(vttContent,fileName+'.vtt','text/vtt');showToast('VTT downloaded!');}

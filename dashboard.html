@@ -6,6 +6,7 @@
 <title>Dashboard — Transcribr</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/lib/upgrade.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -91,7 +92,7 @@ tr:hover td { background:rgba(255,255,255,0.015); }
 .sdot { width:5px; height:5px; border-radius:50%; background:var(--green); }
 .act-row { display:flex; gap:0.3rem; flex-wrap:wrap; }
 .tr-row { cursor:pointer; transition:background 0.15s; }
-.tr-row:hover { background:rgba(255,255,255,0.034); }
+.tr-row:hover { background:rgba(255,255,255,0.03); }
 .act-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:0.22rem 0.55rem; border-radius:5px; font-size:0.7rem; white-space:nowrap; transition:all 0.18s; }
 .act-btn:hover { border-color:var(--accent); color:var(--text); }
 .act-btn.del:hover { border-color:var(--red); color:var(--red); }
@@ -194,7 +195,7 @@ tr:hover td { background:rgba(255,255,255,0.015); }
     <div class="sb-item" onclick="openModal()">➕ New Transcription</div>
     <div class="sb-divider"></div>
     <div class="sb-section">Account</div>
-    <div class="sb-item" id="sbUpgrade" style="display:none" onclick="location.href='/#pricing'">⭐ Upgrade Plan</div>
+    <div class="sb-item" id="sbUpgrade" style="display:none" onclick="location.href='/pricing.html'">⭐ Upgrade Plan</div>
     <div class="sb-item" id="sbSignin" onclick="location.href='/login.html'">🔐 Sign In</div>
     <div class="sb-item" id="sbSignout" style="display:none" onclick="signOut()">🚪 Sign Out</div>
   </aside>
@@ -205,8 +206,28 @@ tr:hover td { background:rgba(255,255,255,0.015); }
       <button class="btn-banner" onclick="location.href='/login.html'">Sign In Free →</button>
     </div>
     <div class="banner upgrade" id="upgradeBanner" style="display:none">
-      <div><h4>🚀 Upgrade to Pro</h4><p>Unlimited transcriptions, 5-hour files, all engines — $12/month.</p></div>
-      <button class="btn-banner" onclick="location.href='/#pricing'">Upgrade Now</button>
+      <div><h4>🚀 Upgrade for more power</h4><p>Get 300–5000 minutes/month, premium AI engines, speaker detection, and large file uploads.</p></div>
+      <button class="btn-banner" onclick="location.href='/pricing.html'">View Plans →</button>
+    </div>
+
+    <!-- USAGE TRACKER (shown for logged-in paid/free users) -->
+    <div id="usageTracker" style="display:none;margin-bottom:1.2rem">
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:1.1rem 1.4rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;flex-wrap:wrap;gap:0.5rem;">
+          <div style="font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+            <span id="usagePlanBadge" style="background:rgba(124,106,255,0.12);border:1px solid rgba(124,106,255,0.3);color:var(--accent2);font-size:0.65rem;padding:2px 8px;border-radius:100px;text-transform:uppercase;font-weight:700;letter-spacing:0.4px;">Free</span>
+            <span id="usageTitle">This month's usage</span>
+          </div>
+          <a href="/pricing.html" id="usageUpgradeLink" style="display:none;font-size:0.75rem;color:var(--accent2);background:rgba(124,106,255,0.1);border:1px solid rgba(124,106,255,0.25);padding:3px 10px;border-radius:100px;">⬆ Upgrade</a>
+        </div>
+        <div style="background:var(--surface2);border-radius:100px;height:6px;overflow:hidden;margin-bottom:0.5rem;">
+          <div id="usageBar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:100px;width:0%;transition:width 0.5s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);">
+          <span id="usageMinutesUsed">0 min used</span>
+          <span id="usageMinutesLeft">— min left</span>
+        </div>
+      </div>
     </div>
 
     <div class="page-header">
@@ -271,24 +292,24 @@ tr:hover td { background:rgba(255,255,255,0.015); }
         <div class="eng-card smart selected" onclick="selectEngine('auto',this)" id="eng-auto">
           <span class="eng-badge default-badge">Default</span>
           <span class="eng-emoji">🧠</span>
-          <span class="eng-name">Auto Mode</span>
+          <span class="eng-name">🧠 Smart Auto</span>
           <span class="eng-sub">Intelligent routing for your file</span>
         </div>
         <div class="eng-card" onclick="selectEngine('quick',this)" id="eng-quick">
           <span class="eng-emoji">⚡</span>
-          <span class="eng-name">Quick Mode</span>
-          <span class="eng-sub">Instant results · Files only</span>
+          <span class="eng-name">⚡ Turbo AI</span>
+          <span class="eng-sub">Powered by Groq Whisper · Files only</span>
         </div>
         <div class="eng-card" onclick="selectEngine('smart',this)" id="eng-smart">
           <span class="eng-emoji">⚖️</span>
-          <span class="eng-name">Smart Mode</span>
-          <span class="eng-sub">Reliable · Files &amp; URLs</span>
+          <span class="eng-name">🌍 Global AI</span>
+          <span class="eng-sub">Powered by Deepgram · Files &amp; URLs</span>
         </div>
         <div class="eng-card" onclick="selectEngine('precision',this)" id="eng-precision">
           <span class="eng-badge pro-badge" id="accurateLock" style="display:none">Pro</span>
           <span class="eng-emoji">🎯</span>
-          <span class="eng-name">Precision Mode</span>
-          <span class="eng-sub">Highest accuracy · Files &amp; URLs</span>
+          <span class="eng-name">🎯 Precision AI</span>
+          <span class="eng-sub">Powered by Whisper v3 · Files &amp; URLs</span>
         </div>
       </div>
 
@@ -353,6 +374,7 @@ function showGuestLimitModal() {
     <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;line-height:1.65">Sign in for free to get 10 transcriptions per month and keep your transcripts permanently.</p>
     <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap">
       <button onclick="location.href='/login.html'" style="background:var(--accent);color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:100px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Sign In Free →</button>
+      <button onclick="location.href='/pricing.html'" style="background:transparent;color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">View Plans →</button>
       <button onclick="document.getElementById('guestLimitModal').style.display='none'" style="background:transparent;color:var(--muted);border:1px solid var(--border2);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">Maybe later</button>
     </div>
     
@@ -391,20 +413,74 @@ async function init() {
   else if(!allTranscripts.length){openModal();}
 }
 
+// Plan config for usage limits
+const PLAN_LIMITS = { free: 30, starter: 300, pro: 1500, business: 5000 };
+
+function updateUsageTracker(minutesUsed, plan) {
+  const tracker = document.getElementById('usageTracker');
+  if (!tracker) return;
+  tracker.style.display = 'block';
+  const limit = PLAN_LIMITS[plan] || 30;
+  const pct = Math.min(100, (minutesUsed / limit) * 100);
+  document.getElementById('usageBar').style.width = pct + '%';
+  document.getElementById('usageBar').style.background = pct > 85 ? '#f87171' : pct > 60 ? '#fbbf24' : 'linear-gradient(90deg,var(--accent),var(--accent2))';
+  document.getElementById('usageMinutesUsed').textContent = minutesUsed + ' min used';
+  document.getElementById('usageMinutesLeft').textContent = Math.max(0, limit - minutesUsed) + ' min left';
+  const badge = document.getElementById('usagePlanBadge');
+  badge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+  badge.style.background = plan === 'free' ? 'rgba(124,106,255,0.12)' : 'rgba(52,211,153,0.12)';
+  badge.style.borderColor = plan === 'free' ? 'rgba(124,106,255,0.3)' : 'rgba(52,211,153,0.3)';
+  badge.style.color = plan === 'free' ? 'var(--accent2)' : 'var(--green)';
+  // Show upgrade link for non-business plans
+  const upgradeLink = document.getElementById('usageUpgradeLink');
+  if (upgradeLink) upgradeLink.style.display = plan === 'business' ? 'none' : 'inline-flex';
+}
+
 async function setupLoggedIn() {
   const email=currentUser.email||'';
   document.getElementById('navRight').innerHTML=`
     <div class="user-pill"><div class="avatar">${email[0]?.toUpperCase()||'U'}</div><span class="user-email">${email}</span><span class="plan-chip" id="planChip">Free</span></div>
+    <span id="navUpgradeBtn" style="display:none"><a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.32rem 0.9rem;border-radius:100px;font-size:0.75rem;text-decoration:none;font-weight:500;white-space:nowrap;">⭐ Upgrade</a></span>
     <button class="btn-signout" onclick="signOut()">Sign out</button>`;
   document.getElementById('sbSignin').style.display='none';
   document.getElementById('sbSignout').style.display='flex';
-  try{const r=await fetch('/api/user/me',{headers:{'Authorization':`Bearer ${authToken}`}});const d=await r.json();userPlan=d?.plan||'free';if(d?.usageCount!==undefined)document.getElementById('sMonth').textContent=d.usageCount;}catch(e){userPlan='free';}
-  const isPriv=['admin','pro','premium'].includes(userPlan);
-  const lbl=userPlan==='admin'?'Admin':userPlan==='pro'?'Pro':userPlan==='premium'?'Premium':'Free';
-  document.getElementById('sPlan').textContent=lbl;
-  const chip=document.getElementById('planChip');chip.textContent=lbl;
-  if(isPriv){chip.className='plan-chip '+(userPlan==='admin'?'admin':'pro');document.getElementById('sMonthSub').textContent='unlimited';}
-  else{document.getElementById('upgradeBanner').style.display='flex';document.getElementById('sbUpgrade').style.display='flex';document.getElementById('accurateLock').style.display='block';document.getElementById('eng-precision').classList.add('locked');}
+  try{
+    const r=await fetch('/api/user/me',{headers:{'Authorization':`Bearer ${authToken}`}});
+    const d=await r.json();
+    userPlan=d?.plan||'free';
+    if(d?.usageCount!==undefined) document.getElementById('sMonth').textContent=d.usageCount;
+    // updateUsageTracker called after plan is set
+    updateUsageTracker(d?.usageMinutes||0, userPlan);
+  }catch(e){userPlan='free';}
+  // All paid tiers — includes every non-free plan
+  const isPaid = ['admin','pro','premium','starter','business'].includes(userPlan);
+  const isHighTier = ['admin','pro','premium','business'].includes(userPlan);
+  const PLAN_LABELS = {admin:'Admin',pro:'Pro',premium:'Premium',starter:'Starter',business:'Business',free:'Free'};
+  const lbl = PLAN_LABELS[userPlan] || 'Free';
+  document.getElementById('sPlan').textContent = lbl;
+  const chip = document.getElementById('planChip');
+  chip.textContent = lbl;
+  if (isPaid) {
+    chip.className = 'plan-chip ' + (isHighTier ? 'pro' : '');
+    const minuteLabels = {business:'5000 min/mo', pro:'1500 min/mo', premium:'1500 min/mo', admin:'Unlimited', starter:'300 min/mo'};
+    document.getElementById('sMonthSub').textContent = minuteLabels[userPlan] || '';
+    // Only lock precision for free users; starter+ can access Precision
+  } else {
+    // Free user — show upgrade nudges and lock premium engines
+    document.getElementById('upgradeBanner').style.display = 'flex';
+    document.getElementById('sbUpgrade').style.display = 'flex';
+    document.getElementById('accurateLock').style.display = 'block';
+    document.getElementById('eng-precision').classList.add('locked');
+  }
+  // Show upgrade CTA in nav for non-business users
+  if (userPlan !== 'business' && userPlan !== 'admin') {
+    const nb = document.getElementById('navUpgradeBtn');
+    if (nb) nb.style.display = 'inline-flex';
+  }
+  // Provide auth token to upgrade modal
+  if (window.UpgradeModal) {
+    UpgradeModal.setAuth(authToken, currentUser.email, currentUser.user_metadata?.full_name || currentUser.email);
+  }
   await loadTranscripts();
 }
 
@@ -440,9 +516,9 @@ function renderTable(list) {
   const tbody=document.getElementById('tbody');
   if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><span class="empty-icon">🎙️</span><p>No transcripts yet.</p><button class="btn-new" onclick="openModal()">+ New Transcription</button></div></td></tr>`;return;}
   tbody.innerHTML=list.map(t=>`<tr class="tr-row" onclick="handleRowClick(event,'${t.id}')">
-    <td><div class="td-name" title="${esc(t.title||'Untitled')}">${esc(t.title||'Untitled')}</div></td>
+    <td><div class="td-name" title="${esc(t.filename||t.title||'Untitled')}">${esc(t.filename||t.title||'Untitled')}</div></td>
     <td><span class="td-muted">${fmtDate(t.created_at)}</span></td>
-    <td><span class="engine-tag">${engineLabel(t.engine)}</span></td>
+    <td><span class="engine-tag">${engineLabel(t.mode||t.engine)}</span></td>
     <td><span class="td-muted">${(t.language||'en').toUpperCase()}</span></td>
     <td><span class="status-pill"><span class="sdot"></span>Done</span></td>
     <td><div class="act-row" onclick="event.stopPropagation()">
@@ -456,7 +532,7 @@ function renderTable(list) {
 
 function filterTable(q){renderTable(allTranscripts.filter(t=>(t.title||'').toLowerCase().includes(q.toLowerCase())));}
 
-function handleRowClick(e,id){if(e.target.closest('.act-row'))return;openTranscript(id);}
+function handleRowClick(e,id){if(e.target.closest(".act-row"))return;openTranscript(id);}
 function openTranscript(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));location.href='/transcript.html';}
 function openTranscriptNewTab(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;localStorage.setItem('currentTranscript',JSON.stringify(t));setTimeout(()=>window.open('/transcript.html?id='+id,'_blank'),80);}
 function downloadTxt(id){const t=allTranscripts.find(x=>x.id===id);if(!t)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t.transcript||''],{type:'text/plain'}));a.download=(t.title||'transcript').replace(/\.[^.]+$/,'')+'.txt';a.click();showToast('⬇ Downloaded');}
@@ -485,8 +561,13 @@ function switchTab(tab,btn){
 }
 
 function selectEngine(engine,el){
-  const isPriv=['admin','pro','premium'].includes(userPlan);
-  if(engine==='precision'&&!isPriv){showToast('🔒 Precision mode requires Pro plan.');return;}
+  const isPriv=['admin','pro','premium','business'].includes(userPlan);
+  const isStarter=['starter'].includes(userPlan);
+  if(engine==='precision'&&!isPriv&&!isStarter){
+    if(window.UpgradeModal) UpgradeModal.show('engine_locked','starter');
+    else location.href='/pricing.html';
+    return;
+  }
   if(engine==='fast'&&currentTab==='url'){showToast('ℹ️ Fast mode doesn\'t support URLs. Switched to Smart Auto.');selectEngine('auto',document.getElementById('eng-auto'));return;}
   selectedEngine=engine;
   document.querySelectorAll('.eng-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');
@@ -601,7 +682,7 @@ function getGuestTranscripts(){try{return JSON.parse(localStorage.getItem('trans
 function getGuestCount(){return parseInt(localStorage.getItem('transcribr_guest_count')||'0');}
 function incrementGuestCount(){localStorage.setItem('transcribr_guest_count',getGuestCount()+1);}
 async function signOut(){if(sb)await sb.auth.signOut();location.href='/';}
-function fmtDate(d){if(!d)return '—';try{return new Date(d).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return d;}}
+function fmtDate(d){if(!d)return '—';try{const dt=new Date(d);return dt.toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){return d;}}
 function engineLabel(e){
   if(e==='groq'||e==='fast'||e==='quick')return'⚡ Quick';
   if(e==='deepgram'||e==='balanced'||e==='smart')return'⚖️ Smart';

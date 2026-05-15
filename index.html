@@ -5,20 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Transcribr — AI Transcription</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<!-- Theme: load before paint to prevent flash -->
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/theme-vars.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Color tokens provided by theme-vars.css — dark default, light via [data-theme="light"] */
 :root {
-  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
-  --glow: rgba(124,106,255,0.18); --green: #34d399; --red: #f87171;
+  /* page-specific extras */
+  --glow: rgba(124,106,255,0.18);
+  --red: #f87171;
 }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background-color 0.25s, color 0.25s; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
 /* NAV */
-nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: var(--nav-bg); backdrop-filter: blur(16px); }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); letter-spacing: -0.3px; text-decoration: none; }
 .logo span { color: var(--accent2); }
 .nav-links { display: flex; gap: 2rem; list-style: none; }
@@ -116,6 +119,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <li><a href="/pricing.html">Pricing</a></li>
   </ul>
   <div class="nav-right" id="navRight">
+    <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme" style="margin-right:0.25rem;"></button>
     <!-- Filled by JS based on auth state -->
   </div>
 </nav>

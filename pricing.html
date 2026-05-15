@@ -5,38 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Pricing — Transcribr</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/theme-vars.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #08080f;
-  --surface: #101018;
-  --surface2: #16161f;
-  --surface3: #1c1c28;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.13);
-  --text: #ededf5;
-  --muted: #7878a0;
-  --muted2: #525270;
-  --accent: #6c5ce7;
-  --accent2: #a29bfe;
-  --green: #00d4aa;
-  --green-bg: rgba(0,212,170,0.1);
-  --gold: #f8c553;
-}
+/* theme tokens provided by theme-vars.css */
 html { scroll-behavior: smooth; }
-
-/* Typography fix — prevents descender clipping on g,p,q,y,j */
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;          /* prevents clipping */
+  font-size: 16px; line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  min-height: 100vh;
+  overflow-x: hidden; min-height: 100vh;
+  transition: background-color 0.25s, color 0.25s;
 }
 
 /* Global descender fix */
@@ -52,7 +36,7 @@ nav {
   padding: 1rem 2.5rem;
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 200;
-  background: rgba(8,8,15,0.9); backdrop-filter: blur(20px);
+  background: var(--nav-bg); backdrop-filter: blur(20px);
 }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); text-decoration: none; }
 .logo span { color: var(--accent2); }
@@ -366,7 +350,7 @@ footer a:hover { color: var(--text); }
         <li class="on"><span class="ic feat-check">✓</span> API integrations</li>
         <li class="on"><span class="ic feat-check">✓</span> Dedicated support</li>
       </ul>
-      <button class="plan-btn sales" onclick="location.href='/contact.html'">Contact Sales →</button>
+      <button class="plan-btn sales" onclick="location.href='/business.html#contact'">Contact Sales →</button>
     </div>
 
   </div>

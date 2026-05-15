@@ -5,6 +5,8 @@
     { "src": "api/payment/*.js", "use": "@vercel/node" },
     { "src": "server.js",        "use": "@vercel/node" },
     { "src": "*.html",           "use": "@vercel/static" },
+    { "src": "theme.js",         "use": "@vercel/static" },
+    { "src": "theme-vars.css",   "use": "@vercel/static" },
     { "src": "lib/*.js",         "use": "@vercel/static" }
   ],
   "routes": [
@@ -26,6 +28,8 @@
     { "src": "/bug.html",                "dest": "/bug.html" },
     { "src": "/terms.html",              "dest": "/terms.html" },
     { "src": "/privacy.html",            "dest": "/privacy.html" },
+    { "src": "/theme.js",                "dest": "/theme.js" },
+    { "src": "/theme-vars.css",          "dest": "/theme-vars.css" },
     { "src": "/(.*)",                    "dest": "/index.html" }
   ]
 }

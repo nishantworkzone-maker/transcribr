@@ -16,6 +16,7 @@
   /* page-specific extras */
   --glow: rgba(124,106,255,0.18);
   --red: #f87171;
+  --gold: #f8c553;
 }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background-color 0.25s, color 0.25s; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
@@ -118,9 +119,11 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <li><a href="#features">Features</a></li>
     <li><a href="/pricing.html">Pricing</a></li>
   </ul>
-  <div class="nav-right" id="navRight">
-    <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme" style="margin-right:0.25rem;"></button>
-    <!-- Filled by JS based on auth state -->
+  <div style="display:flex;align-items:center;gap:0.6rem;">
+    <div class="nav-right" id="navRight">
+      <!-- Filled by JS based on auth state -->
+    </div>
+    <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme"></button>
   </div>
 </nav>
 
@@ -194,64 +197,67 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   <div class="pricing-inner">
     <div class="section-tag" style="text-align:center">Plans</div>
     <h2 class="section-title">Simple, transparent pricing</h2>
-    <p class="section-sub" style="margin:0 auto">Start free. Scale as you grow. Cancel anytime.</p>
-    <div class="pricing-grid">
+    <p class="section-sub" style="margin:0 auto">Start free. No credit card required. Upgrade anytime.</p>
+
+    <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:900px;margin:3rem auto 0;">
+
+      <!-- FREE -->
       <div class="price-card">
         <div class="price-name">Free</div>
-        <div class="price-amount"><sup>₹</sup>0</div>
-        <div class="price-period">forever</div>
+        <div class="price-amount" style="font-size:2.2rem;">$0</div>
+        <div class="price-period">forever · no card needed</div>
         <ul class="price-features">
-          <li>3 transcriptions total</li>
-          <li>Max 10 min per file</li>
-          <li>25MB upload limit</li>
-          <li>⚡ Turbo AI engine</li>
+          <li>3 transcriptions included</li>
+          <li>Up to 15 min per file</li>
+          <li>Smart Auto engine</li>
+          <li>Speaker detection</li>
+          <li>Basic export</li>
         </ul>
         <button class="btn-plan" onclick="location.href='/dashboard.html'">Get started free</button>
       </div>
-      <div class="price-card">
-        <div class="price-name">Starter</div>
-        <div class="price-amount"><sup>₹</sup>249</div>
-        <div class="price-period">per month</div>
-        <ul class="price-features">
-          <li>300 min/month</li>
-          <li>100MB upload limit</li>
-          <li>TXT + SRT exports</li>
-          <li>⚡🎯 2 AI engines</li>
-        </ul>
-        <button class="btn-plan" onclick="location.href='/pricing.html'">Get Starter</button>
-      </div>
+
+      <!-- PRO -->
       <div class="price-card popular">
-        <div class="popular-badge">MOST POPULAR</div>
+        <div class="popular-badge">✦ Most Popular</div>
         <div class="price-name">Pro</div>
-        <div class="price-amount"><sup>₹</sup>699</div>
-        <div class="price-period">per month</div>
+        <div class="price-amount" style="font-size:2.2rem;">$9<span style="font-size:1rem;font-weight:400;opacity:0.6">/mo</span></div>
+        <div class="price-period">₹399/mo for India</div>
         <ul class="price-features">
-          <li>1500 min/month</li>
-          <li>500MB upload limit</li>
-          <li>Speaker detection</li>
-          <li>⚡🎯🌍 3 AI engines</li>
-          <li>Premium exports</li>
+          <li>High monthly usage</li>
+          <li>Long-form transcription</li>
+          <li>All 3 AI engines</li>
+          <li>Precision AI engine</li>
+          <li>AI summaries</li>
+          <li>Speaker diarization</li>
+          <li>PDF &amp; DOCX exports</li>
+          <li>Cloud transcript history</li>
           <li>Priority processing</li>
         </ul>
         <button class="btn-plan filled" onclick="location.href='/pricing.html'">Get Pro</button>
       </div>
-      <div class="price-card">
+
+      <!-- BUSINESS -->
+      <div class="price-card" style="border-color:rgba(248,197,83,0.2);">
         <div class="price-name">Business</div>
-        <div class="price-amount"><sup>₹</sup>1799</div>
-        <div class="price-period">per month</div>
+        <div class="price-amount" style="font-size:1.5rem;padding-top:0.3rem;">Custom</div>
+        <div class="price-period">Volume pricing · Enterprise SLA</div>
         <ul class="price-features">
-          <li>5000 min/month</li>
-          <li>2GB upload limit</li>
-          <li>All 4 AI engines</li>
-          <li>AI summaries (soon)</li>
-          <li>Highest priority</li>
+          <li>Everything in Pro</li>
+          <li>AI QA evaluations</li>
+          <li>Automated scorecards</li>
+          <li>Compliance monitoring</li>
+          <li>Team dashboards</li>
+          <li>API integrations</li>
+          <li>Dedicated support</li>
         </ul>
-        <button class="btn-plan" onclick="location.href='/pricing.html'">Get Business</button>
+        <button class="btn-plan" style="border-color:rgba(248,197,83,0.35);color:var(--gold,#f8c553);" onclick="location.href='/business.html'">Contact Sales →</button>
       </div>
+
     </div>
+
     <p style="text-align:center;margin-top:2rem;font-size:0.83rem;color:var(--muted)">
-      💳 UPI, Cards, Net Banking · 🔒 Secured by Razorpay · ↩️ Cancel anytime
-      <a href="/pricing.html" style="color:var(--accent2);margin-left:1rem">See full comparison →</a>
+      💳 UPI · Cards · Net Banking · 🔒 Razorpay · ↩️ Cancel anytime
+      <a href="/pricing.html" style="color:var(--accent2);margin-left:1rem">See full pricing →</a>
     </p>
   </div>
 </section>

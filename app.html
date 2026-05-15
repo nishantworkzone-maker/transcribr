@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/theme-vars.css"/>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Transcribe — Transcribr</title>
@@ -9,15 +11,10 @@
 <script src="/lib/upgrade.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-  --text: #f0f0f8; --muted: #888899; --accent: #7c6aff; --accent2: #a78bfa;
-  --glow: rgba(124,106,255,0.18); --green: #34d399; --red: #f87171;
-}
+/* color tokens from theme-vars.css */
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
-nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: var(--nav-bg); backdrop-filter: blur(16px); }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); letter-spacing: -0.3px; text-decoration: none; }
 .logo span { color: var(--accent2); }
 .nav-right { display: flex; align-items: center; gap: 0.8rem; }

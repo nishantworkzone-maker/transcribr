@@ -19,7 +19,6 @@
     { "src": "/login.html",              "dest": "/login.html" },
     { "src": "/dashboard.html",          "dest": "/dashboard.html" },
     { "src": "/transcript.html",         "dest": "/transcript.html" },
-    { "src": "/app.html",                "dest": "/app.html" },
     { "src": "/pricing.html",            "dest": "/pricing.html" },
     { "src": "/refund.html",             "dest": "/refund.html" },
     { "src": "/contact.html",            "dest": "/contact.html" },

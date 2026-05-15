@@ -247,7 +247,7 @@ footer a:hover { color: var(--text); }
 <nav>
   <a href="/" class="logo">Transcribr<span>.</span></a>
   <div class="nav-right">
-    <a href="/app.html" class="nav-link">App</a>
+    <a href="/" class="nav-link">Home</a>
     <a href="/login.html" class="nav-btn" id="navSignIn">Sign in</a>
     <a href="/dashboard.html" class="nav-cta" id="navDash" style="display:none">Dashboard</a>
   </div>
@@ -539,7 +539,7 @@ function updateButtons() {
 // ── Plan click handler ────────────────────────────────────────────
 function handlePlan(plan) {
   if (plan === 'free') {
-    location.href = currentUser ? '/app.html' : '/login.html';
+    location.href = currentUser ? '/dashboard.html' : '/login.html';
     return;
   }
   showPayModal(plan);

@@ -4,11 +4,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
 
+// ── Route imports (all at top — required for ES modules) ──────────
 import transcribeRouter from './routes/transcribe.js';
 import translateRouter from './routes/translate.js';
 import importLinkRouter from './routes/importLink.js';
 import userRouter from './routes/user.js';
+import paymentCreateOrder from './api/payment/create-order.js';
+import paymentVerify from './api/payment/verify.js';
+import { requireAuth } from './middleware/auth.js';
 
 const app = express();
 
@@ -73,7 +78,7 @@ const authLimiter = rateLimit({
 const transcribeLimiter = rateLimit({
   windowMs: 60 * 1000, max: 5,
   standardHeaders: true, legacyHeaders: false,
-  message: { error: 'Transcription rate limit reached. Please wait a moment before trying again.' },
+  message: { error: 'Transcription rate limit reached. Please wait a moment.' },
 });
 const paymentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 10,
@@ -99,7 +104,6 @@ function isAllowedAudioUrl(url) {
   try {
     const parsed = new URL(url);
     const h = parsed.hostname;
-    // Block private IP ranges and cloud metadata endpoints
     if (
       h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' ||
       h === '169.254.169.254' || h === 'metadata.google.internal' ||
@@ -121,12 +125,13 @@ app.get('/api/audio', async (req, res) => {
     const headers = { 'User-Agent': 'Transcribr/3.0', 'Accept': 'audio/*' };
     if (req.headers.range) headers['Range'] = req.headers.range;
     const response = await fetch(url, { headers });
-    if (!response.ok && response.status !== 206) return res.status(502).json({ error: 'Could not load audio file.' });
+    if (!response.ok && response.status !== 206) return res.status(502).json({ error: 'Could not load audio.' });
 
     let ct = response.headers.get('content-type') || '';
-    if (!ct || ct.includes('octet-stream') || ct.includes('binary')) {
+    if (!ct || ct.includes('octet-stream')) {
       const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
-      ct = ({wav:'audio/wav',ogg:'audio/ogg',webm:'audio/webm',m4a:'audio/mp4',mp4:'audio/mp4',flac:'audio/flac',opus:'audio/opus'})[ext] || 'audio/mpeg';
+      ct = ({ wav:'audio/wav', ogg:'audio/ogg', webm:'audio/webm', m4a:'audio/mp4',
+               mp4:'audio/mp4', flac:'audio/flac', opus:'audio/opus' })[ext] || 'audio/mpeg';
     }
 
     res.setHeader('Content-Type', ct);
@@ -143,24 +148,19 @@ app.get('/api/audio', async (req, res) => {
   }
 });
 
-// ── Protected routes ──────────────────────────────────────────────
+// ── API routes ────────────────────────────────────────────────────
 app.use('/api/transcribe',  transcribeLimiter, transcribeRouter);
 app.use('/api/translate',   authLimiter, translateRouter);
 app.use('/api/import-link', authLimiter, importLinkRouter);
 app.use('/api/user',        userRouter);
 
 // ── Payment routes ────────────────────────────────────────────────
-import paymentCreateOrder from './api/payment/create-order.js';
-import paymentVerify from './api/payment/verify.js';
 app.post('/api/payment/create-order', paymentLimiter, paymentCreateOrder);
 app.post('/api/payment/verify',       paymentLimiter, paymentVerify);
 app.options('/api/payment/create-order', (req, res) => res.status(200).end());
 app.options('/api/payment/verify',       (req, res) => res.status(200).end());
 
 // ── /api/transcripts ──────────────────────────────────────────────
-import { requireAuth } from './middleware/auth.js';
-import { createClient } from '@supabase/supabase-js';
-
 function getAdminClient() {
   return createClient(
     process.env.SUPABASE_URL,

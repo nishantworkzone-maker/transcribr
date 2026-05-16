@@ -435,10 +435,26 @@ function updateUsageTracker(minutesUsed, plan) {
 
 async function setupLoggedIn() {
   const email=currentUser.email||'';
-  document.getElementById('navRight').innerHTML=`
-    <div class="user-pill"><div class="avatar">${email[0]?.toUpperCase()||'U'}</div><span class="user-email">${email}</span><span class="plan-chip" id="planChip">Free</span></div>
-    <span id="navUpgradeBtn" style="display:none"><a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.32rem 0.9rem;border-radius:100px;font-size:0.75rem;text-decoration:none;font-weight:500;white-space:nowrap;">⭐ Upgrade</a></span>
-    <button class="btn-signout" onclick="signOut()">Sign out</button>`;
+  // SECURITY: Build nav with DOM API — never inject user data via innerHTML
+  const navRight=document.getElementById('navRight');
+  navRight.innerHTML=''; // clear safely
+  // User pill
+  const pill=document.createElement('div');pill.className='user-pill';
+  const avatar=document.createElement('div');avatar.className='avatar';
+  avatar.textContent=(email[0]||'U').toUpperCase(); // textContent = XSS-safe
+  const emailSpan=document.createElement('span');emailSpan.className='user-email';
+  emailSpan.textContent=email; // textContent = XSS-safe
+  const chipSpan=document.createElement('span');chipSpan.className='plan-chip';chipSpan.id='planChip';chipSpan.textContent='Free';
+  pill.append(avatar,emailSpan,chipSpan);
+  // Upgrade link
+  const upgradeWrap=document.createElement('span');upgradeWrap.id='navUpgradeBtn';upgradeWrap.style.display='none';
+  const upgradeA=document.createElement('a');upgradeA.href='/pricing.html';
+  upgradeA.style.cssText='background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.32rem 0.9rem;border-radius:100px;font-size:0.75rem;text-decoration:none;font-weight:500;white-space:nowrap;';
+  upgradeA.textContent='⭐ Upgrade';upgradeWrap.appendChild(upgradeA);
+  // Sign out button
+  const signoutBtn=document.createElement('button');signoutBtn.className='btn-signout';
+  signoutBtn.textContent='Sign out';signoutBtn.onclick=signOut;
+  navRight.append(pill,upgradeWrap,signoutBtn);
   document.getElementById('sbSignin').style.display='none';
   document.getElementById('sbSignout').style.display='flex';
   try{
@@ -687,7 +703,7 @@ function engineLabel(e){
   return e||'—';
 }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3500);}
 init();
 </script>
 </body>

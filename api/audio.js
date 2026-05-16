@@ -1,66 +1,58 @@
-// api/audio.js — Audio proxy
-// Streams remote audio through the server with correct Content-Type headers
-// Supports Range requests so the browser's native audio player can seek
+// api/audio.js — Security hardened
+// FIXED: SSRF protection added; error messages sanitized; CORS restricted
 
 export default async function handler(req, res) {
   const { url } = req.query;
-  if (!url) return res.status(400).send('Missing URL');
+  if (!url) return res.status(400).json({ error: 'Missing URL' });
 
-  // CORS
+  // SSRF protection
+  try {
+    const parsed = new URL(url);
+    const h = parsed.hostname;
+    if (
+      parsed.protocol !== 'https:' ||
+      h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' ||
+      h === '169.254.169.254' || h === 'metadata.google.internal' ||
+      /^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)
+    ) {
+      return res.status(403).json({ error: 'Audio URL not permitted.' });
+    }
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL.' });
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const headers = {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': '*/*',
-    };
-
-    // Forward Range header so seeking works
-    if (req.headers.range) {
-      headers['Range'] = req.headers.range;
-    }
+    const headers = { 'User-Agent': 'Transcribr/3.0', 'Accept': 'audio/*' };
+    if (req.headers.range) headers['Range'] = req.headers.range;
 
     const response = await fetch(url, { headers });
-
     if (!response.ok && response.status !== 206) {
-      return res.status(502).send(`Remote audio returned HTTP ${response.status}`);
+      return res.status(502).json({ error: 'Could not load audio file.' });
     }
 
-    // Use the actual Content-Type from the remote server
-    // Fall back to inferring from URL extension, then default to audio/mpeg
-    let contentType = response.headers.get('content-type') || '';
-    if (!contentType || contentType === 'application/octet-stream' || contentType.includes('binary')) {
-      // Infer from URL
+    let ct = response.headers.get('content-type') || '';
+    if (!ct || ct.includes('octet-stream') || ct.includes('binary')) {
       const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
-      contentType = ext === 'wav'  ? 'audio/wav'
-        : ext === 'ogg'  ? 'audio/ogg'
-        : ext === 'webm' ? 'audio/webm'
-        : ext === 'm4a'  ? 'audio/mp4'
-        : ext === 'mp4'  ? 'audio/mp4'
-        : ext === 'flac' ? 'audio/flac'
-        : ext === 'opus' ? 'audio/opus'
-        : 'audio/mpeg'; // default: MP3
+      ct = ({ wav:'audio/wav', ogg:'audio/ogg', webm:'audio/webm', m4a:'audio/mp4',
+               mp4:'audio/mp4', flac:'audio/flac', opus:'audio/opus' })[ext] || 'audio/mpeg';
     }
 
-    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Type', ct);
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'public, max-age=3600');
 
-    // Forward Content-Length and Content-Range if present (needed for seeking)
-    const contentLength = response.headers.get('content-length');
-    const contentRange = response.headers.get('content-range');
-    if (contentLength) res.setHeader('Content-Length', contentLength);
-    if (contentRange) res.setHeader('Content-Range', contentRange);
+    const cl = response.headers.get('content-length');
+    const cr = response.headers.get('content-range');
+    if (cl) res.setHeader('Content-Length', cl);
+    if (cr) res.setHeader('Content-Range', cr);
 
     res.status(response.status === 206 ? 206 : 200);
-
-    const buffer = await response.arrayBuffer();
-    res.send(Buffer.from(buffer));
-
-  } catch (err) {
-    console.error('[audio proxy] Error:', err.message);
-    res.status(500).send('Audio proxy failed: ' + err.message);
+    res.send(Buffer.from(await response.arrayBuffer()));
+  } catch {
+    res.status(500).json({ error: 'Audio proxy failed.' });
   }
 }

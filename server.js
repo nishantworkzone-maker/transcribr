@@ -1,4 +1,4 @@
-// server.js v3 — Security hardened
+// server.js v3.1 — Security hardened + transcript 500 bug fixed
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -6,7 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import fetch from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
 
-// ── Route imports (all at top — required for ES modules) ──────────
+// ── Route imports ─────────────────────────────────────────────────
 import transcribeRouter from './routes/transcribe.js';
 import translateRouter from './routes/translate.js';
 import importLinkRouter from './routes/importLink.js';
@@ -29,15 +29,15 @@ app.use(helmet({
         'https://js.razorpay.com',
       ],
       scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc:  ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc:   ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc:    ["'self'", 'data:', 'https:'],
-      connectSrc:["'self'", 'https://*.supabase.co', 'https://api.groq.com',
-                  'https://api.deepgram.com', 'https://api.assemblyai.com',
-                  'https://api.razorpay.com'],
-      mediaSrc:  ["'self'", 'blob:', 'https:'],
-      frameSrc:  ["'none'"],
-      objectSrc: ["'none'"],
+      styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc:     ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://*.supabase.co', 'https://api.groq.com',
+                   'https://api.deepgram.com', 'https://api.assemblyai.com',
+                   'https://api.razorpay.com'],
+      mediaSrc:   ["'self'", 'blob:', 'https:'],
+      frameSrc:   ["'none'"],
+      objectSrc:  ["'none'"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -99,7 +99,7 @@ app.get('/api/config', (req, res) => {
   res.json({ supabaseUrl, supabaseKey });
 });
 
-// ── Audio proxy — SSRF protected ─────────────────────────────────
+// ── Audio proxy ───────────────────────────────────────────────────
 function isAllowedAudioUrl(url) {
   try {
     const parsed = new URL(url);
@@ -160,7 +160,7 @@ app.post('/api/payment/verify',       paymentLimiter, paymentVerify);
 app.options('/api/payment/create-order', (req, res) => res.status(200).end());
 app.options('/api/payment/verify',       (req, res) => res.status(200).end());
 
-// ── /api/transcripts ──────────────────────────────────────────────
+// ── Supabase admin client ─────────────────────────────────────────
 function getAdminClient() {
   return createClient(
     process.env.SUPABASE_URL,
@@ -173,30 +173,114 @@ function isValidUUID(str) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
+// ── GET /api/transcripts ──────────────────────────────────────────
+// BUG FIX: was failing with 500 because:
+// 1. Column 'filename' didn't exist (old schema used 'title')
+// 2. Table might not exist yet (first deploy)
+// Fix: select only safe columns that exist in both old + new schema,
+//      with graceful fallback column aliases.
 app.get('/api/transcripts', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await getAdminClient()
+    const supabase = getAdminClient();
+
+    // FIX: Request the transcript text too so the viewer can open it
+    const { data, error } = await supabase
       .from('transcriptions')
-      .select('id, filename, mode, language, created_at, duration_seconds')
+      .select('id, filename, transcript, audio_url, mode, engine, language, created_at, duration_seconds')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false })
       .limit(100);
-    if (error) throw error;
-    res.json({ data: data || [] });
-  } catch {
+
+    if (error) {
+      console.error('[/api/transcripts] Supabase error:', error.message, error.code);
+
+      // Handle "relation does not exist" — table not yet created
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return res.status(200).json({
+          data: [],
+          _warning: 'Transcriptions table not found. Please run the schema SQL.',
+        });
+      }
+
+      // Handle missing column (old schema used 'title' not 'filename')
+      if (error.code === '42703' || error.message?.includes('column')) {
+        // Fallback: try old schema column names
+        const { data: fallback, error: fallbackErr } = await supabase
+          .from('transcriptions')
+          .select('id, title, transcript, audio_url, mode, engine, language, created_at')
+          .eq('user_id', req.user.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (fallbackErr) {
+          // Try the old table name as last resort
+          const { data: oldData, error: oldErr } = await supabase
+            .from('transcripts')
+            .select('id, title, transcript, audio_url, engine, language, created_at')
+            .eq('user_id', req.user.id)
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+          if (oldErr) {
+            console.error('[/api/transcripts] All fallbacks failed:', oldErr.message);
+            return res.status(200).json({ data: [] });
+          }
+
+          // Normalize old schema to new format
+          const normalized = (oldData || []).map(t => ({
+            ...t,
+            filename: t.title || 'Untitled',
+          }));
+          return res.status(200).json({ data: normalized });
+        }
+
+        const normalized = (fallback || []).map(t => ({
+          ...t,
+          filename: t.title || 'Untitled',
+        }));
+        return res.status(200).json({ data: normalized });
+      }
+
+      return res.status(500).json({ error: 'Failed to load transcripts.' });
+    }
+
+    // Ensure filename is always set (some rows may have null)
+    const normalized = (data || []).map(t => ({
+      ...t,
+      filename: t.filename || t.title || 'Untitled',
+      title: t.filename || t.title || 'Untitled',
+    }));
+
+    res.json({ data: normalized });
+  } catch (err) {
+    console.error('[/api/transcripts] Unexpected error:', err.message);
     res.status(500).json({ error: 'Failed to load transcripts.' });
   }
 });
 
+// ── DELETE /api/transcripts/:id ───────────────────────────────────
 app.delete('/api/transcripts/:id', requireAuth, async (req, res) => {
   if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'Invalid ID.' });
   try {
-    const { error } = await getAdminClient()
+    const supabase = getAdminClient();
+    const { error } = await supabase
       .from('transcriptions')
       .delete()
       .eq('id', req.params.id)
       .eq('user_id', req.user.id);
-    if (error) throw error;
+    if (error) {
+      // Fallback to old table name
+      if (error.code === '42P01') {
+        const { error: e2 } = await supabase
+          .from('transcripts')
+          .delete()
+          .eq('id', req.params.id)
+          .eq('user_id', req.user.id);
+        if (e2) return res.status(500).json({ error: 'Delete failed.' });
+        return res.json({ success: true });
+      }
+      throw error;
+    }
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Delete failed.' });
@@ -209,7 +293,8 @@ app.use((req, res) => {
   res.sendFile('index.html', { root: '.' });
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
+  console.error('[server] Unhandled error:', err.message);
   res.status(500).json({ error: 'Something went wrong.' });
 });
 

@@ -1,63 +1,197 @@
 /* =====================================================
-   TRANSCRIBR GLOBAL THEME TOKENS
+   TRANSCRIBR GLOBAL THEME TOKENS v2
    Dark = default. Light = [data-theme="light"]
    This file is the single source of truth for colors.
-   Embed or <link> on every page.
    ===================================================== */
 
 :root,
 [data-theme="dark"] {
-  --bg: #08080f;
-  --surface: #101018;
-  --surface2: #16161f;
-  --surface3: #1c1c28;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.13);
-  --text: #ededf5;
-  --text2: #a0a0b8;
-  --muted: #7878a0;
-  --muted2: #525270;
-  --accent: #6c5ce7;
-  --accent2: #a29bfe;
-  --green: #00d4aa;
-  --green-bg: rgba(0,212,170,0.10);
-  --gold: #f8c553;
-  --gold-bg: rgba(248,197,83,0.08);
-  --nav-bg: rgba(8,8,15,0.92);
+  --bg:        #08080f;
+  --surface:   #101018;
+  --surface2:  #16161f;
+  --surface3:  #1c1c28;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+  --text:      #ededf5;
+  --text2:     #a0a0b8;
+  --muted:     #7878a0;
+  --muted2:    #525270;
+  --accent:    #6c5ce7;
+  --accent2:   #a29bfe;
+  --green:     #00d4aa;
+  --green-bg:  rgba(0,212,170,0.10);
+  --gold:      #f8c553;
+  --gold-bg:   rgba(248,197,83,0.08);
+  --red:       #f87171;
+  --nav-bg:    rgba(8,8,15,0.92);
   --shadow-lg: rgba(0,0,0,0.45);
+  --glow:      rgba(108,92,231,0.12);
+  --input-bg:  #16161f;
+  --input-border: rgba(255,255,255,0.13);
+  --card-bg:   #101018;
+  --modal-bg:  #13131a;
+  --hover-bg:  rgba(255,255,255,0.04);
+  --select-bg: #16161f;
 }
 
 [data-theme="light"] {
-  --bg: #f4f4f8;
-  --surface: #ffffff;
-  --surface2: #ededf5;
-  --surface3: #e4e4ef;
-  --border: rgba(0,0,0,0.08);
-  --border2: rgba(0,0,0,0.14);
-  --text: #0d0d1a;
-  --text2: #3c3c5a;
-  --muted: #60607a;
-  --muted2: #9090a8;
-  --accent: #6c5ce7;
-  --accent2: #5548d9;
-  --green: #00a884;
-  --green-bg: rgba(0,168,132,0.10);
-  --gold: #c47f10;
-  --gold-bg: rgba(196,127,16,0.08);
-  --nav-bg: rgba(244,244,248,0.92);
+  --bg:        #f4f4f8;
+  --surface:   #ffffff;
+  --surface2:  #ededf5;
+  --surface3:  #e4e4ef;
+  --border:    rgba(0,0,0,0.08);
+  --border2:   rgba(0,0,0,0.14);
+  --text:      #0d0d1a;
+  --text2:     #3c3c5a;
+  --muted:     #60607a;
+  --muted2:    #9090a8;
+  --accent:    #6c5ce7;
+  --accent2:   #5548d9;
+  --green:     #00a884;
+  --green-bg:  rgba(0,168,132,0.10);
+  --gold:      #c47f10;
+  --gold-bg:   rgba(196,127,16,0.08);
+  --red:       #dc2626;
+  --nav-bg:    rgba(244,244,248,0.95);
   --shadow-lg: rgba(0,0,0,0.12);
+  --glow:      rgba(108,92,231,0.08);
+  --input-bg:  #ffffff;
+  --input-border: rgba(0,0,0,0.14);
+  --card-bg:   #ffffff;
+  --modal-bg:  #ffffff;
+  --hover-bg:  rgba(0,0,0,0.03);
+  --select-bg: #ffffff;
 }
 
-/* Smooth cross-page transitions */
-html { color-scheme: dark; }
-[data-theme="light"] { color-scheme: light; }
+/* ── Color scheme ─────────────────────────────────── */
+html                  { color-scheme: dark; }
+[data-theme="light"]  { color-scheme: light; }
 
+/* ── Smooth transitions ───────────────────────────── */
 body,
 .surface-transition {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Theme toggle button — only rendered on homepage */
+/* ── Universal input/select/textarea light mode fix ─ */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text);
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--muted);
+}
+
+/* ── Universal card/surface light mode fix ─────────── */
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-bg .modal,
+[data-theme="light"] .upgrade-modal,
+[data-theme="light"] .plan-card,
+[data-theme="light"] .feature-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .table-card,
+[data-theme="light"] .eng-card,
+[data-theme="light"] .price-card,
+[data-theme="light"] .contact-card,
+[data-theme="light"] .faq-item,
+[data-theme="light"] .cap-card,
+[data-theme="light"] .uc-card,
+[data-theme="light"] .ci,
+[data-theme="light"] .form-card,
+[data-theme="light"] .trust-item {
+  background: var(--surface);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+[data-theme="light"] .modal-bg,
+[data-theme="light"] .overlay {
+  background: rgba(0,0,0,0.45);
+}
+
+/* ── Dropdown/select fix ─────────────────────────── */
+[data-theme="light"] select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ── Sidebar light mode ──────────────────────────── */
+[data-theme="light"] #sb-drawer {
+  background: var(--surface);
+  border-color: var(--border2);
+}
+
+/* ── Nav fix for light mode ──────────────────────── */
+[data-theme="light"] nav {
+  background: var(--nav-bg);
+  border-color: var(--border2);
+}
+
+/* ── Table light mode ───────────────────────────── */
+[data-theme="light"] table th,
+[data-theme="light"] table td {
+  border-color: var(--border);
+  color: var(--text);
+}
+[data-theme="light"] .table-card,
+[data-theme="light"] .table-head {
+  background: var(--surface);
+}
+
+/* ── Dashboard sidebar light mode ──────────────── */
+[data-theme="light"] .sidebar {
+  border-color: var(--border2);
+  background: var(--surface);
+}
+[data-theme="light"] .sb-item {
+  color: var(--muted);
+}
+[data-theme="light"] .sb-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* ── Upgrade modal light mode ──────────────────── */
+[data-theme="light"] .upgrade-modal {
+  background: var(--surface);
+}
+[data-theme="light"] .upgrade-plan-card {
+  background: var(--surface2);
+  border-color: var(--border2);
+}
+
+/* ── Toasts ─────────────────────────────────────── */
+[data-theme="light"] .toast {
+  background: var(--surface);
+  border-color: var(--border2);
+  color: var(--text);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* ── Banners ─────────────────────────────────────── */
+[data-theme="light"] .banner.guest {
+  background: linear-gradient(135deg, rgba(108,92,231,0.07), rgba(162,155,254,0.04));
+  border-color: rgba(108,92,231,0.18);
+}
+[data-theme="light"] .banner.upgrade {
+  background: linear-gradient(135deg, rgba(0,168,132,0.06), rgba(108,92,231,0.04));
+  border-color: rgba(0,168,132,0.18);
+}
+
+/* ── Progress / usage bars keep color in light mode */
+[data-theme="light"] .prog-bar,
+[data-theme="light"] .sb-usage-bar,
+[data-theme="light"] .progress-wrap,
+[data-theme="light"] .spk-bar-wrap {
+  background: var(--border2);
+}
+
+/* ── Theme toggle button ─────────────────────────── */
 #themeToggleBtn {
   width: 34px; height: 34px;
   border-radius: 8px;
@@ -65,7 +199,9 @@ body,
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
@@ -74,3 +210,13 @@ body,
   color: var(--text);
   border-color: var(--accent);
 }
+
+/* ── Scrollbar theming ───────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+*::-webkit-scrollbar        { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track  { background: transparent; }
+*::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--muted2); }

@@ -10,176 +10,177 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-/* color tokens from theme-vars.css */
 html, body { height: 100%; }
 body {
   background: var(--bg); color: var(--text);
   font-family: 'DM Sans', sans-serif;
   display: flex; flex-direction: column;
-  height: 100vh; overflow: hidden;
-  overflow-x: hidden;
-  max-width: 100vw;
-  box-sizing: border-box;
+  height: 100vh; overflow: hidden; overflow-x: hidden; max-width: 100vw;
+  transition: background-color 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
 }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+a { color: inherit; }
 
-/* NAV */
+/* ── NAV ── */
 nav {
   flex-shrink: 0; height: 52px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 1.8rem; border-bottom: 1px solid var(--border);
   background: var(--nav-bg); z-index: 200;
+  transition: background-color 0.25s, border-color 0.25s;
 }
 .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; color:var(--text); text-decoration:none; }
-.logo span { color:var(--accent2); }
+.logo-dot { color:var(--accent2); }
 .nav-actions { display:flex; align-items:center; gap:0.6rem; }
-.btn { display:inline-flex; align-items:center; gap:5px; border-radius:8px; font-size:0.78rem; padding:0.35rem 0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; border:1px solid var(--border2); background:var(--surface2); color:var(--muted); }
+.btn {
+  display:inline-flex; align-items:center; gap:5px; border-radius:8px;
+  font-size:0.78rem; padding:0.35rem 0.8rem; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:all 0.18s;
+  border:1px solid var(--border2); background:var(--surface2); color:var(--muted);
+}
 .btn:hover { color:var(--text); border-color:var(--accent); }
 .btn.danger:hover { border-color:var(--red); color:var(--red); }
 .back-link { color:var(--muted); font-size:0.82rem; text-decoration:none; transition:color 0.2s; }
 .back-link:hover { color:var(--text); }
 
-/* FILE BAR */
+/* ── FILE BAR ── */
 .file-bar {
   flex-shrink: 0; height: 64px;
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem;
+  transition: background-color 0.25s, border-color 0.25s;
 }
-.file-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:500px; }
+.file-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:500px; color:var(--text); }
 .file-meta { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
 .chip { display:inline-flex; align-items:center; gap:4px; background:var(--surface2); border:1px solid var(--border2); color:var(--muted); font-size:0.7rem; padding:2px 8px; border-radius:100px; }
-.chip.purple { color:var(--accent2); border-color:rgba(124,106,255,0.3); background:var(--glow); }
-.chip.green { color:var(--green); border-color:rgba(52,211,153,0.25); background:rgba(52,211,153,0.08); }
+.chip.purple { color:var(--accent2); border-color:rgba(108,92,231,0.3); background:var(--glow,rgba(108,92,231,0.08)); }
+.chip.green  { color:var(--green);   border-color:rgba(0,212,170,0.25);  background:rgba(0,212,170,0.08); }
 
-/* CONTENT */
+/* ── CONTENT ── */
 .content-area { flex:1; display:flex; min-height:0; overflow:hidden; }
 
-/* LEFT PANEL */
+/* ── TRANSCRIPT PANEL ── */
 .transcript-panel { flex:1; display:flex; flex-direction:column; border-right:1px solid var(--border); min-width:0; overflow:hidden; }
-.panel-header { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0.65rem 1.3rem; border-bottom:1px solid var(--border); background:var(--surface); }
+.panel-header { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0.65rem 1.3rem; border-bottom:1px solid var(--border); background:var(--surface); transition:background-color 0.25s; }
 .panel-title { font-size:0.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
 .word-badge { font-size:0.7rem; color:var(--muted); }
 .search-bar { flex-shrink:0; padding:0.5rem 1rem; border-bottom:1px solid var(--border); background:var(--bg); }
 .search-inner { position:relative; }
-.search-input { width:100%; background:var(--surface); border:1px solid var(--border2); color:var(--text); border-radius:8px; padding:0.4rem 2.2rem 0.4rem 1.8rem; font-family:'DM Sans',sans-serif; font-size:0.82rem; transition:border-color 0.2s; }
-.search-input:focus { outline:none; border-color:var(--accent); }
+.search-input { width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text); border-radius:8px; padding:0.4rem 2.2rem 0.4rem 1.8rem; font-family:'DM Sans',sans-serif; font-size:0.82rem; transition:border-color 0.2s; outline:none; }
+.search-input::placeholder { color:var(--muted); }
+.search-input:focus { border-color:var(--accent); }
 .si { position:absolute; left:0.6rem; top:50%; transform:translateY(-50%); font-size:0.78rem; color:var(--muted); pointer-events:none; }
 .match-ct { position:absolute; right:0.7rem; top:50%; transform:translateY(-50%); font-size:0.67rem; color:var(--muted); }
 .transcript-scroll { flex:1; overflow-y:auto; padding:0.6rem 0.9rem; min-height:0; }
 .transcript-scroll::-webkit-scrollbar { width:3px; }
 .transcript-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
-/* Lines */
+/* ── Transcript lines ── */
 .t-line { display:flex; gap:0.6rem; padding:0.4rem 0.45rem; border-radius:7px; cursor:pointer; transition:background 0.15s; border-left:2px solid transparent; margin-bottom:1px; }
-.t-line:hover { background:rgba(255,255,255,0.03); }
-.t-line.active { background:rgba(124,106,255,0.11); border-left-color:var(--accent); }
+.t-line:hover { background:var(--hover-bg,rgba(255,255,255,0.03)); }
+.t-line.active { background:rgba(108,92,231,0.11); border-left-color:var(--accent); }
+[data-theme="light"] .t-line.active { background:rgba(108,92,231,0.08); }
 .t-ts { font-size:0.66rem; color:var(--accent2); font-weight:600; white-space:nowrap; padding-top:3px; min-width:32px; font-variant-numeric:tabular-nums; flex-shrink:0; opacity:0.65; }
 .t-body { flex:1; }
 .t-spk { font-size:0.67rem; font-weight:700; margin-bottom:2px; }
 .t-txt { font-size:0.86rem; line-height:1.68; color:var(--text); }
-.t-line.active .t-txt { color:#fff; }
+.t-line.active .t-txt { color:var(--text); font-weight:500; }
 .t-line.active .t-ts { opacity:1; }
 .spk-0 { color:var(--green); }
 .spk-1 { color:var(--accent2); }
-.spk-2 { color:var(--yellow); }
+.spk-2 { color:var(--yellow,#fbbf24); }
 .spk-3 { color:#f472b6; }
 .spk-4 { color:#38bdf8; }
 .plain-text { white-space:pre-wrap; word-break:break-word; font-size:0.86rem; line-height:1.85; color:var(--text); padding:0.3rem 0.4rem; }
-mark.hl { background:rgba(124,106,255,0.32); color:var(--text); border-radius:2px; padding:0 1px; }
+mark.hl { background:rgba(108,92,231,0.25); color:var(--text); border-radius:2px; padding:0 1px; }
+[data-theme="light"] mark.hl { background:rgba(108,92,231,0.18); }
 .pii-tag { display:inline-flex; align-items:center; gap:2px; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); color:#fca5a5; font-size:0.65rem; font-weight:700; padding:0 4px; border-radius:4px; margin:0 1px; vertical-align:middle; letter-spacing:0.3px; }
 
-/* RIGHT PANEL */
-.insights-panel { width:265px; flex-shrink:0; overflow-y:auto; background:var(--surface); padding:0.9rem; display:flex; flex-direction:column; gap:0.85rem; min-height:0; }
+/* ── INSIGHTS PANEL ── */
+.insights-panel {
+  width:265px; flex-shrink:0; overflow-y:auto;
+  background:var(--surface); padding:0.9rem;
+  display:flex; flex-direction:column; gap:0.85rem; min-height:0;
+  transition:background-color 0.25s;
+}
 .insights-panel::-webkit-scrollbar { width:3px; }
 .insights-panel::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 .ins-label { font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:0.45rem; }
 .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.38rem; }
-.stat-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:0.5rem 0.6rem; }
+.stat-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:0.5rem 0.6rem; transition:background-color 0.25s, border-color 0.25s; }
 .stat-box-label { font-size:0.6rem; color:var(--muted); margin-bottom:2px; text-transform:uppercase; letter-spacing:0.5px; }
-.stat-box-val { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; }
+.stat-box-val { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); }
 .stat-box-val.small { font-size:0.82rem; font-family:'DM Sans',sans-serif; font-weight:500; padding-top:2px; color:var(--text); }
-.spk-list { display:flex; flex-direction:column; gap:0.42rem; }
 .spk-row-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; }
 .spk-name { font-size:0.74rem; font-weight:600; }
-.spk-pct { font-size:0.67rem; color:var(--muted); }
+.spk-pct  { font-size:0.67rem; color:var(--muted); }
 .spk-bar-wrap { height:3px; background:var(--border2); border-radius:2px; overflow:hidden; }
 .spk-bar-fill { height:100%; border-radius:2px; }
-.engine-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:0.6rem; display:flex; align-items:center; gap:0.6rem; }
-.engine-icon { font-size:1.3rem; }
-.engine-name { font-size:0.8rem; font-weight:600; }
-.engine-sub { font-size:0.67rem; color:var(--muted); }
+.engine-box { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:0.6rem; display:flex; align-items:center; gap:0.6rem; transition:background-color 0.25s; }
+.engine-name { font-size:0.8rem; font-weight:600; color:var(--text); }
+.engine-sub  { font-size:0.67rem; color:var(--muted); }
 .export-list { display:flex; flex-direction:column; gap:0.32rem; }
 .exp-btn { display:flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:0.4rem 0.7rem; border-radius:7px; font-size:0.76rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; width:100%; }
 .exp-btn:hover { border-color:var(--accent); color:var(--accent2); }
 .exp-btn.cp { background:var(--accent); border-color:var(--accent); color:#fff; }
 .exp-btn.cp:hover { opacity:0.88; }
-.translate-select { width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text); border-radius:7px; padding:0.4rem 0.65rem; font-family:'DM Sans',sans-serif; font-size:0.8rem; margin-bottom:0.4rem; appearance:none; cursor:pointer; }
+.translate-select { width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text); border-radius:7px; padding:0.4rem 0.65rem; font-family:'DM Sans',sans-serif; font-size:0.8rem; margin-bottom:0.4rem; appearance:none; cursor:pointer; transition:background-color 0.25s, border-color 0.25s; }
 .translate-select:focus { outline:none; border-color:var(--accent); }
 .translate-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--surface2); border:1px solid var(--accent); color:var(--accent2); padding:0.42rem; border-radius:7px; font-size:0.78rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; }
-.translate-btn:hover { background:var(--glow); }
+.translate-btn:hover { background:var(--glow,rgba(108,92,231,0.08)); }
 .translate-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-/* ═══════════════════════════════════════
-   VERINT-STYLE AUDIO BAR
-═══════════════════════════════════════ */
+/* ── AUDIO BAR ── */
 .audio-bar {
   flex-shrink: 0;
-  background: #0d0d14; border-top: 1px solid var(--border2);
+  background: var(--surface); border-top: 2px solid var(--border);
   padding: 0 1.4rem; display: flex; flex-direction: column;
   justify-content: center; gap: 4px; z-index: 300;
-  min-height: 88px;
-  overflow: hidden;
-  min-width: 0;
+  min-height: 88px; overflow: hidden; min-width: 0;
   width: calc(100% - 265px);
-  box-sizing: border-box;
+  transition: background-color 0.25s, border-color 0.25s;
 }
+[data-theme="light"] .audio-bar { background: var(--surface2); border-top-color: var(--border2); }
 
-/* Speaker legend row */
 .spk-legend { display:flex; align-items:center; gap:1rem; padding:0 2px; flex-wrap:wrap; }
 .spk-legend-item { display:flex; align-items:center; gap:5px; font-size:0.68rem; color:var(--muted); }
 .spk-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 
-/* Waveform canvas row */
 .waveform-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; }
 .play-btn {
   width:34px; height:34px; border-radius:50%; background:var(--accent);
   border:none; color:#fff; font-size:0.85rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; transition:transform 0.15s;
+  flex-shrink:0; transition:transform 0.15s, opacity 0.2s;
 }
 .play-btn:hover:not(:disabled) { transform:scale(1.1); }
 .play-btn:disabled { opacity:0.35; cursor:default; }
-
 .waveform-wrap {
   flex:1; position:relative; height:52px; cursor:pointer;
-  background: #111118; border-radius:8px; overflow:hidden;
-  user-select: none;
+  background: var(--surface2); border-radius:8px; overflow:hidden; user-select:none;
+  transition:background-color 0.25s;
 }
+[data-theme="light"] .waveform-wrap { background: var(--surface3); }
 .waveform-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
-/* Playhead */
 .waveform-playhead {
   position:absolute; top:0; bottom:0; width:2px;
-  background: rgba(255,255,255,0.9);
-  box-shadow: 0 0 6px rgba(255,255,255,0.6);
-  pointer-events:none;
-  left: 0%;
+  background: var(--text); opacity:0.9;
+  box-shadow: 0 0 6px rgba(108,92,231,0.6);
+  pointer-events:none; left:0%;
   transition: left 0.08s linear;
 }
-/* Current time tooltip */
 .waveform-tooltip {
-  position:absolute; top:-24px; background:var(--surface2);
-  border:1px solid var(--border2); color:var(--text);
+  position:absolute; top:-24px;
+  background:var(--surface); border:1px solid var(--border2); color:var(--text);
   font-size:0.65rem; padding:2px 6px; border-radius:4px;
-  pointer-events:none; display:none; white-space:nowrap;
-  transform:translateX(-50%);
+  pointer-events:none; display:none; white-space:nowrap; transform:translateX(-50%);
 }
-
-/* Time + controls row */
 .audio-controls-row { display:flex; align-items:center; gap:0.8rem; min-width:0; overflow:hidden; }
 .time-display { font-size:0.72rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:90px; }
 .audio-right { display:flex; align-items:center; gap:0.6rem; margin-left:auto; }
 .speed-btn { background:var(--surface2); border:1px solid var(--border2); color:var(--muted); padding:0.2rem 0.48rem; border-radius:5px; font-size:0.68rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.18s; }
-.speed-btn:hover, .speed-btn.active { border-color:var(--accent); color:var(--accent2); }
+.speed-btn:hover,.speed-btn.active { border-color:var(--accent); color:var(--accent2); }
 .follow-toggle { display:flex; align-items:center; gap:4px; font-size:0.7rem; color:var(--muted); cursor:pointer; white-space:nowrap; }
 .toggle-pill { position:relative; width:28px; height:16px; flex-shrink:0; }
 .toggle-pill input { opacity:0; width:0; height:0; position:absolute; }
@@ -192,16 +193,15 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 .vol-range { width:48px; accent-color:var(--accent); cursor:pointer; }
 .no-audio-msg { font-size:0.73rem; color:var(--muted); display:flex; align-items:center; gap:6px; }
 
-/* TRANSLATE MODAL */
-.translate-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:500; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+/* ── TRANSLATE MODAL ── */
+.translate-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:500; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
 .translate-overlay.show { display:flex; }
-.translate-modal { background:var(--surface); border:1px solid var(--border2); border-radius:14px; width:90%; max-width:680px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+.translate-modal { background:var(--surface); border:1px solid var(--border2); border-radius:14px; width:90%; max-width:680px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; transition:background-color 0.25s; }
 .tm-header { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.3rem; border-bottom:1px solid var(--border); flex-shrink:0; }
-.tm-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; }
-.tm-close { background:var(--surface2); border:1px solid var(--border2); color:var(--muted); width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:0.88rem; display:flex; align-items:center; justify-content:center; }
+.tm-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; color:var(--text); }
+.tm-close { background:var(--surface2); border:1px solid var(--border2); color:var(--muted); width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:0.88rem; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.tm-close:hover { color:var(--text); }
 .tm-body { flex:1; overflow-y:auto; padding:1.1rem 1.3rem; }
-.tm-body::-webkit-scrollbar { width:3px; }
-.tm-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 .tm-content { font-size:0.88rem; line-height:1.82; color:var(--text); white-space:pre-wrap; }
 .tm-loading { display:flex; flex-direction:column; align-items:center; gap:1rem; padding:2.5rem; color:var(--muted); font-size:0.86rem; }
 .tm-spinner { width:26px; height:26px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -209,7 +209,7 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 .tm-dl-btn { flex:1; padding:0.45rem; border-radius:7px; font-size:0.78rem; cursor:pointer; font-family:'DM Sans',sans-serif; border:1px solid var(--border2); background:var(--surface2); color:var(--text); transition:all 0.18s; }
 .tm-dl-btn:hover { border-color:var(--accent); color:var(--accent2); }
 
-/* LOADING */
+/* ── LOADING ── */
 .loading-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--muted); gap:1rem; }
 .spinner { width:26px; height:26px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
@@ -217,13 +217,17 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(8px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:0.48rem 1.1rem; border-radius:100px; font-size:0.78rem; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-@media (max-width:720px) { .insights-panel { display:none; } .audio-right { display:none; } .audio-bar { width: 100%; } }
+@media (max-width:720px) {
+  .insights-panel { display:none; }
+  .audio-right    { display:none; }
+  .audio-bar      { width:100%; }
+}
 </style>
 </head>
 <body>
 
 <nav>
-  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <a href="/" class="logo">Transcribr<span class="logo-dot">.</span></a>
   <div class="nav-actions">
     <a href="/dashboard.html" class="back-link">← Dashboard</a>
     <button class="btn danger" onclick="deleteTranscript()">🗑 Delete</button>
@@ -268,7 +272,7 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 
   <!-- RIGHT: INSIGHTS -->
   <div class="insights-panel">
-    <div class="ins-section">
+    <div>
       <div class="ins-label">Overview</div>
       <div class="stat-grid">
         <div class="stat-box"><div class="stat-box-label">Words</div><div class="stat-box-val" id="insWords">0</div></div>
@@ -277,43 +281,39 @@ input:checked + .pill-track::after { transform:translateX(12px); }
         <div class="stat-box"><div class="stat-box-label">Speakers</div><div class="stat-box-val" id="insSpeakers">—</div></div>
       </div>
     </div>
-    <div class="ins-section" id="spkSection" style="display:none">
+    <div id="spkSection" style="display:none">
       <div class="ins-label">Speakers</div>
-      <div class="spk-list" id="spkList"></div>
+      <div id="spkList"></div>
     </div>
-    <div class="ins-section">
+    <div>
       <div class="ins-label">Engine</div>
       <div class="engine-box">
-        <div class="engine-icon" id="engineIcon">⚡</div>
+        <span id="engineIcon" style="font-size:1.3rem">⚡</span>
         <div><div class="engine-name" id="engineName">—</div><div class="engine-sub" id="engineSub">—</div></div>
       </div>
     </div>
-    <div class="ins-section">
+    <div>
       <div class="ins-label">Created</div>
       <div class="stat-box"><div class="stat-box-val small" id="insDate">—</div></div>
     </div>
-    <div class="ins-section">
+    <div>
       <div class="ins-label">Language</div>
       <div class="stat-box"><div class="stat-box-val small" id="insLang">—</div></div>
     </div>
-    <div class="ins-section">
+    <div>
       <div class="ins-label">🌐 Translate</div>
       <select class="translate-select" id="translateLang">
         <option value="">Select language…</option>
-        <option value="Hindi">Hindi</option><option value="Spanish">Spanish</option>
-        <option value="French">French</option><option value="German">German</option>
-        <option value="Arabic">Arabic</option><option value="Portuguese">Portuguese</option>
-        <option value="Japanese">Japanese</option><option value="Chinese (Simplified)">Chinese</option>
-        <option value="Korean">Korean</option><option value="Italian">Italian</option>
-        <option value="Russian">Russian</option><option value="Dutch">Dutch</option>
-        <option value="Turkish">Turkish</option><option value="Vietnamese">Vietnamese</option>
-        <option value="Bengali">Bengali</option><option value="Urdu">Urdu</option>
-        <option value="Punjabi">Punjabi</option><option value="Tamil">Tamil</option>
-        <option value="Telugu">Telugu</option><option value="Marathi">Marathi</option>
+        <option>Hindi</option><option>Spanish</option><option>French</option>
+        <option>German</option><option>Arabic</option><option>Portuguese</option>
+        <option>Japanese</option><option>Chinese (Simplified)</option>
+        <option>Korean</option><option>Italian</option><option>Russian</option>
+        <option>Dutch</option><option>Turkish</option><option>Vietnamese</option>
+        <option>Bengali</option><option>Urdu</option>
       </select>
       <button class="translate-btn" id="translateBtn" onclick="startTranslation()">🌐 Translate Transcript</button>
     </div>
-    <div class="ins-section">
+    <div>
       <div class="ins-label">Export</div>
       <div class="export-list">
         <button class="exp-btn cp" onclick="copyText()">📋 Copy to clipboard</button>
@@ -323,31 +323,23 @@ input:checked + .pill-track::after { transform:translateX(12px); }
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- VERINT-STYLE AUDIO BAR -->
+<!-- AUDIO BAR -->
 <div class="audio-bar" id="audioBar">
-
-  <!-- Speaker legend (shown when audio loaded) -->
   <div class="spk-legend" id="spkLegend" style="display:none"></div>
-
-  <!-- Waveform row -->
   <div class="waveform-row">
-    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled>▶</button>
-
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" disabled title="Play/Pause">▶</button>
     <div class="waveform-wrap" id="waveformWrap">
       <canvas class="waveform-canvas" id="waveCanvas"></canvas>
       <div class="waveform-playhead" id="playhead"></div>
       <div class="waveform-tooltip" id="waveTooltip"></div>
     </div>
   </div>
-
-  <!-- Time + controls -->
   <div class="audio-controls-row">
     <div class="time-display">
       <span id="curTime">0:00</span> / <span id="durTime">0:00</span>
-      <span id="noAudioMsg" style="display:none;margin-left:8px;color:var(--muted);font-size:0.7rem">— No URL audio saved</span>
+      <span id="noAudioMsg" style="display:none;margin-left:8px;font-size:0.7rem;color:var(--muted)">— No audio saved</span>
     </div>
     <div class="audio-right">
       <div style="display:flex;gap:2px">
@@ -361,12 +353,11 @@ input:checked + .pill-track::after { transform:translateX(12px); }
         Follow
       </label>
       <div class="vol-grp">
-        <span class="vol-icon" onclick="toggleMute()">🔊</span>
+        <span class="vol-icon" onclick="toggleMute()" title="Toggle mute">🔊</span>
         <input type="range" class="vol-range" min="0" max="1" step="0.05" value="1" oninput="audio.volume=this.value"/>
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- TRANSLATE MODAL -->
@@ -390,114 +381,128 @@ input:checked + .pill-track::after { transform:translateX(12px); }
 <audio id="audioEl" preload="metadata" crossorigin="anonymous"></audio>
 
 <script>
-// ─── State ──────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────
 let sb, T = null, lines = [], activeIdx = -1, audioLoaded = false;
 let translatedText = '', translateLangName = '';
-let waveSegments = []; // [{start, end, speaker, color}] normalised 0-1
-let isDragging = false;
 const audio = document.getElementById('audioEl');
-const SPEAKER_COLORS_HEX = ['#34d399','#a78bfa','#fbbf24','#f472b6','#38bdf8','#fb923c'];
-const SPEAKER_CSS = ['spk-0','spk-1','spk-2','spk-3','spk-4'];
-const spkColorMap = {};
-const spkHexMap = {};
 
-// ─── Boot ────────────────────────────────────────────────────────
+const SPEAKER_COLORS = ['#00d4aa','#a29bfe','#fbbf24','#f472b6','#38bdf8','#fb923c'];
+const SPEAKER_CSS    = ['spk-0','spk-1','spk-2','spk-3','spk-4'];
+const spkColorMap = {}, spkHexMap = {};
+
+// ── Boot ──────────────────────────────────────────────────────────
 async function init() {
-  // Guests are allowed — no redirect to login
+  // Try auth (non-blocking — guests can view too)
   try {
-    const cfg = await fetch('/api/config').then(r=>r.json());
+    const cfg = await fetch('/api/config').then(r => r.json());
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-    const { data:{ session } } = await sb.auth.getSession();
-    if (!session) { sb = null; } // guest
-    else { await sb.auth.setSession(session); } // set JWT so RLS works
-  } catch(e) { sb = null; }
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) await sb.auth.setSession(session);
+  } catch { sb = null; }
 
   const stored = localStorage.getItem('currentTranscript');
-  if (!stored) { location.href='/dashboard.html'; return; }
-  T = JSON.parse(stored);
+  if (!stored) { location.href = '/dashboard.html'; return; }
+
+  try {
+    T = JSON.parse(stored);
+  } catch {
+    location.href = '/dashboard.html';
+    return;
+  }
+
   render(T);
 }
 
-// ─── Render ──────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────
 function render(t) {
-  const text = t.transcript || '';
+  const text = t.transcript || t.text || '';
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
-  document.getElementById('fileName').textContent = t.title || t.filename || 'Untitled';
+  const name = t.filename || t.title || 'Untitled';
+  document.title = name + ' — Transcribr';
+  document.getElementById('fileName').textContent = name;
   document.getElementById('chipDate').textContent = fmtDate(t.created_at);
   document.getElementById('chipMode').textContent = engineLabel(t.engine || t.mode);
-  document.getElementById('chipLang').textContent = '🌐 '+(t.language||'en').toUpperCase();
-  document.getElementById('chipWords').textContent = wordCount+' words';
+  document.getElementById('chipLang').textContent = '🌐 ' + (t.language || 'en').toUpperCase();
+  document.getElementById('chipWords').textContent = wordCount + ' words';
   document.getElementById('fileBar').style.display = 'flex';
 
+  // Insights
   document.getElementById('insWords').textContent = wordCount.toLocaleString();
   document.getElementById('insChars').textContent = text.length.toLocaleString();
   document.getElementById('insDate').textContent = fmtDate(t.created_at);
-  document.getElementById('insLang').textContent = (t.language||'en').toUpperCase();
-  const ei = (t.engine==='groq'||t.engine==='fast'||t.engine==='quick'||t.mode==='fast'||t.mode==='quick')?'⚡':(t.engine==='assemblyai'||t.engine==='accurate'||t.engine==='precision'||t.mode==='accurate'||t.mode==='precision')?'🎯':'⚖️';
-  const eKey = t.engine || t.mode || '';
+  document.getElementById('insLang').textContent = (t.language || 'en').toUpperCase();
+
+  const eKey = (t.engine || t.mode || '').toLowerCase();
   const isQuick = ['groq','fast','quick'].includes(eKey);
   const isSmart = ['deepgram','balanced','smart'].includes(eKey);
-  document.getElementById('engineIcon').textContent = ei;
-  document.getElementById('engineName').textContent = isQuick?'Quick Mode':isSmart?'Smart Mode':'Precision Mode';
-  document.getElementById('engineSub').textContent = isQuick?'Fast results · File input':isSmart?'Reliable · Files & URLs':'Highest accuracy · Files & URLs';
+  document.getElementById('engineIcon').textContent = isQuick ? '⚡' : isSmart ? '⚖️' : '🎯';
+  document.getElementById('engineName').textContent = isQuick ? 'Quick Mode' : isSmart ? 'Smart Mode' : 'Precision Mode';
+  document.getElementById('engineSub').textContent  = isQuick ? 'Fast · File input' : isSmart ? 'Reliable · Files & URLs' : 'Highest accuracy';
 
   lines = parseLines(text);
   renderLines(lines, null);
   buildSpeakerInsights(lines, wordCount);
-  document.getElementById('wordBadge').textContent = wordCount+' words';
-  document.getElementById('insLines').textContent = lines.length.toLocaleString();
-  const spks = new Set(lines.map(l=>l.speaker).filter(Boolean));
-  document.getElementById('insSpeakers').textContent = spks.size||'—';
-  document.title = (t.filename||'Transcript')+' — Transcribr';
+  document.getElementById('wordBadge').textContent = wordCount + ' words';
+  document.getElementById('insLines').textContent  = lines.length.toLocaleString();
+  const spks = new Set(lines.map(l => l.speaker).filter(Boolean));
+  document.getElementById('insSpeakers').textContent = spks.size || '—';
 
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('contentArea').style.display = 'flex';
 
-  // Setup waveform canvas
   setupWaveformInteraction();
-
-  // Auto-load URL audio
-  if (t.audio_url) {
-    let resolvedSrc;
-    // Handle local blob URL stored in sessionStorage (file uploads without Storage backend)
-    if (t.audio_url.startsWith('__blob__')) {
-      const key = t.audio_url.slice('__blob__'.length);
-      resolvedSrc = sessionStorage.getItem(key) || null;
-    } else {
-      resolvedSrc = `/api/audio?url=${encodeURIComponent(t.audio_url)}`;
-    }
-
-    if (resolvedSrc) {
-      audio.src = resolvedSrc;
-      audioLoaded = true;
-      document.getElementById('playBtn').disabled = false;
-      document.getElementById('noAudioMsg').style.display = 'none';
-      audio.addEventListener('loadedmetadata', () => {
-        document.getElementById('durTime').textContent = fmtS(audio.duration);
-        buildWaveform();
-      }, { once:true });
-      audio.addEventListener('error', () => {
-        audioLoaded = false;
-        document.getElementById('playBtn').disabled = true;
-        document.getElementById('noAudioMsg').style.display = 'inline';
-        buildWaveform();
-      }, { once:true });
-    } else {
-      document.getElementById('noAudioMsg').style.display = 'inline';
-      buildWaveform();
-    }
-  } else {
-    document.getElementById('noAudioMsg').style.display = 'inline';
-    buildWaveform();
-  }
+  setupAudio(t);
 }
 
-// ─── Parse lines ─────────────────────────────────────────────────
+// ── Audio setup ───────────────────────────────────────────────────
+function setupAudio(t) {
+  const audioUrl = t.audio_url;
+
+  if (!audioUrl) {
+    document.getElementById('noAudioMsg').style.display = 'inline';
+    buildWaveform();
+    return;
+  }
+
+  let src;
+  if (audioUrl.startsWith('__blob__')) {
+    // Local blob from sessionStorage (file uploads without storage backend)
+    const key = audioUrl.slice('__blob__'.length);
+    src = sessionStorage.getItem(key) || null;
+  } else {
+    src = '/api/audio?url=' + encodeURIComponent(audioUrl);
+  }
+
+  if (!src) {
+    document.getElementById('noAudioMsg').style.display = 'inline';
+    buildWaveform();
+    return;
+  }
+
+  audio.src = src;
+  audioLoaded = true;
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('noAudioMsg').style.display = 'none';
+
+  audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('durTime').textContent = fmtS(audio.duration);
+    buildWaveform();
+  }, { once: true });
+
+  audio.addEventListener('error', () => {
+    audioLoaded = false;
+    document.getElementById('playBtn').disabled = true;
+    document.getElementById('noAudioMsg').style.display = 'inline';
+    buildWaveform();
+  }, { once: true });
+}
+
+// ── Parse lines ───────────────────────────────────────────────────
 function parseLines(text) {
   if (!text.trim()) return [];
-  return text.split('\n').filter(l=>l.trim()).map(line => {
-    const tsM = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
+  return text.split('\n').filter(l => l.trim()).map(line => {
+    const tsM  = line.match(/^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*/);
     const timeStr = tsM ? tsM[1] : null;
     const timeSec = timeStr ? ts2s(timeStr) : null;
     const rest = tsM ? line.slice(tsM[0].length) : line;
@@ -507,33 +512,36 @@ function parseLines(text) {
     return { timeStr, timeSec, speaker, text: txt };
   });
 }
-function ts2s(ts) { const p=ts.split(':').map(Number); return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1]; }
+function ts2s(ts) {
+  const p = ts.split(':').map(Number);
+  return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1];
+}
 
-// ─── Render lines ─────────────────────────────────────────────────
+// ── Render lines ──────────────────────────────────────────────────
 function renderLines(ls, query) {
   const el = document.getElementById('transcriptLines');
-  if (!ls.length) { el.innerHTML='<div style="color:var(--muted);padding:1rem">No content.</div>'; return; }
+  if (!ls.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">No content.</div>'; return; }
 
-  if (ls.every(l=>l.timeSec===null)) {
-    let html = ls.map(l=>renderPII(escH(l.text))).join('\n');
-    if (query) html = highlight(html,query);
+  if (ls.every(l => l.timeSec === null)) {
+    let html = ls.map(l => renderPII(escH(l.text))).join('\n');
+    if (query) html = highlight(html, query);
     el.innerHTML = `<div class="plain-text">${html}</div>`;
     return;
   }
 
-  el.innerHTML = ls.map((l,i) => {
+  el.innerHTML = ls.map((l, i) => {
     if (!spkColorMap[l.speaker] && l.speaker) {
       const idx = Object.keys(spkColorMap).length % SPEAKER_CSS.length;
       spkColorMap[l.speaker] = SPEAKER_CSS[idx];
-      spkHexMap[l.speaker] = SPEAKER_COLORS_HEX[idx];
+      spkHexMap[l.speaker]   = SPEAKER_COLORS[idx];
     }
-    const spkClass = l.speaker ? spkColorMap[l.speaker]||'spk-0' : '';
+    const spkClass = l.speaker ? (spkColorMap[l.speaker] || 'spk-0') : '';
     let txt = renderPII(escH(l.text));
     if (query) txt = highlight(txt, query);
     return `<div class="t-line" id="ln${i}" onclick="lineClick(${i})">
       <span class="t-ts">${l.timeStr ? fmtS(l.timeSec) : ''}</span>
       <div class="t-body">
-        ${l.speaker?`<div class="t-spk ${spkClass}">${escH(l.speaker)}</div>`:''}
+        ${l.speaker ? `<div class="t-spk ${spkClass}">${escH(l.speaker)}</div>` : ''}
         <div class="t-txt">${txt}</div>
       </div>
     </div>`;
@@ -542,108 +550,100 @@ function renderLines(ls, query) {
 
 function renderPII(html) {
   return html
-    .replace(/\[PII\]/gi, '<span class="pii-tag">🔒 PII</span>')
-    .replace(/\[REDACTED\]/gi, '<span class="pii-tag">🔒 PII</span>')
-    .replace(/&lt;PII&gt;/gi, '<span class="pii-tag">🔒 PII</span>')
-    .replace(/\*\*\*PII\*\*\*/gi, '<span class="pii-tag">🔒 PII</span>')
-    .replace(/\[PHONE\]/gi, '<span class="pii-tag">🔒 PHONE</span>')
-    .replace(/\[EMAIL\]/gi, '<span class="pii-tag">🔒 EMAIL</span>')
-    .replace(/\[SSN\]/gi, '<span class="pii-tag">🔒 SSN</span>');
-}
-function highlight(html, q) {
-  return html.replace(new RegExp(escH(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark class="hl">${m}</mark>`);
+    .replace(/\[EMAIL REDACTED\]/gi,  '<span class="pii-tag">🔒 EMAIL</span>')
+    .replace(/\[PHONE REDACTED\]/gi,  '<span class="pii-tag">🔒 PHONE</span>')
+    .replace(/\[CARD REDACTED\]/gi,   '<span class="pii-tag">🔒 CARD</span>')
+    .replace(/\[SSN REDACTED\]/gi,    '<span class="pii-tag">🔒 SSN</span>')
+    .replace(/\[AADHAAR REDACTED\]/gi,'<span class="pii-tag">🔒 ID</span>')
+    .replace(/\[REDACTED\]/gi,        '<span class="pii-tag">🔒 PII</span>');
 }
 
-// ─── Speaker insights ─────────────────────────────────────────────
+function highlight(html, q) {
+  const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return html.replace(new RegExp(safe, 'gi'), m => `<mark class="hl">${m}</mark>`);
+}
+
+// ── Speaker insights ──────────────────────────────────────────────
 function buildSpeakerInsights(ls, totalWords) {
   const spks = {};
-  ls.forEach(l => { if (!l.speaker) return; spks[l.speaker]=(spks[l.speaker]||0)+(l.text.match(/\S+/g)||[]).length; });
+  ls.forEach(l => { if (!l.speaker) return; spks[l.speaker] = (spks[l.speaker] || 0) + (l.text.match(/\S+/g) || []).length; });
   const entries = Object.entries(spks);
   if (!entries.length) return;
-  document.getElementById('spkSection').style.display='block';
-  document.getElementById('spkList').innerHTML = entries.map(([name,wc]) => {
-    const pct = totalWords?Math.round(wc/totalWords*100):0;
-    const color = spkHexMap[name] || '#7c6aff';
-    return `<div class="spk-row">
+  document.getElementById('spkSection').style.display = 'block';
+  document.getElementById('spkList').innerHTML = entries.map(([name, wc]) => {
+    const pct   = totalWords ? Math.round(wc / totalWords * 100) : 0;
+    const color = spkHexMap[name] || '#6c5ce7';
+    return `<div style="margin-bottom:0.45rem">
       <div class="spk-row-top"><span class="spk-name" style="color:${color}">${escH(name)}</span><span class="spk-pct">${pct}% · ${wc}w</span></div>
       <div class="spk-bar-wrap"><div class="spk-bar-fill" style="width:${pct}%;background:${color}"></div></div>
     </div>`;
   }).join('');
 }
 
-// ─── Search ───────────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────
 function doSearch(q) {
-  renderLines(lines, q.trim()||null);
-  if (!q.trim()) { document.getElementById('matchCt').textContent=''; return; }
-  const n = lines.reduce((a,l)=>a+(l.text.match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'))||[]).length,0);
-  document.getElementById('matchCt').textContent = n?`${n} match${n>1?'es':''}`:' No matches';
+  renderLines(lines, q.trim() || null);
+  if (!q.trim()) { document.getElementById('matchCt').textContent = ''; return; }
+  const n = lines.reduce((a, l) => a + (l.text.match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi')) || []).length, 0);
+  document.getElementById('matchCt').textContent = n ? `${n} match${n > 1 ? 'es' : ''}` : 'No matches';
   const first = document.querySelector('mark.hl');
-  if (first) first.scrollIntoView({behavior:'smooth',block:'center'});
+  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// ─── Verint-style Waveform ────────────────────────────────────────
+// ── Waveform ──────────────────────────────────────────────────────
 function buildWaveform() {
   const canvas = document.getElementById('waveCanvas');
-  const wrap = document.getElementById('waveformWrap');
-  const W = wrap.offsetWidth || 800;
-  const H = 52;
+  const wrap   = document.getElementById('waveformWrap');
+  const W = wrap.offsetWidth || 800, H = 52;
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  // Build speaker segments from transcript lines
-  const dur = audio.duration || 0;
-  const speakerList = [...new Set(lines.map(l=>l.speaker).filter(Boolean))];
-  const timedLines = lines.filter(l => l.timeSec !== null);
-
-  // Draw bars
-  const barW = 2.5, barGap = 1, totalBarW = barW + barGap;
-  const numBars = Math.floor(W / totalBarW);
+  const dur         = audio.duration || 0;
+  const timedLines  = lines.filter(l => l.timeSec !== null);
+  const barW = 2.5, barGap = 1;
+  const numBars = Math.floor(W / (barW + barGap));
   const mid = H / 2;
 
   ctx.clearRect(0, 0, W, H);
+
+  // Detect current theme for waveform color
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
   for (let i = 0; i < numBars; i++) {
     const pct = i / numBars;
     const timeSec = dur ? pct * dur : 0;
 
-    // Find which speaker is talking at this time
-    let spkColor = 'rgba(255,255,255,0.18)';
+    let spkColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
     if (timedLines.length > 0 && dur > 0) {
-      let activeLine = null;
       for (let j = 0; j < timedLines.length; j++) {
-        const next = timedLines[j+1];
+        const next = timedLines[j + 1];
         const lineEnd = next ? next.timeSec : dur;
         if (timeSec >= timedLines[j].timeSec && timeSec < lineEnd) {
-          activeLine = timedLines[j];
+          if (timedLines[j].speaker && spkHexMap[timedLines[j].speaker]) {
+            spkColor = spkHexMap[timedLines[j].speaker];
+          }
           break;
         }
       }
-      if (activeLine?.speaker && spkHexMap[activeLine.speaker]) {
-        spkColor = spkHexMap[activeLine.speaker];
-      }
     }
 
-    // Bar height: pseudo-random but deterministic
     const seed = Math.sin(i * 127.1 + 311.7) * 43758.5453;
     const rand = seed - Math.floor(seed);
     const bh = 4 + rand * (H * 0.78);
-    const x = i * totalBarW;
+    const x  = i * (barW + barGap);
 
-    ctx.fillStyle = spkColor;
-    ctx.globalAlpha = 0.85;
+    ctx.fillStyle   = spkColor;
+    ctx.globalAlpha = 0.82;
     ctx.beginPath();
-    ctx.roundRect(x, mid - bh/2, barW, bh, 1);
+    if (ctx.roundRect) ctx.roundRect(x, mid - bh/2, barW, bh, 1);
+    else ctx.rect(x, mid - bh/2, barW, bh);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-
-  // Speaker legend
-  buildSpkLegend(speakerList);
+  buildSpkLegend([...new Set(lines.map(l => l.speaker).filter(Boolean))]);
 }
 
 function buildSpkLegend(speakerList) {
@@ -652,81 +652,78 @@ function buildSpkLegend(speakerList) {
   legend.style.display = 'flex';
   legend.innerHTML = speakerList.map(s => `
     <div class="spk-legend-item">
-      <div class="spk-legend-dot" style="background:${spkHexMap[s]||'#7c6aff'}"></div>
+      <div class="spk-legend-dot" style="background:${spkHexMap[s] || '#6c5ce7'}"></div>
       <span>${escH(s)}</span>
     </div>`).join('');
 }
 
-// ─── Waveform interaction (seek) ──────────────────────────────────
+// ── Waveform interaction ──────────────────────────────────────────
 function setupWaveformInteraction() {
-  const wrap = document.getElementById('waveformWrap');
+  const wrap    = document.getElementById('waveformWrap');
   const tooltip = document.getElementById('waveTooltip');
 
-  // Click to seek
-  wrap.addEventListener('click', (e) => {
+  wrap.addEventListener('click', e => {
     if (!audioLoaded || !audio.duration) return;
     const r = wrap.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
     audio.currentTime = pct * audio.duration;
-    if (audio.paused) audio.play();
+    if (audio.paused) audio.play().catch(() => {});
   });
 
-  // Hover tooltip
-  wrap.addEventListener('mousemove', (e) => {
-    const r = wrap.getBoundingClientRect();
+  wrap.addEventListener('mousemove', e => {
+    const r   = wrap.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-    const timeSec = (audio.duration || 0) * pct;
-    tooltip.textContent = fmtS(timeSec);
-    tooltip.style.left = (pct * 100) + '%';
+    tooltip.textContent = fmtS((audio.duration || 0) * pct);
+    tooltip.style.left  = (pct * 100) + '%';
     tooltip.style.display = 'block';
   });
   wrap.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
 }
 
-// ─── Audio controls ───────────────────────────────────────────────
+// Rebuild waveform when theme changes (colors differ)
+const themeObserver = new MutationObserver(() => { if (lines.length) buildWaveform(); });
+themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ── Audio controls ────────────────────────────────────────────────
 function togglePlay() {
   if (!audioLoaded) return;
-  audio.paused ? audio.play() : audio.pause();
+  if (audio.paused) audio.play().catch(() => showToast('⚠️ Audio could not be played'));
+  else audio.pause();
 }
-audio.addEventListener('play', ()=>document.getElementById('playBtn').textContent='⏸');
-audio.addEventListener('pause', ()=>document.getElementById('playBtn').textContent='▶');
-audio.addEventListener('ended', ()=>document.getElementById('playBtn').textContent='▶');
+audio.addEventListener('play',  () => document.getElementById('playBtn').textContent = '⏸');
+audio.addEventListener('pause', () => document.getElementById('playBtn').textContent = '▶');
+audio.addEventListener('ended', () => document.getElementById('playBtn').textContent = '▶');
 
 audio.addEventListener('timeupdate', () => {
-  const t = audio.currentTime, d = audio.duration||0;
-  const pct = d ? t/d : 0;
+  const t = audio.currentTime, d = audio.duration || 0;
+  const pct = d ? t / d : 0;
   document.getElementById('curTime').textContent = fmtS(t);
-  document.getElementById('playhead').style.left = (pct*100)+'%';
+  document.getElementById('playhead').style.left = (pct * 100) + '%';
   syncActiveLine(t);
 });
 
-// FIX: lineClick seeks correctly and only when audio is available
 function lineClick(idx) {
   const l = lines[idx];
   if (l.timeSec === null) return;
-  if (!audioLoaded) {
-    showToast('No audio available for this transcript');
-    return;
-  }
-  // Direct assignment — no other logic
+  if (!audioLoaded) { showToast('No audio for this transcript'); return; }
   audio.currentTime = l.timeSec;
-  if (audio.paused) audio.play();
+  if (audio.paused) audio.play().catch(() => {});
 }
 
 function syncActiveLine(t) {
   let idx = -1;
-  for (let i=0; i<lines.length; i++) {
+  for (let i = 0; i < lines.length; i++) {
     if (lines[i].timeSec !== null && lines[i].timeSec <= t) idx = i;
   }
   if (idx === activeIdx) return;
   activeIdx = idx;
-  document.querySelectorAll('.t-line.active').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.t-line.active').forEach(e => e.classList.remove('active'));
   if (idx >= 0) {
-    const el = document.getElementById('ln'+idx);
+    const el = document.getElementById('ln' + idx);
     if (el) {
       el.classList.add('active');
       if (document.getElementById('followTgl').checked) {
-        el.scrollIntoView({behavior:'smooth', block:'center'});
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }
@@ -734,19 +731,18 @@ function syncActiveLine(t) {
 
 function setSpeed(s, btn) {
   audio.playbackRate = s;
-  document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 function toggleMute() {
   audio.muted = !audio.muted;
-  document.querySelector('.vol-icon').textContent = audio.muted?'🔇':'🔊';
+  document.querySelector('.vol-icon').textContent = audio.muted ? '🔇' : '🔊';
 }
 
-// ─── Translation (calls /api/translate on our backend) ────────────
+// ── Translation ───────────────────────────────────────────────────
 async function startTranslation() {
   const lang = document.getElementById('translateLang').value;
   if (!lang) { showToast('Please select a language first'); return; }
-
   translateLangName = lang;
   document.getElementById('tmTitle').textContent = `Translation — ${lang}`;
   document.getElementById('tmBody').innerHTML = `<div class="tm-loading"><div class="tm-spinner"></div><span>Translating to ${lang}…</span></div>`;
@@ -754,11 +750,9 @@ async function startTranslation() {
   document.getElementById('translateBtn').disabled = true;
 
   try {
-    const text = T?.transcript || '';
-    // Split into chunks of ~4000 chars to avoid hitting token limits
+    const text   = T?.transcript || T?.text || '';
     const chunks = chunkText(text, 4000);
-    let result = '';
-
+    let result   = '';
     for (let i = 0; i < chunks.length; i++) {
       if (chunks.length > 1) {
         document.getElementById('tmBody').innerHTML = `<div class="tm-loading"><div class="tm-spinner"></div><span>Translating part ${i+1} of ${chunks.length}…</span></div>`;
@@ -772,24 +766,19 @@ async function startTranslation() {
       if (!res.ok) throw new Error(data.error || 'Translation failed');
       result += (i > 0 ? '\n' : '') + data.translated;
     }
-
     translatedText = result.trim();
     document.getElementById('tmBody').innerHTML = `<div class="tm-content">${escH(translatedText)}</div>`;
-  } catch(e) {
+  } catch (e) {
     document.getElementById('tmBody').innerHTML = `<div style="color:var(--red);padding:2rem;text-align:center;font-size:0.85rem">❌ ${escH(e.message)}</div>`;
   }
-
   document.getElementById('translateBtn').disabled = false;
 }
 
 function chunkText(text, maxLen) {
-  const lines = text.split('\n');
-  const chunks = [], cur = [];
-  let len = 0;
-  for (const line of lines) {
-    if (len + line.length > maxLen && cur.length) {
-      chunks.push(cur.join('\n')); cur.length=0; len=0;
-    }
+  const ls = text.split('\n'), chunks = [];
+  let cur = [], len = 0;
+  for (const line of ls) {
+    if (len + line.length > maxLen && cur.length) { chunks.push(cur.join('\n')); cur = []; len = 0; }
     cur.push(line); len += line.length + 1;
   }
   if (cur.length) chunks.push(cur.join('\n'));
@@ -797,56 +786,86 @@ function chunkText(text, maxLen) {
 }
 
 function closeTranslation() { document.getElementById('translateOverlay').classList.remove('show'); }
-function copyTranslation() { navigator.clipboard.writeText(translatedText).then(()=>showToast('✅ Copied!')); }
-function downloadTranslation() {
-  const name = (T?.filename||'transcript').replace(/\.[^.]+$/,'') + `_${translateLangName}.txt`;
-  dl(translatedText, name, 'text/plain');
+function copyTranslation()  { navigator.clipboard.writeText(translatedText).then(() => showToast('✅ Copied!')); }
+function downloadTranslation() { dl(translatedText, base() + `_${translateLangName}.txt`, 'text/plain'); }
+
+// ── Exports ───────────────────────────────────────────────────────
+function copyText()    { navigator.clipboard.writeText(T?.transcript || T?.text || '').then(() => showToast('✅ Copied!')); }
+function downloadTxt() { dl(T?.transcript || T?.text || '', base() + '.txt', 'text/plain'); showToast('⬇ TXT saved'); }
+function downloadSrt() { dl(makeSrt(), base() + '.srt', 'text/plain'); showToast('⬇ SRT saved'); }
+function downloadVtt() { dl('WEBVTT\n\n' + makeSrt().replace(/,/g,'.'), base() + '.vtt', 'text/vtt'); showToast('⬇ VTT saved'); }
+
+function makeSrt() {
+  const tl = lines.filter(l => l.timeSec !== null);
+  return tl.map((l, i) => `${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec ?? l.timeSec+5)}\n${l.speaker ? l.speaker+': ' : ''}${l.text}\n`).join('\n');
 }
+function s2srt(s) {
+  s = s || 0;
+  const h = ~~(s/3600), m = ~~((s%3600)/60), sec = ~~(s%60), ms = Math.round((s%1)*1000);
+  return `${p2(h)}:${p2(m)}:${p2(sec)},${String(ms).padStart(3,'0')}`;
+}
+function base() { return (T?.filename || T?.title || 'transcript').replace(/\.[^.]+$/, ''); }
+function dl(c, n, t) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c],{type:t})); a.download = n; a.click(); }
 
-// ─── Export ───────────────────────────────────────────────────────
-function copyText(){navigator.clipboard.writeText(T?.transcript||'').then(()=>showToast('✅ Copied!'));}
-function downloadTxt(){dl(T?.transcript||'',base()+'.txt','text/plain');showToast('⬇ TXT saved');}
-function downloadSrt(){dl(makeSrt(),base()+'.srt','text/plain');showToast('⬇ SRT saved');}
-function downloadVtt(){dl('WEBVTT\n\n'+makeSrt().replace(/,/g,'.'),base()+'.vtt','text/vtt');showToast('⬇ VTT saved');}
-function makeSrt(){const tl=lines.filter(l=>l.timeSec!==null);return tl.map((l,i)=>`${i+1}\n${s2srt(l.timeSec)} --> ${s2srt(tl[i+1]?.timeSec??l.timeSec+5)}\n${l.speaker?l.speaker+': ':''}${l.text}\n`).join('\n');}
-function s2srt(s){s=s||0;const h=~~(s/3600),m=~~((s%3600)/60),sec=~~(s%60),ms=Math.round((s%1)*1000);return`${p2(h)}:${p2(m)}:${p2(sec)},${String(ms).padStart(3,'0')}`;}
-function base(){return(T?.filename||'transcript').replace(/\.[^.]+$/,'');}
-function dl(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();}
-
+// ── Delete ────────────────────────────────────────────────────────
 async function deleteTranscript() {
   if (!confirm('Delete this transcript permanently?')) return;
-  if (!T.isGuest && T.id && sb) {
-    // Use server-side delete (service key, bypasses RLS)
-    const session = (await sb.auth.getSession()).data?.session;
-    const token = session?.access_token;
-    if (token) {
+
+  if (T?.isGuest) {
+    const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts') || '[]').filter(x => x.id !== T.id);
+    localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list));
+    localStorage.removeItem('currentTranscript');
+    showToast('🗑 Deleted');
+    setTimeout(() => location.href = '/dashboard.html', 800);
+    return;
+  }
+
+  if (!T?.id || !sb) {
+    localStorage.removeItem('currentTranscript');
+    location.href = '/dashboard.html';
+    return;
+  }
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
       await fetch(`/api/transcripts/${T.id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
     }
-  }
-  if (T.isGuest || !sb) { const list = JSON.parse(localStorage.getItem('transcribr_guest_transcripts')||'[]').filter(x=>x.id!==T.id); localStorage.setItem('transcribr_guest_transcripts', JSON.stringify(list)); }
+  } catch {}
+
   localStorage.removeItem('currentTranscript');
   showToast('🗑 Deleted');
-  setTimeout(()=>location.href='/dashboard.html', 900);
+  setTimeout(() => location.href = '/dashboard.html', 800);
 }
 
-function fmtS(s){if(!s&&s!==0)return'0:00';s=Math.floor(s);return`${~~(s/60)}:${p2(s%60)}`;}
-function p2(n){return String(n).padStart(2,'0');}
-function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function engineLabel(e){
-  if(e==="groq"||e==="fast"||e==="quick")return"⚡ Quick";
-  if(e==="deepgram"||e==="balanced"||e==="smart")return"⚖️ Smart";
-  if(e==="assemblyai"||e==="accurate"||e==="precision")return"🎯 Precision";
-  return e||"—";
+// ── Helpers ───────────────────────────────────────────────────────
+function fmtS(s) {
+  if (!s && s !== 0) return '0:00';
+  s = Math.floor(s);
+  return `${~~(s/60)}:${p2(s%60)}`;
 }
-function modeLabel(m){return m==='fast'?'⚡ Fast':m==='balanced'?'🐬 Balanced':'🐋 Most Accurate';}
-function fmtDate(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function p2(n)   { return String(n).padStart(2,'0'); }
+function escH(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function engineLabel(e) {
+  if (['groq','fast','quick'].includes(e))           return '⚡ Quick';
+  if (['deepgram','balanced','smart'].includes(e))    return '⚖️ Smart';
+  if (['assemblyai','accurate','precision'].includes(e)) return '🎯 Precision';
+  return e || '—';
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
 
-// Redraw waveform on resize
-window.addEventListener('resize', ()=>{ if(lines.length) buildWaveform(); });
+window.addEventListener('resize', () => { if (lines.length) buildWaveform(); });
 
 init();
 </script>

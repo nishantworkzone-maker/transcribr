@@ -1,5 +1,6 @@
-// middleware/usage.js — Transcribr v3
-// Admin bypass · IP-aware pricing · Smart Auto routing · Professional error messages
+// middleware/usage.js — v3.1
+// FIX: saveTranscript now uses correct column names matching the schema
+// FIX: getUserPlanAndUsage handles missing tables gracefully
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,59 +14,49 @@ function getSupabaseAdmin() {
 
 // ── Plan definitions ──────────────────────────────────────────────
 export const PLAN_LIMITS = {
-  free:     { transcriptions: 3, maxMinutesPerFile: 15, totalLifetimeMinutes: 45, label: 'Free' },
-  pro:      { transcriptions: Infinity, maxMinutesPerFile: Infinity, totalLifetimeMinutes: Infinity, monthlyMinutes: 1500, label: 'Pro' },
-  business: { transcriptions: Infinity, maxMinutesPerFile: Infinity, totalLifetimeMinutes: Infinity, monthlyMinutes: 5000, label: 'Business' },
-  admin:    { transcriptions: Infinity, maxMinutesPerFile: Infinity, totalLifetimeMinutes: Infinity, monthlyMinutes: Infinity, label: 'Admin' },
+  free:     { transcriptions: 3,        maxMinutesPerFile: 15,  totalLifetimeMinutes: 45,   label: 'Free' },
+  starter:  { transcriptions: Infinity, maxMinutesPerFile: 60,  monthlyMinutes: 300,        label: 'Starter' },
+  pro:      { transcriptions: Infinity, maxMinutesPerFile: 300, monthlyMinutes: 1500,       label: 'Pro' },
+  business: { transcriptions: Infinity, maxMinutesPerFile: 600, monthlyMinutes: 5000,       label: 'Business' },
+  admin:    { transcriptions: Infinity, maxMinutesPerFile: Infinity, monthlyMinutes: Infinity, label: 'Admin' },
 };
 
 // ── Engine access by plan ─────────────────────────────────────────
-// Internal engine keys — never exposed to frontend
 const PLAN_ENGINES = {
-  free:     ['groq', 'deepgram'],          // Smart Auto uses groq + deepgram only
+  free:     ['groq', 'deepgram'],
+  starter:  ['groq', 'deepgram', 'assemblyai'],
   pro:      ['groq', 'deepgram', 'assemblyai'],
   business: ['groq', 'deepgram', 'assemblyai'],
   admin:    ['groq', 'deepgram', 'assemblyai'],
 };
 
-// Frontend mode → internal engine mapping
-// These names are NEVER shown to users — frontend shows: Smart Auto, Turbo AI, Global AI, Precision AI
+// Frontend mode → internal engine
 export const MODE_TO_ENGINE = {
-  auto:      'auto',        // Smart Auto — resolved dynamically
-  fast:      'groq',        // Turbo AI
-  balanced:  'deepgram',    // Global AI
-  accurate:  'assemblyai',  // Precision AI — Pro+ only
-  // Legacy aliases
+  auto:      'auto',
+  fast:      'groq',
+  balanced:  'deepgram',
+  accurate:  'assemblyai',
   quick:     'groq',
   smart:     'auto',
   precision: 'assemblyai',
 };
 
-// ── Smart Auto routing logic ──────────────────────────────────────
-// NEVER expose this logic to frontend — internal only
+// ── Smart Auto routing ────────────────────────────────────────────
 export function resolveSmartAutoEngine(req, plan) {
-  const audioUrl   = req.body?.audioUrl;
-  const diarize    = req.body?.diarize === 'true' || req.body?.speakers === 'true';
-  const lang       = req.body?.language || 'en';
-  const fileSize   = req.file?.size || 0;
-  const isNonEn    = lang !== 'en' && lang !== 'auto';
+  const audioUrl = req.body?.audioUrl;
+  const diarize  = req.body?.diarize === 'true' || req.body?.speakers === 'true';
+  const lang     = req.body?.language || 'en';
+  const fileSize = req.file?.size || 0;
+  const isNonEn  = lang !== 'en' && lang !== 'auto';
+  const canUseAssemblyAI = ['pro', 'business', 'admin', 'starter'].includes(plan);
 
-  const canUseAssemblyAI = ['pro', 'business', 'admin'].includes(plan);
-
-  // URL input → always Deepgram (more reliable for remote URLs)
   if (audioUrl) return 'deepgram';
-
-  // Diarization needed → Deepgram or AssemblyAI
   if (diarize) return canUseAssemblyAI ? 'assemblyai' : 'deepgram';
-
-  // Large file or non-English → Deepgram
   if (fileSize > 20 * 1024 * 1024 || isNonEn) return 'deepgram';
-
-  // Default: Groq (fastest, cheapest for simple files)
   return 'groq';
 }
 
-// ── Admin detection — backend only, never expose to frontend ──────
+// ── Admin check ───────────────────────────────────────────────────
 async function isAdminUser(userId) {
   if (!userId) return false;
   try {
@@ -76,118 +67,122 @@ async function isAdminUser(userId) {
       .eq('user_id', userId)
       .single();
     return data?.role === 'admin';
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-// ── Get user plan with admin bypass ──────────────────────────────
+// ── Get user plan + usage ─────────────────────────────────────────
 export async function getUserPlanAndUsage(userId) {
   const supabase = getSupabaseAdmin();
   try {
-    // Check admin first
     const admin = await isAdminUser(userId);
     if (admin) {
       return {
-        plan: 'admin',
-        isAdmin: true,
-        usedTranscriptions: 0,
-        limitTranscriptions: Infinity,
-        usedMinutes: 0,
-        limitMinutes: Infinity,
-        maxMinutesPerFile: Infinity,
-        count: 0,
-        limit: Infinity,
+        plan: 'admin', isAdmin: true,
+        usedTranscriptions: 0, limitTranscriptions: Infinity,
+        usedMinutes: 0, limitMinutes: Infinity,
+        maxMinutesPerFile: Infinity, count: 0, limit: Infinity,
+        usageMinutes: 0,
       };
     }
 
-    // Check user_plans (Razorpay), fall back to subscriptions
+    // Check user_plans first (Razorpay), fall back to subscriptions
     let plan = 'free';
-    const { data: planData } = await supabase
-      .from('user_plans')
-      .select('plan, status, plan_expires_at')
-      .eq('user_id', userId)
-      .single();
-
-    if (planData) {
-      if (planData.plan !== 'free' && planData.plan_expires_at) {
-        plan = new Date(planData.plan_expires_at) > new Date() ? planData.plan : 'free';
-      } else {
-        plan = planData.plan || 'free';
-      }
-    } else {
-      const { data: subData } = await supabase
-        .from('subscriptions')
-        .select('plan')
+    try {
+      const { data: planData } = await supabase
+        .from('user_plans')
+        .select('plan, status, plan_expires_at')
         .eq('user_id', userId)
         .single();
-      plan = subData?.plan || 'free';
+
+      if (planData) {
+        if (planData.status !== 'active') {
+          plan = 'free';
+        } else if (planData.plan_expires_at && new Date(planData.plan_expires_at) < new Date()) {
+          plan = 'free';
+        } else {
+          plan = planData.plan || 'free';
+        }
+      }
+    } catch {
+      // user_plans table may not exist yet — try subscriptions
+      try {
+        const { data: subData } = await supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('user_id', userId)
+          .single();
+        plan = subData?.plan || 'free';
+      } catch { plan = 'free'; }
     }
 
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
-    // For free users: count lifetime transcriptions
+    // Free plan: count lifetime transcriptions
     if (plan === 'free') {
-      const { count: txCount } = await supabase
-        .from('usage')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      let txCount = 0;
+      let totalSeconds = 0;
+      try {
+        const { count } = await supabase
+          .from('usage')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        txCount = count || 0;
 
-      const { data: minuteData } = await supabase
-        .from('usage')
-        .select('duration_seconds')
-        .eq('user_id', userId);
+        const { data: minuteData } = await supabase
+          .from('usage')
+          .select('duration_seconds')
+          .eq('user_id', userId);
+        totalSeconds = (minuteData || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
+      } catch { /* usage table may not exist yet */ }
 
-      const totalSeconds = (minuteData || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
       const usedMinutes = Math.ceil(totalSeconds / 60);
-
       return {
-        plan,
-        isAdmin: false,
-        usedTranscriptions: txCount || 0,
+        plan, isAdmin: false,
+        usedTranscriptions: txCount,
         limitTranscriptions: limits.transcriptions,
         usedMinutes,
-        limitMinutes: limits.totalLifetimeMinutes,
+        limitMinutes: limits.totalLifetimeMinutes || 45,
         maxMinutesPerFile: limits.maxMinutesPerFile,
-        count: txCount || 0,
-        limit: limits.transcriptions,
+        count: txCount, limit: limits.transcriptions,
+        usageMinutes: usedMinutes,
       };
     }
 
-    // For paid users: monthly minutes
+    // Paid plan: monthly minutes
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const { data: usageData } = await supabase
-      .from('usage')
-      .select('duration_seconds')
-      .eq('user_id', userId)
-      .gte('created_at', startOfMonth.toISOString());
+    let totalSeconds = 0;
+    try {
+      const { data: usageData } = await supabase
+        .from('usage')
+        .select('duration_seconds')
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth.toISOString());
+      totalSeconds = (usageData || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
+    } catch { /* usage table may not exist */ }
 
-    const totalSeconds = (usageData || []).reduce((s, r) => s + (r.duration_seconds || 0), 0);
     const usedMinutes = Math.ceil(totalSeconds / 60);
     const monthlyLimit = limits.monthlyMinutes || Infinity;
 
     return {
-      plan,
-      isAdmin: false,
-      usedTranscriptions: Infinity,
-      limitTranscriptions: Infinity,
-      usedMinutes,
-      limitMinutes: monthlyLimit,
-      maxMinutesPerFile: Infinity,
-      count: usedMinutes,
-      limit: monthlyLimit,
+      plan, isAdmin: false,
+      usedTranscriptions: Infinity, limitTranscriptions: Infinity,
+      usedMinutes, limitMinutes: monthlyLimit,
+      maxMinutesPerFile: limits.maxMinutesPerFile || Infinity,
+      count: usedMinutes, limit: monthlyLimit,
+      usageMinutes: usedMinutes,
     };
 
   } catch (err) {
-    console.error('getUserPlanAndUsage error:', err.message);
+    console.error('[getUserPlanAndUsage] error:', err.message);
     return {
       plan: 'free', isAdmin: false,
       usedTranscriptions: 0, limitTranscriptions: 3,
       usedMinutes: 0, limitMinutes: 45,
       maxMinutesPerFile: 15, count: 0, limit: 3,
+      usageMinutes: 0,
     };
   }
 }
@@ -199,29 +194,24 @@ export async function checkUsageLimit(req, res, next) {
   try {
     const usage = await getUserPlanAndUsage(req.user.id);
 
-    // Admin bypass — no limits at all
     if (usage.isAdmin) {
       req.userPlan = 'admin';
       req.userUsage = usage;
       return next();
     }
 
-    // Free plan: check lifetime transcription count
-    if (usage.plan === 'free') {
-      if (usage.usedTranscriptions >= usage.limitTranscriptions) {
-        return res.status(429).json({
-          error: 'You have used all 3 transcriptions included in the Free plan. Upgrade to Pro to continue with unlimited transcriptions.',
-          code: 'USAGE_LIMIT',
-          plan: 'free',
-          upgradeUrl: '/pricing.html',
-        });
-      }
+    if (usage.plan === 'free' && usage.usedTranscriptions >= usage.limitTranscriptions) {
+      return res.status(429).json({
+        error: 'You have used all 3 transcriptions on the Free plan. Upgrade to Pro to continue.',
+        code: 'USAGE_LIMIT',
+        plan: 'free',
+        upgradeUrl: '/pricing.html',
+      });
     }
 
-    // Paid plan: check monthly minutes
-    if (usage.plan !== 'free' && usage.usedMinutes >= usage.limitMinutes) {
+    if (usage.plan !== 'free' && isFinite(usage.limitMinutes) && usage.usedMinutes >= usage.limitMinutes) {
       return res.status(429).json({
-        error: 'Your monthly usage limit has been reached. Your limit resets at the start of next month.',
+        error: 'Your monthly usage limit has been reached. It resets at the start of next month.',
         code: 'MONTHLY_LIMIT',
         plan: usage.plan,
         upgradeUrl: '/pricing.html',
@@ -232,7 +222,7 @@ export async function checkUsageLimit(req, res, next) {
     req.userUsage = usage;
     next();
   } catch {
-    next();
+    next(); // fail open — don't block transcription on usage check failure
   }
 }
 
@@ -241,11 +231,9 @@ export async function checkEngineAccess(req, res, next) {
   const rawMode = req.body?.mode || 'auto';
   const engineKey = MODE_TO_ENGINE[rawMode] || 'groq';
 
-  // Smart Auto and Turbo AI are always allowed
   if (engineKey === 'auto' || engineKey === 'groq') return next();
 
   if (!req.user) {
-    // Guests can only use auto/groq
     return res.status(403).json({
       error: 'Sign in to access additional AI engines.',
       code: 'AUTH_REQUIRED',
@@ -258,10 +246,9 @@ export async function checkEngineAccess(req, res, next) {
 
     const allowed = PLAN_ENGINES[plan] || PLAN_ENGINES.free;
     if (!allowed.includes(engineKey)) {
-      // Professional user-facing error — no internal engine names
-      const uiNames = { assemblyai: 'Precision AI' };
+      const uiNames = { assemblyai: 'Precision AI', deepgram: 'Global AI' };
       return res.status(403).json({
-        error: `${uiNames[engineKey] || 'This AI engine'} is available on the Pro plan. Upgrade to access advanced AI processing.`,
+        error: `${uiNames[engineKey] || 'This AI engine'} requires a Pro plan. Upgrade to access advanced processing.`,
         code: 'ENGINE_LOCKED',
         upgradeUrl: '/pricing.html',
       });
@@ -270,14 +257,13 @@ export async function checkEngineAccess(req, res, next) {
     req.userPlan = plan;
     next();
   } catch {
-    next();
+    next(); // fail open
   }
 }
 
 // ── Record usage ──────────────────────────────────────────────────
 export async function recordUsage(userId, engine, durationSeconds, filename) {
   if (!userId) return;
-  // Never record usage for admin
   try {
     const admin = await isAdminUser(userId);
     if (admin) return;
@@ -291,26 +277,72 @@ export async function recordUsage(userId, engine, durationSeconds, filename) {
       filename: filename || 'audio',
     });
   } catch (err) {
-    console.error('recordUsage failed:', err.message);
+    console.error('[recordUsage] failed:', err.message);
   }
 }
 
 // ── Save transcript ───────────────────────────────────────────────
+// FIX: Uses correct column names from the schema (transcriptions table)
+// Old schema had 'title' — new schema uses 'filename'. Both are handled.
 export async function saveTranscript(userId, data) {
   if (!userId) return null;
-  const { data: saved, error } = await getSupabaseAdmin()
-    .from('transcriptions')
-    .insert({
-      user_id: userId,
-      filename: data.title || 'Untitled',
-      transcript: data.text,
-      audio_url: data.audioUrl || null,
-      mode: data.engine || 'groq',
-      language: data.language || 'en',
-      duration_seconds: data.durationSeconds || 0,
-      file_size_mb: data.fileSizeMb || 0,
-    })
-    .select().single();
-  if (error) throw new Error('saveTranscript failed: ' + error.message);
-  return saved;
+  const supabase = getSupabaseAdmin();
+
+  const row = {
+    user_id:          userId,
+    filename:         data.title || data.filename || 'Untitled',
+    transcript:       data.text || '',
+    audio_url:        data.audioUrl || null,
+    engine:           data.engine || 'groq',
+    mode:             data.engine || 'groq',
+    language:         data.language || 'en',
+    duration_seconds: Math.round(data.durationSeconds || 0),
+    file_size_mb:     parseFloat((data.fileSizeMb || 0).toFixed(2)),
+  };
+
+  try {
+    // Try new schema (transcriptions table with 'filename' column)
+    const { data: saved, error } = await supabase
+      .from('transcriptions')
+      .insert(row)
+      .select()
+      .single();
+
+    if (error) {
+      // Column 'filename' doesn't exist in old schema — try with 'title'
+      if (error.code === '42703') {
+        const oldRow = { ...row, title: row.filename };
+        delete oldRow.filename;
+        delete oldRow.mode;
+        delete oldRow.file_size_mb;
+
+        const { data: saved2, error: err2 } = await supabase
+          .from('transcriptions')
+          .insert(oldRow)
+          .select()
+          .single();
+
+        if (err2) {
+          // Try old table name as last resort
+          if (err2.code === '42P01') {
+            const { data: saved3, error: err3 } = await supabase
+              .from('transcripts')
+              .insert(oldRow)
+              .select()
+              .single();
+            if (err3) throw new Error('saveTranscript all fallbacks failed: ' + err3.message);
+            return saved3;
+          }
+          throw new Error('saveTranscript fallback failed: ' + err2.message);
+        }
+        return saved2;
+      }
+      throw new Error('saveTranscript failed: ' + error.message);
+    }
+
+    return saved;
+  } catch (err) {
+    console.error('[saveTranscript]', err.message);
+    throw err;
+  }
 }

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/theme-vars.css"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Account — Transcribr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --red: #f87171; --yellow: #fbbf24; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s, color 0.25s;
+}
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+/* NAV */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.8rem; height: 56px;
+  background: var(--nav-bg); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 200;
+}
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--text); }
+.logo-dot { color: var(--accent2); }
+.nav-back { font-size: 0.82rem; color: var(--muted); transition: color 0.2s; }
+.nav-back:hover { color: var(--text); }
+
+/* LAYOUT */
+.page-wrap { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+/* PROFILE HEADER */
+.profile-header {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.avatar-big {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; font-weight: 800; color: #fff;
+  font-family: 'Syne', sans-serif;
+  flex-shrink: 0;
+}
+.profile-info { flex: 1; min-width: 0; }
+.profile-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.2rem; }
+.profile-email { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.6rem; }
+.profile-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 700; padding: 3px 10px;
+  border-radius: 100px; letter-spacing: 0.3px;
+}
+.badge-plan { background: rgba(108,92,231,0.15); color: var(--accent2); border: 1px solid rgba(108,92,231,0.3); }
+.badge-plan.pro { background: rgba(0,212,170,0.12); color: var(--green); border-color: rgba(0,212,170,0.25); }
+.badge-joined { background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); }
+.profile-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
+.btn-upgrade {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; border: none; padding: 0.55rem 1.2rem;
+  border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+  transition: opacity 0.2s;
+}
+.btn-upgrade:hover { opacity: 0.88; }
+.btn-outline {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border2); padding: 0.5rem 1rem;
+  border-radius: 100px; font-size: 0.78rem;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+.card-title {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--muted2);
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.card-title .icon { font-size: 0.9rem; }
+
+/* USAGE CARD */
+.usage-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+.usage-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 1rem; }
+.progress-wrap { background: var(--border2); border-radius: 100px; height: 6px; overflow: hidden; margin-bottom: 0.5rem; }
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+.progress-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); }
+
+/* STAT MINI CARDS */
+.stat-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  text-align: center;
+}
+.stat-num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.15rem; }
+.stat-lbl { font-size: 0.7rem; color: var(--muted); }
+
+/* PLAN CARD */
+.plan-feature {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  font-size: 0.83rem; color: var(--text2, var(--muted));
+  padding: 0.3rem 0;
+}
+.plan-feature .check { color: var(--green); flex-shrink: 0; }
+.plan-feature .lock { color: var(--muted2); flex-shrink: 0; }
+
+/* ENGINES */
+.engine-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.engine-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 0.6rem 0.8rem;
+}
+.engine-left { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; }
+.engine-lock { font-size: 0.65rem; color: var(--accent2); background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.25); padding: 1px 7px; border-radius: 100px; }
+.engine-ok { font-size: 0.65rem; color: var(--green); background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2); padding: 1px 7px; border-radius: 100px; }
+
+/* SETTINGS */
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 0.86rem; font-weight: 500; margin-bottom: 0.15rem; }
+.setting-desc { font-size: 0.75rem; color: var(--muted); }
+.toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--border2); border-radius: 22px; cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-track::after {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  top: 3px; left: 3px; transition: transform 0.2s;
+}
+input:checked + .toggle-track { background: var(--accent); }
+input:checked + .toggle-track::after { transform: translateX(16px); }
+.setting-select {
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 8px; padding: 0.4rem 0.75rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+  appearance: none; cursor: pointer;
+}
+
+/* DANGER ZONE */
+.danger-card { border-color: rgba(248,113,113,0.25); }
+.danger-title { color: var(--red); }
+.danger-btn {
+  background: transparent; border: 1px solid var(--red); color: var(--red);
+  padding: 0.5rem 1.1rem; border-radius: 8px; font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.danger-btn:hover { background: rgba(248,113,113,0.1); }
+
+/* LOADING */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* TOAST */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 9px; padding: 0.65rem 1.1rem; font-size: 0.82rem; color: var(--text); transform: translateY(60px); opacity: 0; transition: all 0.3s; z-index: 999; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .profile-header { flex-direction: column; }
+  .profile-actions { align-items: flex-start; flex-direction: row; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Transcribr<span class="logo-dot">.</span></a>
+  <a href="/dashboard.html" class="nav-back">← Dashboard</a>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header" id="profileHeader">
+    <div class="avatar-big" id="avatarBig">…</div>
+    <div class="profile-info">
+      <div class="profile-name" id="profileName"><div class="skeleton" style="width:160px;height:22px"></div></div>
+      <div class="profile-email" id="profileEmail"><div class="skeleton" style="width:220px;height:16px;margin-top:6px"></div></div>
+      <div class="profile-badges" id="profileBadges">
+        <div class="skeleton" style="width:60px;height:20px;border-radius:100px"></div>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn-upgrade" id="upgradeBtn" style="display:none" onclick="location.href='/pricing.html'">⭐ Upgrade Plan</button>
+      <button class="btn-outline" onclick="location.href='/pricing.html'">View Plans</button>
+    </div>
+  </div>
+
+  <!-- USAGE STATS ROW -->
+  <div class="grid-3" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">—</div>
+      <div class="stat-lbl">Total Transcriptions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statMonth">—</div>
+      <div class="stat-lbl">This Month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statMinutes">—</div>
+      <div class="stat-lbl">Minutes Transcribed</div>
+    </div>
+  </div>
+
+  <!-- USAGE + PLAN ROW -->
+  <div class="grid-2">
+
+    <!-- USAGE CARD -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> Monthly Usage</div>
+      <div class="usage-number" id="usageNum">0</div>
+      <div class="usage-label" id="usageLabel">minutes used this month</div>
+      <div class="progress-wrap">
+        <div class="progress-fill" id="usageBar" style="width:0%"></div>
+      </div>
+      <div class="progress-labels">
+        <span id="usageUsed">0 min used</span>
+        <span id="usageLeft">—</span>
+      </div>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted)">
+        Resets on the 1st of each month
+      </div>
+    </div>
+
+    <!-- PLAN CARD -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💎</span> Current Plan</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:0.3rem" id="planName">Free</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem" id="planSub">Free forever • No credit card needed</div>
+      <div class="engine-grid" id="planFeatures">
+        <div class="engine-row">
+          <div class="engine-left">🧠 Smart Auto Engine</div>
+          <span class="engine-ok">Included</span>
+        </div>
+        <div class="engine-row">
+          <div class="engine-left">⚡ Turbo AI (Groq)</div>
+          <span class="engine-ok">Included</span>
+        </div>
+        <div class="engine-row">
+          <div class="engine-left">⚖️ Global AI (Deepgram)</div>
+          <span class="engine-ok">Included</span>
+        </div>
+        <div class="engine-row" id="precisionRow">
+          <div class="engine-left">🎯 Precision AI (AssemblyAI)</div>
+          <span class="engine-lock" id="precisionBadge">Pro only</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BILLING HISTORY + SETTINGS -->
+  <div class="grid-2" style="margin-bottom:1.25rem">
+
+    <!-- BILLING -->
+    <div class="card">
+      <div class="card-title"><span class="icon">💳</span> Billing</div>
+      <div id="billingContent">
+        <div style="padding:1.5rem;text-align:center;color:var(--muted)">
+          <div style="font-size:2rem;margin-bottom:0.5rem">💳</div>
+          <div style="font-size:0.85rem;margin-bottom:1rem">No active subscription</div>
+          <button class="btn-upgrade" onclick="location.href='/pricing.html'" style="font-size:0.82rem">Upgrade to Pro →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="card" id="settings">
+      <div class="card-title"><span class="icon">⚙️</span> Preferences</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Theme</div>
+          <div class="setting-desc">Light or dark interface</div>
+        </div>
+        <select class="setting-select" id="themeSel" onchange="changeTheme(this.value)">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Email Notifications</div>
+          <div class="setting-desc">Transcription complete alerts</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="emailNotif" checked/>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Auto-save Transcripts</div>
+          <div class="setting-desc">Save to cloud after each job</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="autoSave" checked/>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT ACTIVITY -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-title"><span class="icon">🕐</span> Recent Transcripts</div>
+    <div id="recentActivity">
+      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.85rem">
+        <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4">📝</div>
+        Loading recent activity…
+      </div>
+    </div>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div class="card danger-card">
+    <div class="card-title danger-title"><span class="icon">⚠️</span> Danger Zone</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div style="font-size:0.85rem;font-weight:500;margin-bottom:0.2rem">Delete All Transcripts</div>
+        <div style="font-size:0.75rem;color:var(--muted)">Permanently remove all your transcript data. Cannot be undone.</div>
+      </div>
+      <button class="danger-btn" onclick="confirmDeleteAll()">Delete All Data</button>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(248,113,113,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div style="font-size:0.85rem;font-weight:500;margin-bottom:0.2rem">Delete Account</div>
+        <div style="font-size:0.75rem;color:var(--muted)">Permanently delete your account and all associated data.</div>
+      </div>
+      <button class="danger-btn" onclick="confirmDeleteAccount()">Delete Account</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let sb = null, currentUser = null, authToken = null;
+
+async function init() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/login.html'; return; }
+    currentUser = session.user;
+    authToken = session.access_token;
+  } catch (e) {
+    showToast('❌ Connection error');
+    return;
+  }
+
+  // Set theme selector
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  document.getElementById('themeSel').value = theme;
+
+  renderUserInfo();
+  await Promise.all([loadPlanData(), loadTranscripts()]);
+}
+
+function renderUserInfo() {
+  const email = currentUser.email || '';
+  const name = currentUser.user_metadata?.full_name || email.split('@')[0] || 'User';
+  const initial = name.charAt(0).toUpperCase();
+  const joined = new Date(currentUser.created_at || Date.now()).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+  document.getElementById('avatarBig').textContent = initial;
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileEmail').textContent = email;
+  document.getElementById('profileBadges').innerHTML = `
+    <span class="badge badge-plan" id="planBadge">Free</span>
+    <span class="badge badge-joined">Joined ${joined}</span>
+  `;
+}
+
+async function loadPlanData() {
+  try {
+    const r = await fetch('/api/user/me', { headers: { 'Authorization': `Bearer ${authToken}` } });
+    if (!r.ok) return;
+    const d = await r.json();
+    const plan = d.plan || 'free';
+    const usedMins = d.usageMinutes || d.usedMinutes || 0;
+    const LIMITS = { free: 30, starter: 300, pro: 1500, business: 5000 };
+    const limit = LIMITS[plan] || 30;
+    const pct = Math.min(100, Math.round((usedMins / limit) * 100));
+    const isPaid = !['free', 'guest'].includes(plan);
+    const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+    // Plan badge
+    const badge = document.getElementById('planBadge');
+    badge.textContent = planLabel + ' Plan';
+    if (isPaid) badge.classList.add('pro');
+
+    // Upgrade button
+    if (!isPaid) document.getElementById('upgradeBtn').style.display = 'block';
+
+    // Plan name card
+    document.getElementById('planName').textContent = planLabel;
+    document.getElementById('planSub').textContent = isPaid
+      ? `${limit.toLocaleString()} min/month • Billed monthly`
+      : 'Free forever • No credit card needed';
+
+    // Precision AI lock
+    if (isPaid) {
+      document.getElementById('precisionBadge').textContent = '✓ Included';
+      document.getElementById('precisionBadge').className = 'engine-ok';
+    }
+
+    // Usage bar
+    document.getElementById('usageNum').textContent = usedMins;
+    document.getElementById('usageLabel').textContent = 'minutes used this month';
+    document.getElementById('usageBar').style.width = pct + '%';
+    document.getElementById('usageBar').style.background =
+      pct > 85 ? '#f87171' : pct > 60 ? '#fbbf24' :
+      'linear-gradient(90deg, var(--accent), var(--accent2))';
+    document.getElementById('usageUsed').textContent = usedMins + ' min used';
+    document.getElementById('usageLeft').textContent = Math.max(0, limit - usedMins) + ' / ' + limit + ' min';
+
+    // Stats
+    document.getElementById('statMinutes').textContent = usedMins;
+
+    // Billing section
+    if (isPaid) {
+      document.getElementById('billingContent').innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem">
+          <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem">✅</div>
+          <div>
+            <div style="font-size:0.88rem;font-weight:600">${planLabel} — Active</div>
+            <div style="font-size:0.72rem;color:var(--muted)">Monthly billing</div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem">Next billing date: calculated from your payment date.</div>
+        <button class="btn-outline" onclick="location.href='/pricing.html'" style="font-size:0.78rem">Manage Subscription</button>
+      `;
+    }
+  } catch (e) { console.error('loadPlanData:', e); }
+}
+
+async function loadTranscripts() {
+  try {
+    const r = await fetch('/api/transcripts', { headers: { 'Authorization': `Bearer ${authToken}` } });
+    if (!r.ok) throw new Error('Failed');
+    const d = await r.json();
+    const transcripts = d.data || [];
+
+    // Count stats
+    const total = transcripts.length;
+    const now = new Date();
+    const thisMonth = transcripts.filter(t => {
+      const d = new Date(t.created_at);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statMonth').textContent = thisMonth;
+
+    // Recent activity
+    const el = document.getElementById('recentActivity');
+    if (!transcripts.length) {
+      el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.85rem">
+        <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4">🎙️</div>
+        <div>No transcripts yet</div>
+        <a href="/dashboard.html?new=1" style="color:var(--accent2);font-size:0.8rem;margin-top:0.5rem;display:inline-block">Create your first →</a>
+      </div>`;
+      return;
+    }
+
+    const recent = transcripts.slice(0, 5);
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;font-size:0.65rem;color:var(--muted2);padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px">Name</th>
+          <th style="text-align:left;font-size:0.65rem;color:var(--muted2);padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px">Date</th>
+          <th style="text-align:left;font-size:0.65rem;color:var(--muted2);padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px">Engine</th>
+          <th style="text-align:left;font-size:0.65rem;color:var(--muted2);padding:0.5rem 0.75rem;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px">Actions</th>
+        </tr></thead>
+        <tbody>
+          ${recent.map(t => `<tr>
+            <td style="padding:0.7rem 0.75rem;font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--border)">${esc(t.filename || t.title || 'Untitled')}</td>
+            <td style="padding:0.7rem 0.75rem;font-size:0.75rem;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border)">${fmtDate(t.created_at)}</td>
+            <td style="padding:0.7rem 0.75rem;border-bottom:1px solid var(--border)">
+              <span style="font-size:0.7rem;padding:2px 8px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)">${engineLabel(t.engine || t.mode)}</span>
+            </td>
+            <td style="padding:0.7rem 0.75rem;border-bottom:1px solid var(--border)">
+              <a href="/dashboard.html" onclick="openById('${t.id}')" style="font-size:0.75rem;color:var(--accent2)">Open →</a>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      </div>
+      <div style="padding:0.75rem;text-align:right">
+        <a href="/dashboard.html" style="font-size:0.78rem;color:var(--accent2)">View all ${total} transcripts →</a>
+      </div>
+    `;
+  } catch (e) {
+    console.error('loadTranscripts:', e);
+    document.getElementById('recentActivity').innerHTML = `
+      <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:0.82rem">
+        Could not load transcripts. <a href="/dashboard.html" style="color:var(--accent2)">Go to dashboard →</a>
+      </div>`;
+  }
+}
+
+function openById(id) {
+  localStorage.setItem('openTranscriptId', id);
+}
+
+function changeTheme(val) {
+  document.documentElement.setAttribute('data-theme', val);
+  localStorage.setItem('transcribr_theme', val);
+}
+
+async function confirmDeleteAll() {
+  if (!confirm('Are you sure? This will permanently delete ALL your transcripts. This cannot be undone.')) return;
+  showToast('⏳ Deleting all transcripts…');
+  try {
+    // Currently not implemented server-side — show contact info
+    showToast('📧 Please contact support to bulk delete transcripts.');
+  } catch (e) { showToast('❌ Failed. Please try again.'); }
+}
+
+function confirmDeleteAccount() {
+  if (!confirm('This will permanently delete your account and all data. Contact support to proceed.')) return;
+  window.location.href = 'mailto:nishant.workzone@gmail.com?subject=Account Deletion Request&body=Please delete my account: ' + (currentUser?.email || '');
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+function engineLabel(e) {
+  if (['groq','fast','quick'].includes(e)) return '⚡ Quick';
+  if (['deepgram','balanced','smart'].includes(e)) return '⚖️ Smart';
+  if (['assemblyai','accurate','precision'].includes(e)) return '🎯 Precision';
+  return e || '—';
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+init();
+</script>
+</body>
+</html>

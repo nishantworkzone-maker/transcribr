@@ -13,6 +13,6 @@
   <line x1="20" y1="53" x2="36" y2="53" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
   <!-- Sound waves -->
   <path d="M50 18 Q57 30 50 42" fill="none" stroke="#a29bfe" stroke-width="2" stroke-linecap="round"/>
-  <!-- Wordmark -->
+  <!-- Wordmark — dark text for light backgrounds -->
   <text x="74" y="40" font-family="Syne, Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="-0.8" fill="#0d0d1a">Transcribr<tspan fill="#a29bfe">.</tspan></text>
 </svg>

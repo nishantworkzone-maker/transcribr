@@ -4,13 +4,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Transcribr — AI Transcription</title>
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <!-- Theme: load before paint to prevent flash -->
 <script src="/theme.js"></script>
+<script src="/lib/logo.js"></script>
 <link rel="stylesheet" href="/theme-vars.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 /* Color tokens provided by theme-vars.css — dark default, light via [data-theme="light"] */
 :root {
   /* page-specific extras */
@@ -18,11 +21,14 @@
   --red: #f87171;
   --gold: #f8c553;
 }
+
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background-color 0.25s, color 0.25s; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
 /* NAV */
 nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; background: var(--nav-bg); backdrop-filter: blur(16px); }
+.logo-link { display: inline-flex; align-items: center; text-decoration: none; }
+.nav-logo { height: 34px; width: auto; display: block; }
 .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--text); letter-spacing: -0.3px; text-decoration: none; }
 .logo span { color: var(--accent2); }
 .nav-links { display: flex; gap: 2rem; list-style: none; }
@@ -101,6 +107,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   nav { padding: 1rem 1.2rem; }
   .nav-links { display: none; }
 }
+
 .faq-item { border-bottom: 1px solid var(--border); overflow: hidden; }
 .faq-q { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 0; cursor: pointer; font-weight: 500; font-size: 0.96rem; gap: 1rem; user-select: none; }
 .faq-q:hover { color: var(--accent2); }
@@ -114,7 +121,9 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 
 <!-- NAV -->
 <nav>
-  <a href="/" class="logo">Transcribr<span>.</span></a>
+  <a href="/" class="logo-link">
+    <img src="/logo-dark.svg" alt="Transcribr" height="34" class="nav-logo"/>
+  </a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="/pricing.html">Pricing</a></li>
@@ -130,21 +139,16 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 <!-- HERO -->
 <section class="hero">
   <div class="hero-badge">⚡ AI-Powered Transcription</div>
-
   <h1>Transcribe anything<br>in <span class="accent">seconds</span></h1>
-
   <p>
     Upload audio or video — or paste a URL — and get fast, accurate transcripts with speaker labels in 99+ languages.
   </p>
-
   <p style="margin-top:10px;font-size:0.85rem;color:#888;">
     🔒 Your files are private • Powered by AI transcription • No spam
   </p>
-
   <p style="margin-top:6px;font-size:0.8rem;color:#666;">
     No signup required to try • Works instantly
   </p>
-
   <div class="hero-btns">
     <a href="/dashboard.html?new=1" class="btn-primary" id="heroCtaBtn">
       Transcribe for free →
@@ -199,7 +203,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <div class="section-tag" style="text-align:center">Plans</div>
     <h2 class="section-title">Simple, transparent pricing</h2>
     <p class="section-sub" style="margin:0 auto">Start free. No credit card required. Upgrade anytime.</p>
-
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:900px;margin:3rem auto 0;">
 
       <!-- FREE -->
@@ -255,7 +258,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
       </div>
 
     </div>
-
     <p style="text-align:center;margin-top:2rem;font-size:0.83rem;color:var(--muted)">
       💳 UPI · Cards · Net Banking · 🔒 Razorpay · ↩️ Cancel anytime
       <a href="/pricing.html" style="color:var(--accent2);margin-left:1rem">See full pricing →</a>
@@ -281,7 +283,9 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 
 <!-- FOOTER -->
 <footer>
-  <div class="logo" style="font-size:1.05rem">Transcribr<span style="color:var(--accent2)">.</span></div>
+  <a href="/" class="logo-link">
+    <img src="/logo-dark.svg" alt="Transcribr" height="28" class="nav-logo"/>
+  </a>
   <div style="display:flex;gap:2rem;flex-wrap:wrap">
     <a href="/privacy.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Privacy</a>
     <a href="/terms.html" style="color:var(--muted);text-decoration:none;font-size:0.83rem">Terms</a>
@@ -294,7 +298,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 </footer>
 
 <script>
-// Check if user is already logged in — update nav accordingly
 async function checkAuth() {
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
@@ -302,21 +305,17 @@ async function checkAuth() {
     const { data: { session } } = await sb.auth.getSession();
     const navRight = document.getElementById('navRight');
     if (session) {
-      // Logged in — show Dashboard button
       navRight.innerHTML = `
         ${['free',''].includes(userPlan||'') ? '<a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.4rem 1rem;border-radius:100px;font-size:0.82rem;text-decoration:none;font-weight:500;margin-right:0.2rem;">⭐ Upgrade</a>' : ''}
         <a href="/dashboard.html" class="nav-login">Dashboard</a>
         <a href="/dashboard.html?new=1" class="nav-cta">Transcribe →</a>`;
-      // Update hero CTA to go straight to app
       document.getElementById('heroCtaBtn').href = '/dashboard.html?new=1';
     } else {
-      // Not logged in — show Login + Sign up
       navRight.innerHTML = `
         <a href="/login.html" class="nav-login">Log in</a>
         <a href="/login.html" class="nav-cta">Sign up free</a>`;
     }
   } catch(e) {
-    // fallback
     document.getElementById('navRight').innerHTML = `
       <a href="/login.html" class="nav-login">Log in</a>
       <a href="/login.html" class="nav-cta">Sign up free</a>`;
@@ -324,7 +323,6 @@ async function checkAuth() {
 }
 checkAuth();
 
-// FAQ accordion
 const faqs = [
   { q: 'Is Transcribr really free to use?', a: 'Yes! You can transcribe up to 3 files as a guest without signing up. Create a free account to get 10 transcriptions per month — no credit card needed.' },
   { q: 'What audio formats are supported?', a: 'Transcribr supports MP3, MP4, WAV, M4A, OGG, WEBM, and FLAC files up to 100MB. You can also paste a direct URL to an audio or video file.' },
@@ -354,7 +352,6 @@ function toggleFaq(i) {
   document.querySelectorAll('.faq-item').forEach(x => x.classList.remove('open'));
   if (!isOpen) el.classList.add('open');
 }
-
 </script>
 </body>
 </html>

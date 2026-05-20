@@ -3,6 +3,7 @@
 <head>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/theme-vars.css"/>
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg"/>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard — Transcribr</title>
@@ -356,13 +357,18 @@ tr:hover td { background:var(--hover-bg); }
 }
 @media(max-width:480px) { .main { padding:1rem; } .stats-row { grid-template-columns:1fr; } }
 </style>
+<script src="/lib/logo.js"></script>
 </head>
 <body>
 
 <div class="test-mode-badge" id="testModeBadge">Test Mode</div>
 
 <nav>
-  <a href="/" class="logo">Transcribr<span class="logo-dot">.</span></a>
+  <a href="/" style="display:inline-flex;align-items:center;text-decoration:none;flex-shrink:0;">
+    <img src="/logo-dark.svg" alt="Transcribr" height="34" id="navLogo" style="display:block;"
+         onerror="this.onerror=null;this.style.display='none';document.getElementById('navLogoFallback').style.display='inline'"/>
+    <span id="navLogoFallback" style="display:none;font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--text)">Transcribr<span style="color:var(--accent2)">.</span></span>
+  </a>
   <div class="nav-right" id="navRight"></div>
 </nav>
 
@@ -438,7 +444,7 @@ tr:hover td { background:var(--hover-bg); }
       <div class="stat-card">
         <div class="stat-lbl">This Month</div>
         <div class="stat-val" id="sMonth">—</div>
-        <div class="stat-sub" id="sMonthSub">of 10 free</div>
+        <div class="stat-sub" id="sMonthSub">of 3 free</div>
       </div>
       <div class="stat-card">
         <div class="stat-lbl">Plan</div>
@@ -585,13 +591,14 @@ function showGuestLimitModal() {
   div.id = 'guestLimitModal';
   div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:600;display:flex;align-items:center;justify-content:center;padding:1rem;';
   div.innerHTML = `<div style="background:var(--modal-bg,var(--surface));border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:420px;width:100%;text-align:center;">
-    <div style="font-size:2rem;margin-bottom:0.8rem">🎯</div>
-    <h3 style="font-family:Syne,sans-serif;font-size:1.1rem;margin-bottom:0.5rem">You've used all 3 free transcriptions</h3>
-    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;line-height:1.65">Sign in for free to get 10 transcriptions per month and keep your transcripts permanently.</p>
+    <img src="/logo.svg" alt="Transcribr" height="38" style="margin:0 auto 1.2rem;display:block;" onerror="this.style.display='none'"/>
+    <h3 style="font-family:Syne,sans-serif;font-size:1.1rem;margin-bottom:0.5rem;color:var(--text)">You've used all 3 free transcriptions</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:0.5rem;line-height:1.65">Sign in to continue with <strong style="color:var(--text)">3 free transcriptions/month</strong> — stored permanently in your account.</p>
+    <p style="color:var(--muted);font-size:0.78rem;margin-bottom:1.5rem;line-height:1.6">Want more? Upgrade to <strong style="color:var(--accent2)">Pro for 1500 min/month</strong> and all AI engines.</p>
     <div style="display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap">
-      <button onclick="location.href='/login.html'" style="background:var(--accent);color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:100px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Sign In Free →</button>
-      <button onclick="location.href='/pricing.html'" style="background:transparent;color:var(--accent2);border:1px solid rgba(108,92,231,0.4);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">View Plans →</button>
-      <button onclick="document.getElementById('guestLimitModal').style.display='none'" style="background:transparent;color:var(--muted);border:1px solid var(--border2);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:DM Sans,sans-serif;">Maybe later</button>
+      <button onclick="location.href='/login.html'" style="background:var(--accent);color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:100px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign In Free →</button>
+      <button onclick="location.href='/pricing.html'" style="background:transparent;color:var(--accent2);border:1px solid rgba(108,92,231,0.4);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;">View Plans →</button>
+      <button onclick="document.getElementById('guestLimitModal').style.display='none'" style="background:transparent;color:var(--muted);border:1px solid var(--border2);padding:0.65rem 1.2rem;border-radius:100px;font-size:0.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Maybe later</button>
     </div>
   </div>`;
   document.body.appendChild(div);
@@ -1156,6 +1163,18 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
+
+// ── Switch logo based on theme ────────────────────────────────────
+function updateLogoForTheme() {
+  const logo = document.getElementById('navLogo');
+  if (!logo) return;
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  logo.src = isDark ? '/logo-dark.svg' : '/logo.svg';
+}
+updateLogoForTheme();
+new MutationObserver(updateLogoForTheme).observe(
+  document.documentElement, { attributes: true, attributeFilter: ['data-theme'] }
+);
 
 init();
 </script>

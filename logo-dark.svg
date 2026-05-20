@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="60" viewBox="0 0 280 60" role="img">
+  <title>Transcribr</title>
+  <desc>Transcribr - AI-powered transcription</desc>
+  <rect x="0" y="2" width="56" height="56" rx="14" fill="#6c5ce7"/>
+  <rect x="18" y="8" width="20" height="26" rx="10" fill="#ffffff"/>
+  <path d="M10 30 Q10 46 28 46 Q46 46 46 30" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="28" y1="46" x2="28" y2="53" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="20" y1="53" x2="36" y2="53" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M50 18 Q57 30 50 42" fill="none" stroke="#a29bfe" stroke-width="2" stroke-linecap="round"/>
+  <text x="74" y="40" font-family="Syne, Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="-0.8" fill="#ededf5">Transcribr<tspan fill="#a29bfe">.</tspan></text>
+</svg>

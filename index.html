@@ -6,22 +6,17 @@
 <title>Transcribr — AI Transcription</title>
 <link rel="icon" type="image/svg+xml" href="/logo-icon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<!-- Theme: load before paint to prevent flash -->
 <script src="/theme.js"></script>
 <script src="/lib/logo.js"></script>
 <link rel="stylesheet" href="/theme-vars.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* Color tokens provided by theme-vars.css — dark default, light via [data-theme="light"] */
 :root {
-  /* page-specific extras */
   --glow: rgba(124,106,255,0.18);
   --red: #f87171;
   --gold: #f8c553;
 }
-
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background-color 0.25s, color 0.25s; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
 
@@ -41,17 +36,145 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .nav-cta:hover { opacity: 0.85; }
 
 /* HERO */
-.hero { text-align: center; padding: 6rem 2rem 4.5rem; position: relative; overflow: hidden; }
+.hero { text-align: center; padding: 6rem 2rem 3rem; position: relative; overflow: hidden; }
 .hero::before { content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 680px; height: 480px; background: radial-gradient(ellipse at center, rgba(124,106,255,0.13) 0%, transparent 70%); pointer-events: none; }
 .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(124,106,255,0.1); border: 1px solid rgba(124,106,255,0.28); color: var(--accent2); font-size: 0.76rem; font-weight: 500; padding: 0.28rem 0.85rem; border-radius: 100px; margin-bottom: 1.4rem; letter-spacing: 0.4px; }
 .hero h1 { font-size: clamp(2.3rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; max-width: 760px; margin: 0 auto 1.3rem; }
 .hero h1 .accent { color: var(--accent2); }
 .hero p { color: var(--muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto 2.3rem; line-height: 1.7; }
 .hero-btns { display: flex; gap: 0.9rem; justify-content: center; flex-wrap: wrap; }
-.btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.8rem 1.9rem; border-radius: 100px; font-size: 0.92rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s, transform 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.8rem 1.9rem; border-radius: 100px; font-size: 0.92rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s, transform 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
 .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border2); padding: 0.8rem 1.9rem; border-radius: 100px; font-size: 0.92rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; }
-.btn-ghost:hover { border-color: var(--accent); }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border2); padding: 0.8rem 1.9rem; border-radius: 100px; font-size: 0.92rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s, background 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn-ghost:hover { border-color: var(--accent); background: rgba(124,106,255,0.06); }
+.btn-ghost .play-icon { width: 18px; height: 18px; background: var(--accent); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.btn-ghost .play-icon::after { content: ''; border-left: 6px solid #fff; border-top: 4px solid transparent; border-bottom: 4px solid transparent; margin-left: 2px; }
+
+/* ── VIDEO SECTION ── */
+.video-section {
+  padding: 0 2rem 4rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.video-wrapper {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  background: #0a0a12;
+  /* 16:9 aspect ratio */
+  aspect-ratio: 16 / 9;
+}
+.video-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+/* Subtle glow under video */
+.video-glow {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 80px;
+  background: radial-gradient(ellipse, rgba(108,92,231,0.35) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(16px);
+}
+/* Browser-chrome mock on top of video */
+.video-chrome {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 36px;
+  background: rgba(20,18,35,0.92);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+.video-chrome .dot { width: 10px; height: 10px; border-radius: 50%; }
+.video-chrome .dot-r { background: #ff5f57; }
+.video-chrome .dot-y { background: #febc2e; }
+.video-chrome .dot-g { background: #28c840; }
+.video-chrome .url-bar {
+  margin-left: 10px;
+  flex: 1;
+  height: 20px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-family: monospace;
+}
+.video-iframe-wrap {
+  position: absolute;
+  inset: 0;
+  top: 36px; /* below chrome bar */
+}
+.video-iframe-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── MODAL (for Watch demo button) ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  padding: 1.5rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  width: 100%;
+  max-width: 860px;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.modal-close:hover { background: rgba(255,255,255,0.2); }
+.modal-video {
+  aspect-ratio: 16/9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+.modal-video iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
 /* STATS */
 .stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; padding: 1.8rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
@@ -85,7 +208,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .popular-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 600; padding: 3px 11px; border-radius: 100px; white-space: nowrap; }
 .price-name { font-family: 'Syne', sans-serif; font-size: 0.97rem; font-weight: 600; margin-bottom: 0.45rem; }
 .price-amount { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.25rem; }
-.price-amount sup { font-size: 1.1rem; vertical-align: super; }
 .price-period { color: var(--muted); font-size: 0.8rem; margin-bottom: 1.4rem; }
 .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.8rem; }
 .price-features li { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 7px; }
@@ -106,6 +228,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
 @media(max-width:600px) {
   nav { padding: 1rem 1.2rem; }
   .nav-links { display: none; }
+  .video-section { padding: 0 1rem 3rem; }
 }
 
 .faq-item { border-bottom: 1px solid var(--border); overflow: hidden; }
@@ -129,9 +252,7 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <li><a href="/pricing.html">Pricing</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:0.6rem;">
-    <div class="nav-right" id="navRight">
-      <!-- Filled by JS based on auth state -->
-    </div>
+    <div class="nav-right" id="navRight"></div>
     <button id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme"></button>
   </div>
 </nav>
@@ -149,13 +270,40 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   <p style="margin-top:6px;font-size:0.8rem;color:#666;">
     No signup required to try • Works instantly
   </p>
-  <div class="hero-btns">
+  <div class="hero-btns" style="margin-bottom:3rem;">
     <a href="/dashboard.html?new=1" class="btn-primary" id="heroCtaBtn">
       Transcribe for free →
     </a>
-    <button class="btn-ghost">Watch demo</button>
+    <button class="btn-ghost" onclick="openDemoModal()">
+      <span class="play-icon"></span>
+      Watch demo
+    </button>
   </div>
 </section>
+
+<!-- ── DEMO VIDEO — always visible on homepage ── -->
+<div class="video-section">
+  <div class="video-wrapper">
+    <!-- Fake browser chrome for polish -->
+    <div class="video-chrome">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="url-bar">mytranscribr.vercel.app</div>
+    </div>
+    <!-- YouTube embed: autoplay=0 so it loads but waits for user press -->
+    <div class="video-iframe-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/FgT3WdYBJZQ?rel=0&modestbranding=1&color=white"
+        title="Transcribr demo"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+    <div class="video-glow"></div>
+  </div>
+</div>
 
 <!-- STATS -->
 <div class="stats">
@@ -205,7 +353,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
     <p class="section-sub" style="margin:0 auto">Start free. No credit card required. Upgrade anytime.</p>
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:900px;margin:3rem auto 0;">
 
-      <!-- FREE -->
       <div class="price-card">
         <div class="price-name">Free</div>
         <div class="price-amount" style="font-size:2.2rem;">$0</div>
@@ -220,7 +367,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
         <button class="btn-plan" onclick="location.href='/dashboard.html'">Get started free</button>
       </div>
 
-      <!-- PRO -->
       <div class="price-card popular">
         <div class="popular-badge">✦ Most Popular</div>
         <div class="price-name">Pro</div>
@@ -240,7 +386,6 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
         <button class="btn-plan filled" onclick="location.href='/pricing.html'">Get Pro</button>
       </div>
 
-      <!-- BUSINESS -->
       <div class="price-card" style="border-color:rgba(248,197,83,0.2);">
         <div class="price-name">Business</div>
         <div class="price-amount" style="font-size:1.5rem;padding-top:0.3rem;">Custom</div>
@@ -297,7 +442,48 @@ footer { border-top: 1px solid var(--border); padding: 2.5rem 2.5rem; display: f
   <div style="color:var(--muted);font-size:0.8rem">© 2025 Transcribr. All rights reserved.</div>
 </footer>
 
+<!-- ── MODAL (Watch demo button opens this) ── -->
+<div class="modal-overlay" id="demoModal" onclick="closeDemoModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDemoModal()" aria-label="Close">✕</button>
+    <div class="modal-video">
+      <!-- src is set dynamically when modal opens so video doesn't preload -->
+      <iframe id="modalIframe"
+        src=""
+        title="Transcribr demo"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+</div>
+
 <script>
+/* ── MODAL ── */
+function openDemoModal() {
+  const modal = document.getElementById('demoModal');
+  const iframe = document.getElementById('modalIframe');
+  // autoplay=1 in the modal so video plays immediately when opened
+  iframe.src = 'https://www.youtube.com/embed/FgT3WdYBJZQ?autoplay=1&rel=0&modestbranding=1&color=white';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDemoModal(e) {
+  if (e && e.target !== document.getElementById('demoModal') && !e.target.classList.contains('modal-close')) return;
+  const modal = document.getElementById('demoModal');
+  const iframe = document.getElementById('modalIframe');
+  iframe.src = ''; // stops video playback
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDemoModal({ target: document.getElementById('demoModal') });
+});
+
+/* ── AUTH ── */
 async function checkAuth() {
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
@@ -306,7 +492,7 @@ async function checkAuth() {
     const navRight = document.getElementById('navRight');
     if (session) {
       navRight.innerHTML = `
-        ${['free',''].includes(userPlan||'') ? '<a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.4rem 1rem;border-radius:100px;font-size:0.82rem;text-decoration:none;font-weight:500;margin-right:0.2rem;">⭐ Upgrade</a>' : ''}
+        ${['free',''].includes(typeof userPlan !== 'undefined' ? userPlan : '') ? '<a href="/pricing.html" style="background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(167,139,250,0.15));color:var(--accent2);border:1px solid rgba(124,106,255,0.4);padding:0.4rem 1rem;border-radius:100px;font-size:0.82rem;text-decoration:none;font-weight:500;margin-right:0.2rem;">⭐ Upgrade</a>' : ''}
         <a href="/dashboard.html" class="nav-login">Dashboard</a>
         <a href="/dashboard.html?new=1" class="nav-cta">Transcribe →</a>`;
       document.getElementById('heroCtaBtn').href = '/dashboard.html?new=1';
@@ -323,6 +509,7 @@ async function checkAuth() {
 }
 checkAuth();
 
+/* ── FAQ ── */
 const faqs = [
   { q: 'Is Transcribr really free to use?', a: 'Yes! You can transcribe up to 3 files as a guest without signing up. Create a free account to get 10 transcriptions per month — no credit card needed.' },
   { q: 'What audio formats are supported?', a: 'Transcribr supports MP3, MP4, WAV, M4A, OGG, WEBM, and FLAC files up to 100MB. You can also paste a direct URL to an audio or video file.' },

@@ -22,6 +22,42 @@ const ALLOWED_MIMES = new Set([
   'video/mp4','video/webm','application/octet-stream',
 ]);
 
+// ── Supabase Storage upload ────────────────────────────────────────
+// Uploads audio buffer to Supabase Storage and returns a permanent public URL.
+// This is non-blocking — if it fails, transcription still succeeds.
+async function uploadAudioToStorage(buffer, fileName, userId) {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey  = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !serviceKey) return null;
+
+    const bucket = 'audio-files';
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
+    const filePath = `${Date.now()}_${safeName}`;
+
+    // Upload via Supabase Storage REST API
+    const uploadRes = await fetch(
+      `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${serviceKey}`,
+          'Content-Type': 'audio/mpeg',
+          'x-upsert': 'false',
+        },
+        body: buffer,
+      }
+    );
+
+    if (!uploadRes.ok) return null;
+
+    // Return the public URL
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
+  } catch {
+    return null; // non-critical — never fail transcription over this
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────
 function formatTimeSecs(s) {
   return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -450,6 +486,21 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Upload audio to Supabase Storage for permanent playback ──
+    // Only for logged-in users (guests use sessionStorage blobs)
+    // Only upload if buffer ≤ 50MB to avoid timeout on serverless
+    let permanentAudioUrl = null;
+    const STORAGE_MAX = 50 * 1024 * 1024; // 50MB cap for storage uploads
+    if (!isGuest && workingBuffer && workingBuffer.length <= STORAGE_MAX) {
+      const uploadName = workingName || `audio_${Date.now()}.mp3`;
+      permanentAudioUrl = await uploadAudioToStorage(
+        workingBuffer, uploadName, user?.id || null
+      );
+    }
+    // For URL transcriptions where we didn't download the buffer,
+    // keep the original URL as fallback so the download link still works
+    const finalAudioUrl = permanentAudioUrl || (isUrl ? audioUrl : null);
+
     // Free plan duration cap (post-transcription check)
     const lastSeg = result.segments?.[result.segments.length - 1];
     const durationSecs = lastSeg?.end || 0;
@@ -458,7 +509,9 @@ export default async function handler(req, res) {
       const trimText = trimmed.map(s => `[${formatTimeSecs(s.start)}] ${s.text}`).join('\n');
       return res.status(200).json({
         success: true, text: trimText, engine: result.engine,
-        segments: trimmed, audioUrl: isUrl ? audioUrl : null,
+        segments: trimmed,
+        audioUrl: finalAudioUrl,
+        audioSize: workingBuffer?.length || null,
         resolvedMode, fallback: result.fallback || false,
         trimmed: true, trimmedAtSeconds: FREE_MAX_DUR,
         upgradePrompt: 'Transcript trimmed to 15 minutes (Free plan limit). Upgrade to Pro for full transcription.',
@@ -471,7 +524,8 @@ export default async function handler(req, res) {
       text: result.text,
       engine: result.engine,
       segments: result.segments || [],
-      audioUrl: isUrl ? audioUrl : null,
+      audioUrl: finalAudioUrl,
+      audioSize: workingBuffer?.length || null,
       resolvedMode,
       fallback: result.fallback || false,
     });

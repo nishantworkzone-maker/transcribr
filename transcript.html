@@ -325,6 +325,10 @@ input:checked + .pill-track::after { transform:translateX(12px); }
         <button class="exp-btn" onclick="downloadTxt()">📄 Download TXT</button>
         <button class="exp-btn" onclick="downloadSrt()">🎬 Download SRT</button>
         <button class="exp-btn" onclick="downloadVtt()">💬 Download VTT</button>
+        <!-- Download Audio — shown/hidden + populated by setupAudioDownloadBtn() -->
+        <a id="audioDownloadBtn" class="exp-btn" style="display:none;text-decoration:none;" target="_blank" rel="noopener">
+          🔊 Download Audio
+        </a>
       </div>
     </div>
   </div>
@@ -462,49 +466,53 @@ function render(t) {
 
 // ── Audio setup ───────────────────────────────────────────────────
 function setupAudio(t) {
-  const audioUrl = t.audio_url;
+  const audioUrl  = t.audio_url;
+  const audioSize = t.audio_size || t.audioSize || null;
 
-  // Always show download button if we have a source URL
+  // Always wire up the Download Audio button if we have any URL
   if (audioUrl && !audioUrl.startsWith('__blob__')) {
-    showSourceDownload(audioUrl);
+    setupAudioDownloadBtn(audioUrl, audioSize);
   }
 
+  // No audio at all
   if (!audioUrl) {
-    document.getElementById('noAudioMsg').style.display = 'inline';
-    buildWaveform();
+    showNoAudio('— No audio saved');
     return;
   }
 
-  let src;
+  // Blob from sessionStorage (file uploaded this session)
   if (audioUrl.startsWith('__blob__')) {
-    // Local blob from sessionStorage (file uploads)
     const key = audioUrl.slice('__blob__'.length);
-    src = sessionStorage.getItem(key) || null;
-  } else {
-    // For URLs: try direct playback first (works for direct audio links)
-    // YouTube and other streaming URLs will fail gracefully — user can use download button
-    const isYouTube = /youtube\.com|youtu\.be/i.test(audioUrl);
-    const isSoundCloud = /soundcloud\.com/i.test(audioUrl);
-    if (isYouTube || isSoundCloud) {
-      // These can't be played directly — show message and download link only
-      document.getElementById('noAudioMsg').textContent = '— Audio not playable (streaming URL). Use the link below ↓';
-      document.getElementById('noAudioMsg').style.display = 'inline';
-      buildWaveform();
-      return;
+    const src = sessionStorage.getItem(key);
+    if (src) {
+      loadAudio(src);
+      // Also wire download button from blob
+      setupAudioDownloadBtnFromBlob(src, audioSize);
+    } else {
+      showNoAudio('— Audio not available (session expired)');
     }
-    src = audioUrl; // play direct — works for direct .mp3/.wav/.m4a URLs
-  }
-
-  if (!src) {
-    document.getElementById('noAudioMsg').style.display = 'inline';
-    buildWaveform();
     return;
   }
 
+  // Permanent URL from Supabase Storage or direct audio link
+  const isYouTube    = /youtube\.com|youtu\.be/i.test(audioUrl);
+  const isSoundCloud = /soundcloud\.com/i.test(audioUrl);
+
+  if (isYouTube || isSoundCloud) {
+    // Streaming URLs — can't play in browser, but download button shows "Open on YouTube" etc.
+    showNoAudio('— Streaming URL (use button below to open)');
+    return;
+  }
+
+  // Try direct playback (works for Supabase Storage URLs and direct .mp3 links)
+  loadAudio(audioUrl);
+}
+
+function loadAudio(src) {
   audio.src = src;
-  audioLoaded = true;
   document.getElementById('playBtn').disabled = false;
   document.getElementById('noAudioMsg').style.display = 'none';
+  audioLoaded = true;
 
   audio.addEventListener('loadedmetadata', () => {
     document.getElementById('durTime').textContent = fmtS(audio.duration);
@@ -512,57 +520,58 @@ function setupAudio(t) {
   }, { once: true });
 
   audio.addEventListener('error', () => {
-    // Direct playback failed (CORS or format) — fall back to proxy
-    audio.src = '/api/audio?url=' + encodeURIComponent(audioUrl);
-    audio.addEventListener('error', () => {
-      audioLoaded = false;
-      document.getElementById('playBtn').disabled = true;
-      document.getElementById('noAudioMsg').textContent = '— Audio playback unavailable. Use download link ↓';
-      document.getElementById('noAudioMsg').style.display = 'inline';
-      buildWaveform();
-    }, { once: true });
-    audio.addEventListener('loadedmetadata', () => {
-      document.getElementById('durTime').textContent = fmtS(audio.duration);
-      buildWaveform();
-    }, { once: true });
+    // Try proxy as fallback
+    if (!audio.src.includes('/api/audio')) {
+      audio.src = '/api/audio?url=' + encodeURIComponent(audio.src);
+      return;
+    }
+    audioLoaded = false;
+    document.getElementById('playBtn').disabled = true;
+    showNoAudio('— Playback unavailable (use download button)');
+    buildWaveform();
   }, { once: true });
 }
 
-// ── Source URL download button ─────────────────────────────────────
-function showSourceDownload(url) {
-  const existing = document.getElementById('sourceDownloadBtn');
-  if (existing) return;
+function showNoAudio(msg) {
+  const el = document.getElementById('noAudioMsg');
+  if (el) { el.textContent = msg; el.style.display = 'inline'; }
+  buildWaveform();
+}
 
-  const exportList = document.querySelector('.export-list');
-  if (!exportList) return;
+// ── Download Audio button ──────────────────────────────────────────
+function setupAudioDownloadBtn(url, sizeBytes) {
+  const btn = document.getElementById('audioDownloadBtn');
+  if (!btn) return;
 
-  // Detect type for label
-  const isYT  = /youtube\.com|youtu\.be/i.test(url);
-  const isSC  = /soundcloud\.com/i.test(url);
-  const label = isYT ? '▶ Open on YouTube' : isSC ? '▶ Open on SoundCloud' : '⬇ Download Source Audio';
-  const icon  = isYT ? '📺' : isSC ? '🎵' : '🔗';
+  const isYT = /youtube\.com|youtu\.be/i.test(url);
+  const isSC = /soundcloud\.com/i.test(url);
 
-  const btn = document.createElement('a');
-  btn.id        = 'sourceDownloadBtn';
-  btn.href      = url;
-  btn.target    = '_blank';
-  btn.rel       = 'noopener noreferrer';
-  btn.className = 'exp-btn';
-  btn.style.cssText = 'display:flex;align-items:center;gap:6px;text-decoration:none;background:rgba(108,92,231,0.08);border-color:rgba(108,92,231,0.3);color:var(--accent2);';
-  btn.innerHTML = `${icon} ${label}`;
+  let label, icon;
+  if (isYT)      { icon = '📺'; label = 'Open on YouTube'; btn.target = '_blank'; }
+  else if (isSC) { icon = '🎵'; label = 'Open on SoundCloud'; btn.target = '_blank'; }
+  else           { icon = '🔊'; label = 'Download Audio'; btn.download = ''; }
 
-  // Insert as first button in export list
-  exportList.insertBefore(btn, exportList.firstChild);
+  const sizeLabel = sizeBytes ? ` <span style="opacity:0.55;font-size:0.7rem">${formatBytes(sizeBytes)}</span>` : '';
+  btn.innerHTML = `${icon} ${label}${sizeLabel}`;
+  btn.href = url;
+  btn.style.display = 'flex';
+}
 
-  // Also show source URL in a small info strip above export
-  const insLabel = exportList.closest('div')?.querySelector('.ins-label');
-  if (insLabel && !document.getElementById('sourceUrlStrip')) {
-    const strip = document.createElement('div');
-    strip.id = 'sourceUrlStrip';
-    strip.style.cssText = 'font-size:0.7rem;color:var(--muted2);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 9px;margin-bottom:8px;word-break:break-all;line-height:1.5;';
-    strip.innerHTML = `<span style="color:var(--muted);font-weight:600;">Source URL:</span><br><a href="${url}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;">${url.length > 60 ? url.slice(0,60)+'…' : url}</a>`;
-    exportList.closest('div').insertBefore(strip, exportList);
-  }
+function setupAudioDownloadBtnFromBlob(blobSrc, sizeBytes) {
+  const btn = document.getElementById('audioDownloadBtn');
+  if (!btn) return;
+  const sizeLabel = sizeBytes ? ` <span style="opacity:0.55;font-size:0.7rem">${formatBytes(sizeBytes)}</span>` : '';
+  btn.innerHTML = `🔊 Download Audio${sizeLabel}`;
+  btn.href = blobSrc;
+  btn.download = 'audio.mp3';
+  btn.target = '_self';
+  btn.style.display = 'flex';
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 // ── Parse lines ───────────────────────────────────────────────────

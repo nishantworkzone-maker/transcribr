@@ -1057,7 +1057,7 @@ async function startTranscription() {
     if (!res.ok || data.error) throw new Error(data.error || 'Transcription failed');
     setProgress(100, 'Done!');
 
-    // Cache blob URL for audio playback without storage backend
+    // Cache blob URL only if API didn't return a permanent storage URL
     let localAudioKey = null;
     if (!isUrl && selectedFile && !data.audioUrl) {
       try {
@@ -1066,6 +1066,14 @@ async function startTranscription() {
         sessionStorage.setItem(key, blobUrl);
         data.audioUrl = '__blob__' + key;
         localAudioKey = key;
+      } catch (e) { /* non-critical */ }
+    }
+    // If we got a permanent storage URL from API, also cache blob for instant playback this session
+    if (!isUrl && selectedFile && data.audioUrl && !data.audioUrl.startsWith('__blob__')) {
+      try {
+        const blobUrl = URL.createObjectURL(selectedFile);
+        const key = 'audio_blob_perm_' + Date.now();
+        sessionStorage.setItem('perm_' + data.audioUrl, blobUrl);
       } catch (e) { /* non-critical */ }
     }
 

@@ -509,7 +509,14 @@ function setupAudio(t) {
 }
 
 function loadAudio(src) {
-  audio.src = src;
+  const isSupabaseStorage = src.includes('/storage/v1/object/');
+  const isBlob = src.startsWith('blob:') || src.startsWith('data:');
+
+  // Check if we have a cached blob for this permanent URL (set during upload session)
+  const cachedBlob = !isBlob ? sessionStorage.getItem('perm_' + src) : null;
+  const actualSrc  = cachedBlob || src;
+
+  audio.src = actualSrc;
   document.getElementById('playBtn').disabled = false;
   document.getElementById('noAudioMsg').style.display = 'none';
   audioLoaded = true;
@@ -520,9 +527,19 @@ function loadAudio(src) {
   }, { once: true });
 
   audio.addEventListener('error', () => {
-    // Try proxy as fallback
-    if (!audio.src.includes('/api/audio')) {
-      audio.src = '/api/audio?url=' + encodeURIComponent(audio.src);
+    // If direct Supabase URL failed, try via proxy
+    if (!audio.src.includes('/api/audio') && !audio.src.includes('/api/proxy-audio')) {
+      audio.src = '/api/proxy-audio?url=' + encodeURIComponent(src);
+      audio.addEventListener('error', () => {
+        // Try audio.js as last resort
+        audio.src = '/api/audio?url=' + encodeURIComponent(src);
+        audio.addEventListener('error', () => {
+          audioLoaded = false;
+          document.getElementById('playBtn').disabled = true;
+          showNoAudio('— Playback unavailable (use download button)');
+          buildWaveform();
+        }, { once: true });
+      }, { once: true });
       return;
     }
     audioLoaded = false;

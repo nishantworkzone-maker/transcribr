@@ -509,12 +509,21 @@ function setupAudio(t) {
 }
 
 function loadAudio(src) {
-  const isSupabaseStorage = src.includes('/storage/v1/object/');
   const isBlob = src.startsWith('blob:') || src.startsWith('data:');
 
   // Check if we have a cached blob for this permanent URL (set during upload session)
   const cachedBlob = !isBlob ? sessionStorage.getItem('perm_' + src) : null;
   const actualSrc  = cachedBlob || src;
+
+  // Determine the right proxy for this URL type:
+  // - Supabase storage URLs  → /api/proxy-audio  (CORS-aware Supabase proxy)
+  // - All other https URLs   → /api/audio         (general audio proxy)
+  // IMPORTANT: /api/proxy-audio explicitly rejects non-Supabase URLs with 403,
+  // so routing an original external URL through it always fails silently.
+  const isSupabaseUrl = !isBlob && src.includes('/storage/v1/object/');
+  const proxyUrl = isSupabaseUrl
+    ? '/api/proxy-audio?url=' + encodeURIComponent(src)
+    : '/api/audio?url='       + encodeURIComponent(src);
 
   audio.src = actualSrc;
   document.getElementById('playBtn').disabled = false;
@@ -527,18 +536,15 @@ function loadAudio(src) {
   }, { once: true });
 
   audio.addEventListener('error', () => {
-    // If direct Supabase URL failed, try via proxy
+    // Direct load failed — try the correct proxy for this URL type
     if (!audio.src.includes('/api/audio') && !audio.src.includes('/api/proxy-audio')) {
-      audio.src = '/api/proxy-audio?url=' + encodeURIComponent(src);
+      audio.src = proxyUrl;
       audio.addEventListener('error', () => {
-        // Try audio.js as last resort
-        audio.src = '/api/audio?url=' + encodeURIComponent(src);
-        audio.addEventListener('error', () => {
-          audioLoaded = false;
-          document.getElementById('playBtn').disabled = true;
-          showNoAudio('— Playback unavailable (use download button)');
-          buildWaveform();
-        }, { once: true });
+        // Proxy also failed — nothing more we can do
+        audioLoaded = false;
+        document.getElementById('playBtn').disabled = true;
+        showNoAudio('— Playback unavailable (use download button)');
+        buildWaveform();
       }, { once: true });
       return;
     }

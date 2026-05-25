@@ -59,11 +59,16 @@ async function uploadAudioToStorage(buffer, fileName, userId) {
       }
     );
 
-    if (!uploadRes.ok) return null;
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text().catch(() => '');
+      console.error('[transcribr] Supabase upload failed:', uploadRes.status, errText.slice(0, 200));
+      return null;
+    }
 
     // Return the public URL
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
-  } catch {
+  } catch (e) {
+    console.error('[transcribr] uploadAudioToStorage exception:', e?.message || e);
     return null; // non-critical — never fail transcription over this
   }
 }
@@ -472,6 +477,7 @@ export default async function handler(req, res) {
         }
         // For balanced/accurate: Deepgram/AssemblyAI can still try the URL directly.
         // Audio playback may not work if the URL is private/expired — but transcription will succeed.
+        console.error('[transcribr] URL audio download failed — transcription will continue but playback may break:', dlErr?.message || dlErr);
       }
     }
 
@@ -521,6 +527,7 @@ export default async function handler(req, res) {
     // keep the original URL as fallback so the download link still works.
     // The frontend will route this through /api/audio proxy for CORS-safe playback.
     const finalAudioUrl = permanentAudioUrl || (isUrl ? audioUrl : null);
+    console.log('[transcribr] finalAudioUrl:', finalAudioUrl ? (finalAudioUrl.startsWith('http') ? finalAudioUrl.slice(0,80)+'...' : finalAudioUrl) : 'null', '| permanentAudioUrl:', !!permanentAudioUrl, '| workingBuffer bytes:', workingBuffer?.length || 0);
 
     // Free plan duration cap (post-transcription check)
     const lastSeg = result.segments?.[result.segments.length - 1];

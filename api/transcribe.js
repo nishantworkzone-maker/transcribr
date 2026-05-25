@@ -35,6 +35,16 @@ async function uploadAudioToStorage(buffer, fileName, userId) {
     const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
     const filePath = `${Date.now()}_${safeName}`;
 
+    // Detect correct MIME type from file extension — never hardcode audio/mpeg
+    const extRaw = (fileName.split('.').pop() || '').toLowerCase();
+    const mimeMap = {
+      mp3: 'audio/mpeg', mp4: 'audio/mp4', m4a: 'audio/mp4',
+      wav: 'audio/wav',  ogg: 'audio/ogg', webm: 'audio/webm',
+      flac: 'audio/flac', opus: 'audio/opus', aac: 'audio/aac',
+      wma: 'audio/x-ms-wma', aiff: 'audio/aiff', aif: 'audio/aiff',
+    };
+    const contentType = mimeMap[extRaw] || 'audio/mpeg';
+
     // Upload via Supabase Storage REST API
     const uploadRes = await fetch(
       `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`,
@@ -42,7 +52,7 @@ async function uploadAudioToStorage(buffer, fileName, userId) {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${serviceKey}`,
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': contentType,
           'x-upsert': 'false',
         },
         body: buffer,
@@ -491,14 +501,33 @@ export default async function handler(req, res) {
     // Only upload if buffer ≤ 50MB to avoid timeout on serverless
     let permanentAudioUrl = null;
     const STORAGE_MAX = 50 * 1024 * 1024; // 50MB cap for storage uploads
+
     if (!isGuest && workingBuffer && workingBuffer.length <= STORAGE_MAX) {
+      // Case 1: file-upload or URL where buffer was already downloaded (fast mode)
       const uploadName = workingName || `audio_${Date.now()}.mp3`;
       permanentAudioUrl = await uploadAudioToStorage(
         workingBuffer, uploadName, user?.id || null
       );
+    } else if (!isGuest && isUrl && !workingBuffer) {
+      // Case 2: URL-based transcription where Deepgram/AssemblyAI used the URL directly
+      // (no local buffer exists yet). Fetch the audio now so we can store it permanently.
+      // This is the main fix for URL-based audio playback — without this, we fall back
+      // to returning the raw original URL which may expire or be blocked by CORS.
+      try {
+        const { buffer: dlBuffer, ext } = await fetchUrlToBuffer(audioUrl, STORAGE_MAX);
+        const dlName = `url_audio_${Date.now()}${ext}`;
+        permanentAudioUrl = await uploadAudioToStorage(dlBuffer, dlName, user?.id || null);
+        // Update workingBuffer so audioSize is reported correctly
+        workingBuffer = dlBuffer;
+        workingName = dlName;
+      } catch {
+        // Non-critical — fall through to returning the original URL
+      }
     }
-    // For URL transcriptions where we didn't download the buffer,
-    // keep the original URL as fallback so the download link still works
+
+    // For URL transcriptions where upload wasn't possible (guest, or download failed),
+    // keep the original URL as fallback so the download link still works.
+    // The frontend will route this through /api/audio proxy for CORS-safe playback.
     const finalAudioUrl = permanentAudioUrl || (isUrl ? audioUrl : null);
 
     // Free plan duration cap (post-transcription check)

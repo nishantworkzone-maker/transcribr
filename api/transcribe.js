@@ -452,8 +452,11 @@ export default async function handler(req, res) {
     let workingBuffer = fileBuffer;
     let workingName   = fileName;
 
-    // Groq needs a local buffer — download URL if needed
-    if (isUrl && resolvedMode === 'fast' && !workingBuffer) {
+    // Download URL audio buffer early for ALL modes.
+    // Critical for URLs with auth tokens (e.g. call recording services like virtualcd.biz)
+    // that expire or become inaccessible after the API call returns.
+    // Having workingBuffer guarantees we can upload to Supabase for reliable audio playback.
+    if (isUrl && !workingBuffer) {
       try {
         const { buffer, ext } = await fetchUrlToBuffer(audioUrl, maxBytes);
         workingBuffer = buffer;
@@ -462,9 +465,13 @@ export default async function handler(req, res) {
         if (dlErr.code === 'TOO_LARGE') {
           return res.status(413).json({ error: 'Audio file is too large.', upgradeUrl: '/pricing.html' });
         }
-        return res.status(400).json({
-          error: 'Fast mode requires a downloadable audio file. Try Smart mode instead.',
-        });
+        if (resolvedMode === 'fast') {
+          return res.status(400).json({
+            error: 'Fast mode requires a downloadable audio file. Try Smart mode instead.',
+          });
+        }
+        // For balanced/accurate: Deepgram/AssemblyAI can still try the URL directly.
+        // Audio playback may not work if the URL is private/expired — but transcription will succeed.
       }
     }
 
@@ -503,26 +510,11 @@ export default async function handler(req, res) {
     const STORAGE_MAX = 50 * 1024 * 1024; // 50MB cap for storage uploads
 
     if (!isGuest && workingBuffer && workingBuffer.length <= STORAGE_MAX) {
-      // Case 1: file-upload or URL where buffer was already downloaded (fast mode)
+      // workingBuffer is always populated for URL transcriptions now (downloaded early above)
       const uploadName = workingName || `audio_${Date.now()}.mp3`;
       permanentAudioUrl = await uploadAudioToStorage(
         workingBuffer, uploadName, user?.id || null
       );
-    } else if (!isGuest && isUrl && !workingBuffer) {
-      // Case 2: URL-based transcription where Deepgram/AssemblyAI used the URL directly
-      // (no local buffer exists yet). Fetch the audio now so we can store it permanently.
-      // This is the main fix for URL-based audio playback — without this, we fall back
-      // to returning the raw original URL which may expire or be blocked by CORS.
-      try {
-        const { buffer: dlBuffer, ext } = await fetchUrlToBuffer(audioUrl, STORAGE_MAX);
-        const dlName = `url_audio_${Date.now()}${ext}`;
-        permanentAudioUrl = await uploadAudioToStorage(dlBuffer, dlName, user?.id || null);
-        // Update workingBuffer so audioSize is reported correctly
-        workingBuffer = dlBuffer;
-        workingName = dlName;
-      } catch {
-        // Non-critical — fall through to returning the original URL
-      }
     }
 
     // For URL transcriptions where upload wasn't possible (guest, or download failed),

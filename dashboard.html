@@ -1057,25 +1057,33 @@ async function startTranscription() {
     if (!res.ok || data.error) throw new Error(data.error || 'Transcription failed');
     setProgress(100, 'Done!');
 
-    // Cache blob URL only if API didn't return a permanent storage URL
-    let localAudioKey = null;
-    if (!isUrl && selectedFile && !data.audioUrl) {
-      try {
-        const blobUrl = URL.createObjectURL(selectedFile);
-        const key = 'audio_blob_' + Date.now();
-        sessionStorage.setItem(key, blobUrl);
-        data.audioUrl = '__blob__' + key;
-        localAudioKey = key;
-      } catch (e) { /* non-critical */ }
+    // ── Audio URL handling (matches new 4-step backend pipeline) ──
+    // File uploads: backend returns a Supabase URL for logged-in users.
+    //   For guests with file uploads: create a session blob for this-session playback.
+    // URL inputs: backend ALWAYS downloads + stores to Supabase (logged-in users).
+    //   For guests with URL inputs: no audio playback (URL has expired by now).
+    //   Never store the raw original URL — it expires immediately.
+
+    if (!isUrl && selectedFile) {
+      if (!data.audioUrl) {
+        // Logged-in: Supabase upload may have failed — create a session blob as fallback
+        // Guest: always create a session blob for this-session playback
+        try {
+          const blobUrl = URL.createObjectURL(selectedFile);
+          const key = 'audio_blob_' + Date.now();
+          sessionStorage.setItem(key, blobUrl);
+          data.audioUrl = '__blob__' + key;
+        } catch (e) { /* non-critical */ }
+      } else if (!data.audioUrl.startsWith('__blob__')) {
+        // Logged-in with permanent Supabase URL: also cache blob for instant same-session playback
+        try {
+          const blobUrl = URL.createObjectURL(selectedFile);
+          sessionStorage.setItem('perm_' + data.audioUrl, blobUrl);
+        } catch (e) { /* non-critical */ }
+      }
     }
-    // If we got a permanent storage URL from API, also cache blob for instant playback this session
-    if (!isUrl && selectedFile && data.audioUrl && !data.audioUrl.startsWith('__blob__')) {
-      try {
-        const blobUrl = URL.createObjectURL(selectedFile);
-        const key = 'audio_blob_perm_' + Date.now();
-        sessionStorage.setItem('perm_' + data.audioUrl, blobUrl);
-      } catch (e) { /* non-critical */ }
-    }
+    // For URL inputs: data.audioUrl is either a permanent Supabase URL (logged-in)
+    // or null (guest). Either way, don't fall back to the raw original URL.
 
     if (isGuest()) {
       incrementGuestCount();
@@ -1088,7 +1096,7 @@ async function startTranscription() {
         transcript: data.text,
         engine: data.engine || resolvedMode,
         language: lang,
-        audio_url: data.audioUrl || (isUrl ? audioUrl : null),
+        audio_url: data.audioUrl || null,  // never store raw URLs — they expire
         created_at: new Date().toISOString(),
         isGuest: true,
         segments: data.segments || []

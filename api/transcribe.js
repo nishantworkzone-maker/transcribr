@@ -452,84 +452,121 @@ export default async function handler(req, res) {
       });
     }
 
-    const resolvedMode = resolveMode(fileBuffer?.length, isUrl, mode);
+    // ═══════════════════════════════════════════════════════════════
+    // PIPELINE: same 4 steps for EVERY input — file upload OR URL
+    //
+    //   STEP 1 → Get audio buffer  (download URL or use uploaded file)
+    //   STEP 2 → Transcribe        (from buffer — no raw URLs passed to engines)
+    //   STEP 3 → Upload to storage (Supabase — permanent URL for playback)
+    //   STEP 4 → Return result     (with permanent audio URL)
+    //
+    // This mirrors how TurboScribe works: capture audio first, then process.
+    // URLs are NEVER passed raw to transcription engines or stored as audio_url.
+    // ═══════════════════════════════════════════════════════════════
 
-    let workingBuffer = fileBuffer;
-    let workingName   = fileName;
+    // ── STEP 1: Get audio buffer ──────────────────────────────────
+    // For file uploads: buffer is already in memory from multipart parse.
+    // For URLs: download the audio NOW, before doing anything else.
+    // This is critical — URL tokens (like virtualcd.biz) expire in seconds.
+    // We must capture the bytes while the link is still valid.
 
-    // Download URL audio buffer early for ALL modes.
-    // Critical for URLs with auth tokens (e.g. call recording services like virtualcd.biz)
-    // that expire or become inaccessible after the API call returns.
-    // Having workingBuffer guarantees we can upload to Supabase for reliable audio playback.
-    if (isUrl && !workingBuffer) {
+    let audioBuffer = fileBuffer;   // null if URL input
+    let audioName   = fileName;
+
+    if (isUrl) {
       try {
         const { buffer, ext } = await fetchUrlToBuffer(audioUrl, maxBytes);
-        workingBuffer = buffer;
-        workingName   = `audio_${Date.now()}${ext}`;
+        audioBuffer = buffer;
+        audioName   = `audio_${Date.now()}${ext}`;
+        console.log('[transcribr] Step 1 ✓ URL downloaded:', audioBuffer.length, 'bytes');
       } catch (dlErr) {
+        // Hard fail: file too large
         if (dlErr.code === 'TOO_LARGE') {
-          return res.status(413).json({ error: 'Audio file is too large.', upgradeUrl: '/pricing.html' });
-        }
-        if (resolvedMode === 'fast') {
-          return res.status(400).json({
-            error: 'Fast mode requires a downloadable audio file. Try Smart mode instead.',
+          return res.status(413).json({
+            error: 'Audio file is too large to process. Max size: ' +
+              (isGuest || userPlan === 'free' ? '50MB (free plan)' : '500MB'),
+            upgradeUrl: '/pricing.html',
           });
         }
-        // For balanced/accurate: Deepgram/AssemblyAI can still try the URL directly.
-        // Audio playback may not work if the URL is private/expired — but transcription will succeed.
-        console.error('[transcribr] URL audio download failed — transcription will continue but playback may break:', dlErr?.message || dlErr);
+        // Hard fail: could not download at all — no point continuing
+        console.error('[transcribr] Step 1 ✗ URL download failed:', dlErr?.message);
+        return res.status(400).json({
+          error: 'Could not download the audio from that URL. ' +
+            'The link may have expired, require a login, or be blocked. ' +
+            'Try downloading the file manually and uploading it instead.',
+        });
       }
     }
 
-    // Run engine
+    // Validate we have something to work with
+    if (!audioBuffer) {
+      return res.status(400).json({ error: 'No audio data received.' });
+    }
+
+    // ── STEP 2: Transcribe from buffer ────────────────────────────
+    // All engines receive the local buffer — never a raw URL.
+    // This guarantees consistent behaviour for files and URLs alike.
+
+    const resolvedMode = resolveMode(audioBuffer.length, false, mode);
+
+    // Plan gate for Precision mode
+    if (resolvedMode === 'accurate' && (isGuest || userPlan === 'free')) {
+      return res.status(403).json({
+        error: 'Precision mode requires a Pro plan.',
+        code: 'ENGINE_LOCKED', upgradeUrl: '/pricing.html',
+      });
+    }
+
     let result;
     try {
       if (resolvedMode === 'fast') {
-        result = await transcribeGroq(workingBuffer, workingName, language);
+        result = await transcribeGroq(audioBuffer, audioName, language);
       } else if (resolvedMode === 'balanced') {
-        result = await transcribeDeepgram(workingBuffer || null, isUrl && !workingBuffer ? audioUrl : null, language);
-      } else if (resolvedMode === 'accurate') {
-        // Pro/Business only for AssemblyAI
-        if (isGuest || userPlan === 'free') {
-          return res.status(403).json({
-            error: 'Precision mode requires a Pro plan.', code: 'ENGINE_LOCKED', upgradeUrl: '/pricing.html',
-          });
-        }
-        result = await transcribeAssemblyAI(workingBuffer || null, isUrl && !workingBuffer ? audioUrl : null, language);
+        result = await transcribeDeepgram(audioBuffer, null, language);
       } else {
-        return res.status(400).json({ error: 'Unknown processing mode.' });
+        result = await transcribeAssemblyAI(audioBuffer, null, language);
       }
+      console.log('[transcribr] Step 2 ✓ Transcribed via', result.engine, '— segments:', result.segments?.length);
     } catch (engineErr) {
-      // Fallback to balanced if primary fails and Deepgram is available
+      // Auto-fallback: if primary engine fails, try Deepgram with the buffer
       if (resolvedMode !== 'balanced' && process.env.DEEPGRAM_API_KEY) {
-        result = await transcribeDeepgram(workingBuffer || null, isUrl ? audioUrl : null, language);
+        console.warn('[transcribr] Step 2 — primary engine failed, falling back to Deepgram:', engineErr?.message);
+        result = await transcribeDeepgram(audioBuffer, null, language);
         result.fallback = true;
       } else {
         throw engineErr;
       }
     }
 
-    // ── Upload audio to Supabase Storage for permanent playback ──
-    // Only for logged-in users (guests use sessionStorage blobs)
-    // Only upload if buffer ≤ 50MB to avoid timeout on serverless
-    let permanentAudioUrl = null;
-    const STORAGE_MAX = 50 * 1024 * 1024; // 50MB cap for storage uploads
+    // ── STEP 3: Upload audio to Supabase for permanent storage ────
+    // Logged-in users get a permanent Supabase URL for the audio player.
+    // Guests get nothing stored server-side (they use sessionStorage blobs).
+    // Cap at 100MB — large enough for most calls, safe for serverless timeout.
 
-    if (!isGuest && workingBuffer && workingBuffer.length <= STORAGE_MAX) {
-      // workingBuffer is always populated for URL transcriptions now (downloaded early above)
-      const uploadName = workingName || `audio_${Date.now()}.mp3`;
-      permanentAudioUrl = await uploadAudioToStorage(
-        workingBuffer, uploadName, user?.id || null
-      );
+    const STORAGE_MAX = 100 * 1024 * 1024; // 100MB storage cap
+    let permanentAudioUrl = null;
+
+    if (!isGuest && audioBuffer.length <= STORAGE_MAX) {
+      permanentAudioUrl = await uploadAudioToStorage(audioBuffer, audioName, user?.id || null);
+      if (permanentAudioUrl) {
+        console.log('[transcribr] Step 3 ✓ Uploaded to Supabase:', permanentAudioUrl.slice(0, 80));
+      } else {
+        console.warn('[transcribr] Step 3 ✗ Supabase upload failed — audio_url will be null');
+      }
+    } else if (isGuest) {
+      console.log('[transcribr] Step 3 — skipped (guest user, client handles blob)');
+    } else {
+      console.warn('[transcribr] Step 3 — skipped (file too large for storage:', audioBuffer.length, 'bytes)');
     }
 
-    // For URL transcriptions where upload wasn't possible (guest, or download failed),
-    // keep the original URL as fallback so the download link still works.
-    // The frontend will route this through /api/audio proxy for CORS-safe playback.
-    const finalAudioUrl = permanentAudioUrl || (isUrl ? audioUrl : null);
-    console.log('[transcribr] finalAudioUrl:', finalAudioUrl ? (finalAudioUrl.startsWith('http') ? finalAudioUrl.slice(0,80)+'...' : finalAudioUrl) : 'null', '| permanentAudioUrl:', !!permanentAudioUrl, '| workingBuffer bytes:', workingBuffer?.length || 0);
+    // ── STEP 4: Return result ─────────────────────────────────────
+    // audio_url is ONLY set if we have a permanent Supabase URL.
+    // Guests get null — their audio is handled client-side via blob URL.
+    // Never return the original raw URL (it may expire immediately).
 
-    // Free plan duration cap (post-transcription check)
+    const finalAudioUrl = permanentAudioUrl || null;
+
+    // Free plan duration cap
     const lastSeg = result.segments?.[result.segments.length - 1];
     const durationSecs = lastSeg?.end || 0;
     if ((isGuest || userPlan === 'free') && durationSecs > FREE_MAX_DUR) {
@@ -539,7 +576,7 @@ export default async function handler(req, res) {
         success: true, text: trimText, engine: result.engine,
         segments: trimmed,
         audioUrl: finalAudioUrl,
-        audioSize: workingBuffer?.length || null,
+        audioSize: audioBuffer.length,
         resolvedMode, fallback: result.fallback || false,
         trimmed: true, trimmedAtSeconds: FREE_MAX_DUR,
         upgradePrompt: 'Transcript trimmed to 15 minutes (Free plan limit). Upgrade to Pro for full transcription.',
@@ -553,7 +590,7 @@ export default async function handler(req, res) {
       engine: result.engine,
       segments: result.segments || [],
       audioUrl: finalAudioUrl,
-      audioSize: workingBuffer?.length || null,
+      audioSize: audioBuffer.length,
       resolvedMode,
       fallback: result.fallback || false,
     });
